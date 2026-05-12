@@ -25,38 +25,41 @@ export default function KpiCard({
 
   return (
     <div
-      className="rounded-xl p-5 transition-all duration-200 animate-fade-in"
+      className="rounded-xl p-6 transition-all duration-300 animate-fade-in relative overflow-hidden group"
       style={{
         backgroundColor: "var(--color-surface)",
         border: "1px solid var(--color-border)",
-        boxShadow: "var(--shadow-sm)",
+        boxShadow: "var(--shadow-md)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = "var(--shadow-md)";
-        e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = "var(--shadow-lg)";
+        e.currentTarget.style.transform = "translateY(-4px)";
+        e.currentTarget.style.borderColor = "var(--color-border-strong)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = "var(--shadow-sm)";
+        e.currentTarget.style.boxShadow = "var(--shadow-md)";
         e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.borderColor = "var(--color-border)";
       }}
     >
-      <div className="flex items-start justify-between mb-3">
-        <div>
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-primary)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex flex-col">
           <p
-            className="text-xs font-medium uppercase tracking-wider"
+            className="text-[11px] font-bold uppercase tracking-widest mb-1"
             style={{ color: "var(--color-text-tertiary)" }}
           >
             {title}
           </p>
           <p
-            className="text-2xl font-bold mt-1"
+            className="text-2xl font-black tracking-tight"
             style={{ color: "var(--color-text-primary)" }}
           >
             {value}
           </p>
         </div>
         <div
-          className="p-2.5 rounded-lg"
+          className="p-3 rounded-xl shadow-inner"
           style={{ backgroundColor: "var(--color-primary-light)" }}
         >
           <span style={{ color: "var(--color-primary)" }}>{icon}</span>

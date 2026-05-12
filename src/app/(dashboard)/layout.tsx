@@ -11,7 +11,6 @@ export default function DashboardLayout({
       <Sidebar />
       <div
         className="flex flex-col flex-1 overflow-hidden transition-all duration-300"
-        style={{ marginLeft: "var(--sidebar-width)" }}
       >
         <Header />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>

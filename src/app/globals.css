@@ -3,20 +3,20 @@
 /* ===== SMA SERVING - Design System Tokens ===== */
 :root {
   /* Brand Colors (Serving S.A.S.) */
-  --color-primary: #00592d;       /* Verde Oscuro */
-  --color-primary-hover: #004221;
-  --color-primary-light: #e6f0eb;
+  --color-primary: #015c32;       /* Verde Oscuro (Títulos y Logo) */
+  --color-primary-hover: #014224;
+  --color-primary-light: #e0eee7;
   
-  --color-accent: #7ab731;        /* Verde Lima */
-  --color-accent-hover: #659a28;
-  --color-accent-light: #f2f8eb;
+  --color-accent: #11a542;        /* Verde Brillante (Símbolo S) */
+  --color-accent-hover: #0c8233;
+  --color-accent-light: #e5f5e8;
   
-  --color-warning: #f37321;       /* Naranja (Acento) */
-  --color-warning-hover: #d96215;
+  --color-warning: #ff6600;       /* Naranja (Etiquetas/Acento) */
+  --color-warning-hover: #d95600;
   
   /* Neutral Palette */
-  --color-bg: #f5f7f9;            /* Fondo Alternativo */
-  --color-surface: #ffffff;       /* Fondo Principal */
+  --color-bg: #f5f7f8;            /* Fondo General Gris Claro */
+  --color-surface: #ffffff;       /* Fondo Principal (Tarjetas) */
   --color-surface-hover: #f1f5f9;
   --color-border: #e2e8f0;
   --color-border-strong: #cbd5e1;
@@ -55,33 +55,36 @@
   --transition-slow: 350ms ease;
 }
 
-/* Dark mode (Adaptado a paleta verde/naranja) */
+/* Dark mode (Adaptado a LinderAppTauri) */
 .dark {
-  --color-primary: #7ab731; /* En oscuro el acento resalta mejor como primario */
-  --color-primary-hover: #8cc34a;
-  --color-primary-light: #162a10;
+  /* Serving Colors */
+  --color-primary: #11a542; /* Verde brillante es mejor como primario en oscuro */
+  --color-primary-hover: #14c750;
+  --color-primary-light: rgba(17, 165, 66, 0.15);
   
-  --color-accent: #00592d;
-  --color-accent-hover: #007039;
-  --color-accent-light: #064e3b;
+  --color-accent: #015c32; /* Verde Oscuro */
+  --color-accent-hover: #017a42;
+  --color-accent-light: rgba(1, 92, 50, 0.2);
   
-  --color-warning: #f37321;
-  --color-warning-hover: #fb923c;
+  --color-warning: #ff6600;
+  --color-warning-hover: #ff7b24;
   
-  --color-bg: #0d1117;
-  --color-surface: #161b22;
-  --color-surface-hover: #21262d;
-  --color-border: #30363d;
-  --color-border-strong: #484f58;
+  /* LinderAppTauri Deep Dark Palette */
+  --color-bg: #0B0F19; /* Fondo extra oscuro con toque azulado */
+  --color-surface: #111827; /* Superficie gris oscura (gray-900) */
+  --color-surface-hover: #1F2937; /* Hover (gray-800) */
+  --color-border: rgba(255, 255, 255, 0.08); /* Borde super sutil */
+  --color-border-strong: rgba(255, 255, 255, 0.15);
   
-  --color-text-primary: #f0f6fc;
-  --color-text-secondary: #8b949e;
-  --color-text-tertiary: #6e7681;
-  --color-text-inverse: #ffffff;
+  --color-text-primary: #F9FAFB; /* gray-50 */
+  --color-text-secondary: #9CA3AF; /* gray-400 */
+  --color-text-tertiary: #6B7280; /* gray-500 */
+  --color-text-inverse: #000000;
   
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 2px 15px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.5);
+  /* Sombras oscuras profundas */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
 }
 
 /* ===== Base Styles ===== */
@@ -93,12 +96,13 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
   background-color: var(--color-bg);
   color: var(--color-text-primary);
-  font-family: var(--font-montserrat), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -114,15 +118,44 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border-strong);
-  border-radius: 3px;
+  background: var(--color-surface-hover);
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-tertiary);
 }
 
+/* Material Symbols */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', 'Material Icons', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+}
+
 /* ===== Utility Classes ===== */
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-black/5 dark:border-white/5 shadow-2xl;
+  }
+
+  .glass-card {
+    @apply bg-white/60 dark:bg-gray-900/60 backdrop-blur-lg border border-black/5 dark:border-white/5 shadow-lg hover:shadow-xl hover:bg-white/80 dark:hover:bg-gray-900/80 hover:border-black/10 dark:hover:border-white/10 transition-all duration-300 rounded-xl;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-warning)];
+  }
+}
+
 .glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
@@ -131,8 +164,10 @@ body {
 }
 
 .dark .glass {
-  background: rgba(26, 29, 39, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(17, 24, 39, 0.7); /* gray-900 con opacidad */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* ===== Animations ===== */

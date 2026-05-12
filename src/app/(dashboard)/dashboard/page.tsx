@@ -8,17 +8,17 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>
+      <div className="mb-8">
+        <h1 className="text-3xl font-black tracking-tight" style={{ color: "var(--color-text-primary)" }}>
           Dashboard
         </h1>
-        <p className="text-sm mt-1" style={{ color: "var(--color-text-secondary)" }}>
+        <p className="text-base mt-2" style={{ color: "var(--color-text-secondary)" }}>
           Bienvenido de vuelta. Aquí tienes el resumen de Constructora Serving.
         </p>
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <KpiCard
           title="Proyectos Activos"
           value="7"
