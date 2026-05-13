@@ -13,43 +13,59 @@ export default function AnalysisPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-3xl font-bold flex items-center">
-            <span className="material-symbols-outlined mr-3 text-[var(--color-accent)] text-3xl">
+          <h1 className="text-2xl sm:text-4xl font-black flex items-center gap-4 tracking-tight">
+            <span 
+              className="material-symbols-outlined text-4xl flex-shrink-0"
+              style={{ color: "var(--color-primary)" }}
+            >
               analytics
             </span>
-            Análisis de Proyectos (IA)
+            <span style={{ color: "var(--color-text-primary)" }}>Análisis de Proyectos (IA)</span>
           </h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">
-            Correlaciona presupuestos (Excel) con cronogramas (MS Project/CSV) automáticamente.
+          <p className="text-base mt-2 max-w-2xl leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+            Correlaciona presupuestos con cronogramas automáticamente utilizando inteligencia artificial.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-1 space-y-6">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
+        <div className="xl:col-span-2 space-y-6">
           <AnalysisUpload onAnalysisComplete={handleAnalysisComplete} />
           
           {analysisData && (
-            <div className="glass-card p-6 rounded-[var(--radius-lg)] animate-fade-in">
-              <h3 className="text-lg font-bold flex items-center mb-4 text-[var(--color-primary)]">
-                <Sparkles className="w-5 h-5 mr-2" />
+            <div 
+              className="rounded-xl p-6 sm:p-8 animate-fade-in"
+              style={{
+                backgroundColor: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                boxShadow: "var(--shadow-md)",
+              }}
+            >
+              <h3 className="text-lg font-bold flex items-center gap-2 mb-5" style={{ color: "var(--color-primary)" }}>
+                <Sparkles className="w-5 h-5 flex-shrink-0" />
                 Conclusiones de la IA
               </h3>
-              <div className="prose prose-sm dark:prose-invert">
+              <div className="space-y-4">
                 {analysisData.analysis.split("\n").map((paragraph: string, i: number) => (
-                  <p key={i} className="mb-3 text-[var(--color-text-secondary)] leading-relaxed">
-                    {paragraph}
-                  </p>
+                  paragraph.trim() && (
+                    <p 
+                      key={i} 
+                      className="text-sm leading-relaxed select-text cursor-auto"
+                      style={{ color: "var(--color-text-primary)", opacity: 0.9 }}
+                    >
+                      {paragraph}
+                    </p>
+                  )
                 ))}
               </div>
             </div>
           )}
         </div>
 
-        <div className="xl:col-span-2">
+        <div className="xl:col-span-3">
           {analysisData ? (
             <div className="h-full animate-fade-in">
               <BudgetTimelineChart 
@@ -58,7 +74,14 @@ export default function AnalysisPage() {
               />
             </div>
           ) : (
-            <div className="glass-card p-6 rounded-[var(--radius-lg)] h-full min-h-[400px] flex flex-col items-center justify-center relative overflow-hidden group">
+            <div 
+              className="rounded-xl p-8 h-full min-h-[400px] flex flex-col items-center justify-center relative overflow-hidden group"
+              style={{
+                backgroundColor: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                boxShadow: "var(--shadow-sm)",
+              }}
+            >
               <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-accent)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
               <div className="w-24 h-24 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,0,0,0.5)] transform group-hover:scale-105 transition-transform duration-500 relative">
                 <div className="absolute inset-0 bg-[var(--color-accent)]/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>

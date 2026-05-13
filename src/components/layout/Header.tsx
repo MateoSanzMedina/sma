@@ -30,7 +30,7 @@ export default function Header() {
 
   return (
     <header 
-      className="flex items-center justify-between whitespace-nowrap border-b border-white/5 px-6 lg:px-10 py-4 sticky top-0 z-10 shrink-0 backdrop-blur-md bg-surface/80"
+      className="flex items-center justify-between whitespace-nowrap border-b border-white/5 px-12 md:px-20 lg:px-24 xl:px-32 py-5 sticky top-0 z-10 shrink-0 backdrop-blur-md bg-surface/80"
       style={{
         borderColor: "var(--color-border)",
       }}

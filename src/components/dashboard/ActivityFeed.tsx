@@ -63,7 +63,7 @@ const gradients = [
 export default function ActivityFeed() {
   return (
     <div
-      className="rounded-xl p-5 animate-fade-in"
+      className="rounded-xl p-5 sm:p-6 animate-fade-in"
       style={{
         backgroundColor: "var(--color-surface)",
         border: "1px solid var(--color-border)",

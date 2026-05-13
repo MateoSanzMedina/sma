@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import * as xlsx from "xlsx";
-import Papa from "papaparse";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,95 +10,137 @@ export async function POST(req: NextRequest) {
 
     if (!scheduleFile || !budgetFile) {
       return NextResponse.json(
-        { error: "Ambos archivos (cronograma CSV y presupuesto XLSX) son requeridos." },
+        { error: "Ambos archivos (cronograma XLSX y presupuesto XLSX) son requeridos." },
         { status: 400 }
       );
     }
 
     // 1. Parsear el archivo Excel de Presupuesto
     const budgetBuffer = await budgetFile.arrayBuffer();
-    const workbook = xlsx.read(budgetBuffer, { type: "array" });
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
-    // Extraer a JSON (tomamos los datos crudos para que la IA los analice)
-    const budgetJson = xlsx.utils.sheet_to_json(worksheet, { defval: "" });
-
-    // 2. Parsear el archivo CSV del Cronograma (MS Project)
-    const scheduleText = await scheduleFile.text();
-    const scheduleParsed = Papa.parse(scheduleText, {
-      header: true,
-      skipEmptyLines: true,
+    const budgetWorkbook = xlsx.read(budgetBuffer, { type: "array" });
+    
+    // Intentar buscar la pestaña "Presupuesto V5" o la primera disponible
+    const budgetSheetName = budgetWorkbook.SheetNames.find(n => n.includes("V5")) || budgetWorkbook.SheetNames[0];
+    const budgetWorksheet = budgetWorkbook.Sheets[budgetSheetName];
+    const rawBudgetJson = xlsx.utils.sheet_to_json(budgetWorksheet, { defval: "" });
+    
+    // Filtrar filas del presupuesto - Ser más permisivo para no perder ítems
+    const budgetJson = rawBudgetJson.filter((row: any) => {
+      const vals = Object.values(row).map(v => String(v).toLowerCase());
+      // Buscar si la fila parece tener datos (no solo celdas vacías)
+      const hasData = vals.some(v => v.length > 0 && v !== "0");
+      return hasData;
+    }).map(row => {
+      const cleanRow: any = {};
+      Object.entries(row).forEach(([k, v]) => {
+        const lowerK = k.toLowerCase();
+        // Capturar columnas clave sin ser tan restrictivo
+        if (lowerK.includes("desc") || lowerK.includes("item") || lowerK.includes("total") || 
+            lowerK.includes("valor") || lowerK.includes("cant") || lowerK.includes("unidad") ||
+            lowerK.includes("p.u") || lowerK.includes("precio")) {
+          cleanRow[k] = v;
+        }
+      });
+      return cleanRow;
     });
-    const scheduleJson = scheduleParsed.data;
 
-    // 3. Inicializar Gemini
+    console.log(`Presupuesto: Procesadas ${budgetJson.length} filas.`);
+
+    // 2. Parsear el archivo Excel del Cronograma
+    const scheduleBuffer = await scheduleFile.arrayBuffer();
+    const scheduleWorkbook = xlsx.read(scheduleBuffer, { type: "array" });
+    const scheduleSheetName = scheduleWorkbook.SheetNames[0];
+    const scheduleWorksheet = scheduleWorkbook.Sheets[scheduleSheetName];
+    const rawScheduleJson = xlsx.utils.sheet_to_json(scheduleWorksheet, { defval: "" });
+    
+    const scheduleJson = rawScheduleJson.filter((row: any) => {
+      const vals = Object.values(row).map(v => String(v).toLowerCase());
+      return vals.some(v => v.length > 0);
+    }).map(row => {
+      const cleanRow: any = {};
+      Object.entries(row).forEach(([k, v]) => {
+        const lowerK = k.toLowerCase();
+        if (lowerK.includes("nombre") || lowerK.includes("tarea") || lowerK.includes("comienzo") || 
+            lowerK.includes("fin") || lowerK.includes("inicio") || lowerK.includes("duracion") ||
+            lowerK.includes("nombre de la tarea")) {
+          cleanRow[k] = v;
+        }
+      });
+      return cleanRow;
+    });
+
+    console.log(`Cronograma: Procesadas ${scheduleJson.length} tareas.`);
+
+    // 3. Inicializar Gemini con @google/genai
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "La variable GEMINI_API_KEY no está configurada en el servidor." },
+        { error: "La variable GEMINI_API_KEY no está configurada." },
         { status: 500 }
       );
     }
 
-    const ai = new GoogleGenAI({ apiKey: apiKey });
+    const client = new GoogleGenAI({ apiKey });
 
-    // 4. Prompt para Gemini
-    const prompt = `
-Eres un experto en gerencia de proyectos de construcción y analista financiero.
-He extraído datos de dos archivos:
-1. Un cronograma exportado en CSV (proveniente de MS Project) que contiene tareas, fechas de inicio y fechas de fin.
-2. Un presupuesto en XLSX exportado a JSON que contiene conceptos de obra, costos, y cantidades.
+    const systemInstruction = `Eres un analista senior de control de costos en Constructora Serving S.A.S.
+Tu tarea es correlacionar cada uno de los cientos de ítems del presupuesto con las tareas del cronograma.
 
-Tu objetivo es correlacionar de forma inteligente los ítems del presupuesto con las tareas del cronograma. Debes deducir qué costos del presupuesto corresponden a qué fechas del cronograma según la similitud semántica de las tareas/conceptos. 
+REGLAS CRÍTICAS DE PROCESAMIENTO:
+1. NO RESUMAS. Genera un punto de datos individual por cada ítem identificado en el presupuesto.
+2. Si el presupuesto tiene 500 ítems, espero exactamente ~500 dataPoints en el JSON de salida.
+3. El resultado DEBE ser un listado exhaustivo. Si omites ítems para ahorrar espacio, el análisis será inútil.
+4. Mapea cada ítem a la fecha de inicio de la tarea del cronograma más relacionada por nombre o contexto.
+5. Usa el campo "chapter" para agrupar por los títulos de sección del presupuesto.`;
 
-Luego, debes distribuir los costos a lo largo de las fechas del cronograma para crear un flujo de caja proyectado o una gráfica de "Presupuesto requerido según la fecha". Si una tarea dura varios días, asume que el costo se distribuye a lo largo de esos días o se requiere en la fecha de inicio (lo que sea más lógico para construcción, preferiblemente agrupado por mes o hito).
+    const userPrompt = `
+Datos del Presupuesto:
+${JSON.stringify(budgetJson).substring(0, 120000)}
 
-Datos del Presupuesto (JSON):
-${JSON.stringify(budgetJson).substring(0, 50000)} // Truncado por seguridad
+Datos del Cronograma:
+${JSON.stringify(scheduleJson).substring(0, 120000)}
 
-Datos del Cronograma (JSON):
-${JSON.stringify(scheduleJson).substring(0, 50000)} // Truncado por seguridad
-
-IMPORTANTE: DEBES RESPONDER ESTRICTAMENTE EN FORMATO JSON VÁLIDO. NO USES BACKTICKS NI TEXTO ADICIONAL ANTES O DESPUÉS DEL JSON.
-
-El formato JSON debe tener la siguiente estructura exacta:
+RESPUESTA REQUERIDA (ESTRICTAMENTE JSON):
 {
-  "analysis": "Un resumen ejecutivo (texto) de 2-3 párrafos explicando cómo se correlacionaron los datos, los meses/hitos con mayor requerimiento de capital, y recomendaciones financieras.",
+  "analysis": "Breve análisis de la coherencia.",
   "dataPoints": [
     {
-      "date": "YYYY-MM-DD", (o "YYYY-MM" si agrupas por mes)
-      "budget_required": 150000.00,
-      "task_name": "Nombre de la fase o hito agrupado"
+      "date": "YYYY-MM-DD",
+      "budget_required": 1234.56,
+      "task_name": "Nombre exacto del ítem del presupuesto",
+      "chapter": "Nombre del capítulo"
     }
   ],
-  "totalBudget": 5000000.00
+  "totalBudget": 0.0
 }
 `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
-      contents: prompt,
+    const result = await client.models.generateContent({
+      model: "gemini-3-flash-preview",
+      systemInstruction,
+      contents: userPrompt,
       config: {
         responseMimeType: "application/json",
-        temperature: 0.2, // Baja temperatura para resultados deterministas y analíticos
+        maxOutputTokens: 65536,
+        temperature: 0.1,
       }
     });
 
-    const textResponse = response.text;
-    
-    if (!textResponse) {
-       throw new Error("Respuesta vacía del modelo Gemini");
-    }
-
-    // Parsear y devolver el resultado
+    // En @google/genai v2, el resultado suele estar en result.value o similar dependiendo del helper
+    // Pero lo más seguro es usar el campo 'response'
+    const textResponse = result.response.text();
     const resultData = JSON.parse(textResponse);
+    
+    // Asegurar que el totalBudget esté calculado si la IA no lo hizo bien
+    if (resultData.dataPoints && (!resultData.totalBudget || resultData.totalBudget === 0)) {
+      resultData.totalBudget = resultData.dataPoints.reduce((sum: number, dp: any) => sum + (dp.budget_required || 0), 0);
+    }
     
     return NextResponse.json({ success: true, data: resultData });
 
   } catch (error: any) {
     console.error("Error procesando análisis:", error);
     return NextResponse.json(
-      { error: "Error interno al procesar los archivos: " + error.message },
+      { error: "Error interno: " + error.message },
       { status: 500 }
     );
   }

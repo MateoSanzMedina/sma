@@ -25,7 +25,7 @@ export default function KpiCard({
 
   return (
     <div
-      className="rounded-xl p-6 transition-all duration-300 animate-fade-in relative overflow-hidden group"
+      className="rounded-xl p-5 sm:p-6 transition-all duration-300 animate-fade-in relative group"
       style={{
         backgroundColor: "var(--color-surface)",
         border: "1px solid var(--color-border)",
@@ -42,12 +42,13 @@ export default function KpiCard({
         e.currentTarget.style.borderColor = "var(--color-border)";
       }}
     >
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-primary)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex flex-col">
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-primary)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 overflow-hidden"></div>
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex flex-col min-w-0">
           <p
-            className="text-[11px] font-bold uppercase tracking-widest mb-1"
+            className="text-[11px] font-bold uppercase tracking-wide mb-1 truncate"
             style={{ color: "var(--color-text-tertiary)" }}
+            title={title}
           >
             {title}
           </p>
@@ -59,14 +60,14 @@ export default function KpiCard({
           </p>
         </div>
         <div
-          className="p-3 rounded-xl shadow-inner"
+          className="p-2.5 rounded-xl shadow-inner flex-shrink-0"
           style={{ backgroundColor: "var(--color-primary-light)" }}
         >
           <span style={{ color: "var(--color-primary)" }}>{icon}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         {change && (
           <span
             className="text-xs font-semibold"

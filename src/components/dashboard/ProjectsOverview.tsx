@@ -56,7 +56,7 @@ const statusConfig = {
 export default function ProjectsOverview() {
   return (
     <div
-      className="rounded-xl p-5 animate-fade-in"
+      className="rounded-xl p-5 sm:p-6 animate-fade-in"
       style={{
         backgroundColor: "var(--color-surface)",
         border: "1px solid var(--color-border)",
@@ -96,9 +96,9 @@ export default function ProjectsOverview() {
                 e.currentTarget.style.backgroundColor = "transparent";
               }}
             >
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <p className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate" style={{ color: "var(--color-text-primary)" }}>
                     {project.name}
                   </p>
                   <p className="text-xs" style={{ color: "var(--color-text-tertiary)" }}>
@@ -106,7 +106,7 @@ export default function ProjectsOverview() {
                   </p>
                 </div>
                 <span
-                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  className="text-[10px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0"
                   style={{ color: status.color, backgroundColor: status.bg }}
                 >
                   {status.label}
