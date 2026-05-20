@@ -74,7 +74,7 @@ async def process_analysis(schedule_content: bytes, schedule_name: str, budget_c
         # 3. Configurar Gemini con instrucción de NO RESUMEN
         api_key = os.getenv("GEMINI_API_KEY")
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-pro')
+        model = genai.GenerativeModel('gemini-2.5-flash')
 
         prompt = f"""
         Eres un Gerente de Control de Proyectos en Constructora Serving S.A.S.
