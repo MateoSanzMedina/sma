@@ -50,7 +50,7 @@ const statusConfig = {
   "en-obra": { label: "En Obra", color: "var(--color-info)", bg: "#dbeafe" },
   preventa: { label: "Preventa", color: "var(--color-warning)", bg: "#fef3c7" },
   entregado: { label: "Entregado", color: "var(--color-success)", bg: "#d1fae5" },
-  planeacion: { label: "Planeación", color: "#7c3aed", bg: "#ede9fe" },
+  planeacion: { label: "Planeación", color: "#64748b", bg: "#f1f5f9" },
 };
 
 export default function ProjectsOverview() {

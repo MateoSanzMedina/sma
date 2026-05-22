@@ -1,10 +1,25 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { UploadCloud, FileSpreadsheet, FileText, Loader2, CheckCircle } from "lucide-react";
+import { UploadCloud, FileSpreadsheet, Loader2, CheckCircle } from "lucide-react";
+
+interface AnalysisDataPoint {
+  date: string;
+  budget_required: number;
+  task_name: string;
+  chapter?: string;
+  process_name?: string;
+}
+
+interface AnalysisResult {
+  analysis: string;
+  dataPoints: AnalysisDataPoint[];
+  totalBudget: number;
+  isOfflineFallback?: boolean;
+}
 
 interface AnalysisUploadProps {
-  onAnalysisComplete: (data: any) => void;
+  onAnalysisComplete: (data: AnalysisResult) => void;
 }
 
 export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadProps) {
@@ -68,8 +83,8 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
       }
 
       onAnalysisComplete(result.data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ocurrió un error al procesar los archivos.");
     } finally {
       setLoading(false);
     }
@@ -77,158 +92,152 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
 
   return (
     <div 
-      className="rounded-xl p-6 sm:p-8 animate-fade-in"
+      className="rounded-xl p-6 sm:p-8 animate-fade-in flex-1 flex flex-col min-h-[520px]"
       style={{
         backgroundColor: "var(--color-surface)",
         border: "1px solid var(--color-border)",
         boxShadow: "var(--shadow-md)",
       }}
     >
-      <h2 className="text-xl sm:text-2xl font-bold mb-2" style={{ color: "var(--color-text-primary)" }}>
-        Cargar Documentos de Proyecto
-      </h2>
-      <p className="text-sm mb-8" style={{ color: "var(--color-text-secondary)" }}>
-        Sube el cronograma (XLSX exportado de MS Project) y el presupuesto de obra (XLSX) para correlacionarlos mediante IA.
-      </p>
+      <div className="flex-grow flex flex-col">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold mb-2" style={{ color: "var(--color-text-primary)" }}>
+            Cargar Documentos de Proyecto
+          </h2>
+          <p className="text-sm mb-6" style={{ color: "var(--color-text-secondary)" }}>
+            Sube el cronograma (XLSX exportado de MS Project) y el presupuesto de obra (XLSX) para correlacionarlos mediante IA.
+          </p>
 
-      {error && (
-        <div 
-          className="mb-8 p-4 rounded-lg text-sm border" 
-          style={{ 
-            backgroundColor: "rgba(239, 68, 68, 0.1)", 
-            color: "var(--color-error)",
-            borderColor: "rgba(239, 68, 68, 0.2)"
-          }}
-        >
-          {error}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-        {/* Schedule Upload Dropzone */}
-        <div
-          className={`relative border border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
-            scheduleFile 
-              ? "bg-primary/5" 
-              : "hover:bg-white/5"
-          }`}
-          style={{
-            borderColor: scheduleFile ? "var(--color-primary)" : "var(--color-border)",
-            backgroundColor: scheduleFile ? "var(--color-primary-light)" : "transparent"
-          }}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => handleFileDrop(e, "schedule")}
-        >
-          {scheduleFile ? (
-            <div className="flex flex-col items-center">
-              <CheckCircle className="w-10 h-10 mb-3" style={{ color: "var(--color-primary)" }} />
-              <span className="font-semibold mb-1 text-sm break-all" style={{ color: "var(--color-text-primary)" }}>{scheduleFile.name}</span>
-              <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>Cronograma (XLSX)</span>
-              <button 
-                onClick={() => setScheduleFile(null)} 
-                className="mt-5 text-xs font-medium hover:underline transition-colors"
-                style={{ color: "var(--color-error)" }}
-              >
-                Eliminar archivo
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center">
-              <div 
-                className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-                style={{ backgroundColor: "var(--color-surface-hover)" }}
-              >
-                <FileSpreadsheet className="w-7 h-7" style={{ color: "var(--color-text-tertiary)" }} />
-              </div>
-              <p className="text-sm font-bold mb-1" style={{ color: "var(--color-text-primary)" }}>Cronograma de Obra</p>
-              <p className="text-xs mb-5" style={{ color: "var(--color-text-tertiary)" }}>Formato .xlsx</p>
-              <input
-                type="file"
-                accept=".xlsx"
-                onChange={(e) => handleFileSelect(e, "schedule")}
-                className="hidden"
-                id="schedule-upload"
-              />
-              <label
-                htmlFor="schedule-upload"
-                className="px-6 py-2.5 rounded-lg text-sm font-bold cursor-pointer transition-all hover:scale-105 active:scale-95"
-                style={{ 
-                  backgroundColor: "var(--color-surface-hover)",
-                  border: "1px solid var(--color-border)",
-                  color: "var(--color-text-primary)"
-                }}
-              >
-                Seleccionar
-              </label>
+          {error && (
+            <div 
+              className="mb-6 p-4 rounded-lg text-sm border" 
+              style={{ 
+                backgroundColor: "rgba(239, 68, 68, 0.1)", 
+                color: "var(--color-error)",
+                borderColor: "rgba(239, 68, 68, 0.2)"
+              }}
+            >
+              {error}
             </div>
           )}
         </div>
 
-        {/* Budget Upload Dropzone */}
-        <div
-          className={`relative border border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
-            budgetFile 
-              ? "bg-warning/5" 
-              : "hover:bg-white/5"
-          }`}
-          style={{
-            borderColor: budgetFile ? "var(--color-warning)" : "var(--color-border)",
-            backgroundColor: budgetFile ? "rgba(255, 102, 0, 0.05)" : "transparent"
-          }}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => handleFileDrop(e, "budget")}
-        >
-          {budgetFile ? (
-            <div className="flex flex-col items-center">
-              <CheckCircle className="w-10 h-10 mb-3" style={{ color: "var(--color-warning)" }} />
-              <span className="font-semibold mb-1 text-sm break-all" style={{ color: "var(--color-text-primary)" }}>{budgetFile.name}</span>
-              <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>Presupuesto (XLSX)</span>
-              <button 
-                onClick={() => setBudgetFile(null)} 
-                className="mt-5 text-xs font-medium hover:underline transition-colors"
-                style={{ color: "var(--color-error)" }}
-              >
-                Eliminar archivo
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center">
-              <div 
-                className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-                style={{ backgroundColor: "var(--color-surface-hover)" }}
-              >
-                <FileSpreadsheet className="w-7 h-7" style={{ color: "var(--color-text-tertiary)" }} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 flex-1 min-h-[200px]">
+          {/* Schedule Upload Dropzone */}
+          <div
+            className={`relative border border-dashed rounded-xl p-6 text-center transition-all duration-300 flex flex-col justify-center items-center flex-1 h-full min-h-[160px] ${
+              scheduleFile 
+                ? "bg-primary/5" 
+                : "hover:bg-white/5"
+            }`}
+            style={{
+              borderColor: scheduleFile ? "var(--color-primary)" : "var(--color-border)",
+              backgroundColor: scheduleFile ? "var(--color-primary-light)" : "transparent"
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => handleFileDrop(e, "schedule")}
+          >
+            {scheduleFile ? (
+              <div className="flex flex-col items-center justify-center flex-grow w-full h-full">
+                <CheckCircle className="w-10 h-10 mb-3 flex-shrink-0" style={{ color: "var(--color-primary)" }} />
+                <span className="font-semibold mb-1 text-sm break-all" style={{ color: "var(--color-text-primary)" }}>{scheduleFile.name}</span>
+                <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>Cronograma (XLSX)</span>
+                <button 
+                  onClick={() => setScheduleFile(null)} 
+                  className="mt-5 text-xs font-black hover:underline transition-colors cursor-pointer"
+                  style={{ color: "var(--color-error)" }}
+                >
+                  Eliminar archivo
+                </button>
               </div>
-              <p className="text-sm font-bold mb-1" style={{ color: "var(--color-text-primary)" }}>Presupuesto de Obra</p>
-              <p className="text-xs mb-5" style={{ color: "var(--color-text-tertiary)" }}>Formato .xlsx</p>
-              <input
-                type="file"
-                accept=".xlsx"
-                onChange={(e) => handleFileSelect(e, "budget")}
-                className="hidden"
-                id="budget-upload"
-              />
-              <label
-                htmlFor="budget-upload"
-                className="px-6 py-2.5 rounded-lg text-sm font-bold cursor-pointer transition-all hover:scale-105 active:scale-95"
-                style={{ 
-                  backgroundColor: "var(--color-surface-hover)",
-                  border: "1px solid var(--color-border)",
-                  color: "var(--color-text-primary)"
-                }}
-              >
-                Seleccionar
-              </label>
-            </div>
-          )}
+            ) : (
+              <div className="flex flex-col items-center justify-center flex-grow w-full h-full">
+                <div 
+                  className="w-14 h-14 rounded-full flex items-center justify-center mb-4 flex-shrink-0"
+                  style={{ backgroundColor: "var(--color-surface-hover)" }}
+                >
+                  <FileSpreadsheet className="w-7 h-7" style={{ color: "var(--color-text-tertiary)" }} />
+                </div>
+                <p className="text-sm font-bold mb-1" style={{ color: "var(--color-text-primary)" }}>Cronograma de Obra</p>
+                <p className="text-xs mb-5" style={{ color: "var(--color-text-tertiary)" }}>Formato .xlsx</p>
+                <input
+                  type="file"
+                  accept=".xlsx"
+                  onChange={(e) => handleFileSelect(e, "schedule")}
+                  className="hidden"
+                  id="schedule-upload"
+                />
+                <label
+                  htmlFor="schedule-upload"
+                  className="inline-flex items-center justify-center px-10 py-3 rounded-full text-xs font-black min-w-[140px] cursor-pointer transition-all hover:scale-105 active:scale-95 whitespace-nowrap select-none border border-[var(--color-border)] text-[var(--color-text-primary)] bg-[var(--color-surface-hover)] shadow-sm"
+                >
+                  Seleccionar
+                </label>
+              </div>
+            )}
+          </div>
+
+          {/* Budget Upload Dropzone */}
+          <div
+            className={`relative border border-dashed rounded-xl p-6 text-center transition-all duration-300 flex flex-col justify-center items-center flex-1 h-full min-h-[160px] ${
+              budgetFile 
+                ? "bg-warning/5" 
+                : "hover:bg-white/5"
+            }`}
+            style={{
+              borderColor: budgetFile ? "var(--color-warning)" : "var(--color-border)",
+              backgroundColor: budgetFile ? "rgba(255, 102, 0, 0.05)" : "transparent"
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => handleFileDrop(e, "budget")}
+          >
+            {budgetFile ? (
+              <div className="flex flex-col items-center justify-center flex-grow w-full h-full">
+                <CheckCircle className="w-10 h-10 mb-3 flex-shrink-0" style={{ color: "var(--color-warning)" }} />
+                <span className="font-semibold mb-1 text-sm break-all" style={{ color: "var(--color-text-primary)" }}>{budgetFile.name}</span>
+                <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>Presupuesto (XLSX)</span>
+                <button 
+                  onClick={() => setBudgetFile(null)} 
+                  className="mt-5 text-xs font-black hover:underline transition-colors cursor-pointer"
+                  style={{ color: "var(--color-error)" }}
+                >
+                  Eliminar archivo
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center flex-grow w-full h-full">
+                <div 
+                  className="w-14 h-14 rounded-full flex items-center justify-center mb-4 flex-shrink-0"
+                  style={{ backgroundColor: "var(--color-surface-hover)" }}
+                >
+                  <FileSpreadsheet className="w-7 h-7" style={{ color: "var(--color-text-tertiary)" }} />
+                </div>
+                <p className="text-sm font-bold mb-1" style={{ color: "var(--color-text-primary)" }}>Presupuesto de Obra</p>
+                <p className="text-xs mb-5" style={{ color: "var(--color-text-tertiary)" }}>Formato .xlsx</p>
+                <input
+                  type="file"
+                  accept=".xlsx"
+                  onChange={(e) => handleFileSelect(e, "budget")}
+                  className="hidden"
+                  id="budget-upload"
+                />
+                <label
+                  htmlFor="budget-upload"
+                  className="inline-flex items-center justify-center px-10 py-3 rounded-full text-xs font-black min-w-[140px] cursor-pointer transition-all hover:scale-105 active:scale-95 whitespace-nowrap select-none border border-[var(--color-border)] text-[var(--color-text-primary)] bg-[var(--color-surface-hover)] shadow-sm"
+                >
+                  Seleccionar
+                </label>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="flex justify-end pt-6 border-t" style={{ borderColor: "var(--color-border)" }}>
+      <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center pt-6 border-t mt-auto" style={{ borderColor: "var(--color-border)" }}>
         <button
           onClick={handleSubmit}
           disabled={!scheduleFile || !budgetFile || loading}
-          className="flex items-center px-8 py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed"
+          className="w-full sm:w-auto flex items-center justify-center px-12 py-4 rounded-full font-black text-sm shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed whitespace-nowrap select-none cursor-pointer"
           style={{ 
             backgroundColor: "var(--color-primary)",
             color: "white",
@@ -237,12 +246,12 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
         >
           {loading ? (
             <>
-              <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+              <Loader2 className="w-5 h-5 mr-3 animate-spin flex-shrink-0" />
               Analizando...
             </>
           ) : (
             <>
-              <UploadCloud className="w-5 h-5 mr-3" />
+              <UploadCloud className="w-5 h-5 mr-3 flex-shrink-0" />
               Correlacionar Proyecto
             </>
           )}

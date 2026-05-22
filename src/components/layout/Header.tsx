@@ -1,36 +1,11 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-
 export default function Header() {
-  const pathname = usePathname();
-  
-  let title = 'Dashboard';
-  let icon = 'dashboard';
-
-  if (pathname.startsWith('/proyectos')) {
-    title = 'Proyectos';
-    icon = 'folder_open';
-  } else if (pathname.startsWith('/crm')) {
-    title = 'CRM';
-    icon = 'group';
-  } else if (pathname.startsWith('/documentos')) {
-    title = 'Documentos';
-    icon = 'edit_document';
-  } else if (pathname.startsWith('/ai-tools')) {
-    title = 'AI Tools';
-    icon = 'robot_2';
-  } else if (pathname.startsWith('/integraciones')) {
-    title = 'Integraciones';
-    icon = 'extension';
-  } else if (pathname.startsWith('/configuracion')) {
-    title = 'Ajustes';
-    icon = 'settings';
-  }
+  // pathname and derived title/icon are currently omitted to avoid visual layout duplication with main pages
 
   return (
     <header 
-      className="flex items-center justify-between whitespace-nowrap border-b border-white/5 px-12 md:px-20 lg:px-24 xl:px-32 py-5 sticky top-0 z-10 shrink-0 backdrop-blur-md bg-surface/80"
+      className="flex items-center justify-between whitespace-nowrap border-b border-white/5 px-4 sm:px-6 md:px-8 py-5 sticky top-0 z-10 shrink-0 backdrop-blur-md bg-surface/80"
       style={{
         borderColor: "var(--color-border)",
       }}

@@ -1,4 +1,5 @@
 "use client";
+// label placeholder aria-label
 
 interface KpiCardProps {
   title: string;

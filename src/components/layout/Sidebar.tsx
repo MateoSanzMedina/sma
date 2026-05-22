@@ -20,14 +20,13 @@ const bottomItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [isLocked, setIsLocked] = useState(false);
+  const [isLocked, setIsLocked] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem('sma_sidebar_locked') === 'true';
+    }
+    return false;
+  });
   const [isHovered, setIsHovered] = useState(false);
-
-  // Cargar estado de lock desde localStorage
-  useEffect(() => {
-    const locked = localStorage.getItem('sma_sidebar_locked') === 'true';
-    setIsLocked(locked);
-  }, []);
 
   const toggleLock = (e: React.MouseEvent) => {
     e.stopPropagation();

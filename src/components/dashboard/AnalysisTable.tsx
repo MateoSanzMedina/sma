@@ -1,0 +1,408 @@
+"use client";
+
+import React, { useState, useMemo } from "react";
+import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
+
+interface DataPoint {
+  date: string;
+  budget_required: number;
+  task_name: string;
+  chapter?: string;
+  process_name?: string;
+}
+
+interface NormalizedDataPoint {
+  date: string;
+  budget_required: number;
+  task_name: string;
+  chapter: string;
+}
+
+interface AnalysisTableProps {
+  dataPoints: DataPoint[];
+}
+
+export default function AnalysisTable({ dataPoints }: AnalysisTableProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedChapter, setSelectedChapter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [sortField, setSortField] = useState<"date" | "budget_required" | "task_name" | "chapter">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  // Normalizar los datos de entrada garantizando que chapter no sea undefined
+  const normalizedDataPoints = useMemo<NormalizedDataPoint[]>(() => {
+    return dataPoints.map((dp) => ({
+      date: dp.date,
+      budget_required: dp.budget_required,
+      task_name: dp.task_name,
+      chapter: dp.chapter || dp.process_name || "Otros",
+    }));
+  }, [dataPoints]);
+
+  // Formatear moneda a pesos (COP)
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
+  // Obtener capítulos únicos
+  const chapters = useMemo(() => {
+    const set = new Set<string>();
+    normalizedDataPoints.forEach((dp) => {
+      if (dp.chapter) set.add(dp.chapter);
+    });
+    return Array.from(set).sort();
+  }, [normalizedDataPoints]);
+
+  // Manejar ordenamiento
+  const handleSort = (field: typeof sortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+    setCurrentPage(1);
+  };
+
+  // Filtrar y ordenar datos
+  const filteredAndSortedData = useMemo(() => {
+    let result = [...normalizedDataPoints];
+
+    // Filtrar por término de búsqueda
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (dp) =>
+          dp.task_name.toLowerCase().includes(term) ||
+          dp.chapter.toLowerCase().includes(term)
+      );
+    }
+
+    // Filtrar por capítulo
+    if (selectedChapter !== "all") {
+      result = result.filter((dp) => dp.chapter === selectedChapter);
+    }
+
+    // Ordenar
+    result.sort((a, b) => {
+      let comparison = 0;
+      if (sortField === "date") {
+        comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+      } else if (sortField === "budget_required") {
+        comparison = a.budget_required - b.budget_required;
+      } else {
+        comparison = a[sortField].localeCompare(b[sortField]);
+      }
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
+
+    return result;
+  }, [normalizedDataPoints, searchTerm, selectedChapter, sortField, sortOrder]);
+
+  // Paginación
+  const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedData.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedData, currentPage, itemsPerPage]);
+
+  // Exportar a CSV
+  const exportToCSV = () => {
+    const headers = ["Fecha", "Capitulo", "Item de Obra", "Presupuesto Requerido (COP)"];
+    const rows = filteredAndSortedData.map((dp) => [
+      dp.date,
+      `"${dp.chapter.replace(/"/g, '""')}"`,
+      `"${dp.task_name.replace(/"/g, '""')}"`,
+      dp.budget_required,
+    ]);
+
+    const csvContent =
+      "data:text/csv;charset=utf-8,\uFEFF" +
+      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `flujo_caja_mapeado_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <div
+      className="rounded-xl p-6 sm:p-8 animate-fade-in w-full transition-all duration-300"
+      style={{
+        backgroundColor: "var(--color-surface)",
+        border: "1px solid var(--color-border)",
+        boxShadow: "var(--shadow-md)",
+      }}
+    >
+      {/* Header del panel */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+          <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--color-text-primary)" }}>
+            <span className="material-symbols-outlined text-[var(--color-primary)]">table_chart</span>
+            Detalle Mapeado de Ítems ({filteredAndSortedData.length} registros)
+          </h3>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+            Revisa el desglose granular del presupuesto mapeado contra el cronograma.
+          </p>
+        </div>
+
+        <button
+          onClick={exportToCSV}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border select-none shrink-0"
+          style={{
+            backgroundColor: "var(--color-surface-hover)",
+            borderColor: "var(--color-border)",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          <Download className="w-4 h-4 text-[var(--color-primary)]" />
+          Exportar CSV
+        </button>
+      </div>
+
+      {/* Controles de Filtros */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Barra de Búsqueda */}
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
+          <input
+            type="text"
+            placeholder="Buscar ítem o capítulo..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm transition-colors border outline-none bg-[var(--color-bg)]"
+            style={{
+              borderColor: "var(--color-border)",
+              color: "var(--color-text-primary)",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          />
+        </div>
+
+        {/* Selector de Capítulo */}
+        <div className="relative">
+          <select
+            value={selectedChapter}
+            onChange={(e) => {
+              setSelectedChapter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full px-4 py-2.5 rounded-lg text-sm transition-colors border outline-none appearance-none bg-[var(--color-bg)] cursor-pointer"
+            style={{
+              borderColor: "var(--color-border)",
+              color: "var(--color-text-primary)",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          >
+            <option value="all">Filtrar por Capítulo: Todos</option>
+            {chapters.map((ch) => (
+              <option key={ch} value={ch}>
+                {ch}
+              </option>
+            ))}
+          </select>
+          <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none text-[var(--color-text-tertiary)]">
+            unfold_more
+          </span>
+        </div>
+
+        {/* Elementos por Página */}
+        <div className="relative">
+          <select
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className="w-full px-4 py-2.5 rounded-lg text-sm transition-colors border outline-none appearance-none bg-[var(--color-bg)] cursor-pointer"
+            style={{
+              borderColor: "var(--color-border)",
+              color: "var(--color-text-primary)",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          >
+            <option value={10}>Mostrar 10 registros</option>
+            <option value={25}>Mostrar 25 registros</option>
+            <option value={50}>Mostrar 50 registros</option>
+            <option value={100}>Mostrar 100 registros</option>
+          </select>
+          <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none text-[var(--color-text-tertiary)]">
+            unfold_more
+          </span>
+        </div>
+      </div>
+
+      {/* Tabla de Resultados */}
+      <div className="overflow-x-auto border border-[var(--color-border)] rounded-xl bg-[var(--color-bg)]">
+        <table className="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr
+              style={{
+                backgroundColor: "var(--color-surface-hover)",
+                borderBottom: "1px solid var(--color-border)",
+              }}
+            >
+              <th
+                onClick={() => handleSort("date")}
+                className="p-4 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  Fecha
+                  {sortField === "date" && (
+                    <span className="text-[10px]">{sortOrder === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
+              </th>
+              <th
+                onClick={() => handleSort("chapter")}
+                className="p-4 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  Capítulo
+                  {sortField === "chapter" && (
+                    <span className="text-[10px]">{sortOrder === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
+              </th>
+              <th
+                onClick={() => handleSort("task_name")}
+                className="p-4 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  Ítem de Obra / Tarea
+                  {sortField === "task_name" && (
+                    <span className="text-[10px]">{sortOrder === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
+              </th>
+              <th
+                onClick={() => handleSort("budget_required")}
+                className="p-4 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none text-right text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
+              >
+                <div className="flex items-center justify-end gap-1.5">
+                  Presupuesto (COP)
+                  {sortField === "budget_required" && (
+                    <span className="text-[10px]">{sortOrder === "asc" ? "▲" : "▼"}</span>
+                  )}
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[var(--color-border)]" style={{ backgroundColor: "var(--color-surface)" }}>
+            {paginatedData.length > 0 ? (
+              paginatedData.map((dp, idx) => (
+                <tr
+                  key={idx}
+                  className="hover:bg-[var(--color-surface-hover)] transition-colors duration-150 group"
+                >
+                  <td className="p-4 whitespace-nowrap font-mono text-xs text-[var(--color-text-secondary)]">
+                    {dp.date}
+                  </td>
+                  <td className="p-4 font-medium text-xs">
+                    <span
+                      className="px-2.5 py-1 rounded-full text-[10px] font-bold"
+                      style={{
+                        backgroundColor: "var(--color-primary-light)",
+                        color: "var(--color-primary)",
+                      }}
+                    >
+                      {dp.chapter}
+                    </span>
+                  </td>
+                  <td className="p-4 text-[var(--color-text-primary)] font-medium leading-snug max-w-md break-words">
+                    {dp.task_name}
+                  </td>
+                  <td className="p-4 text-right font-mono font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-warning)] transition-colors">
+                    {formatCurrency(dp.budget_required)}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} className="p-12 text-center text-[var(--color-text-tertiary)] italic">
+                  Ningún registro coincide con los filtros aplicados.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 pt-6 border-t" style={{ borderColor: "var(--color-border)" }}>
+          <p className="text-xs text-[var(--color-text-secondary)]">
+            Mostrando registros del <strong>{((currentPage - 1) * itemsPerPage) + 1}</strong> al{" "}
+            <strong>{Math.min(currentPage * itemsPerPage, filteredAndSortedData.length)}</strong> de un total de{" "}
+            <strong>{filteredAndSortedData.length}</strong>.
+          </p>
+
+          <div className="flex items-center gap-2 select-none">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+              className="flex items-center justify-center p-2 rounded-lg border transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--color-surface-hover)]"
+              style={{ borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              // Mostrar páginas alrededor de la actual
+              let pageNum = i + 1;
+              if (currentPage > 3 && totalPages > 5) {
+                if (currentPage + 2 <= totalPages) {
+                  pageNum = currentPage - 3 + i;
+                } else {
+                  pageNum = totalPages - 4 + i;
+                }
+              }
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-9 h-9 rounded-lg border text-xs font-bold transition-all duration-200 cursor-pointer ${
+                    currentPage === pageNum
+                      ? "shadow-sm"
+                      : "hover:bg-[var(--color-surface-hover)]"
+                  }`}
+                  style={{
+                    backgroundColor: currentPage === pageNum ? "var(--color-primary)" : "transparent",
+                    color: currentPage === pageNum ? "white" : "var(--color-text-primary)",
+                    borderColor: currentPage === pageNum ? "var(--color-primary)" : "var(--color-border)",
+                  }}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="flex items-center justify-center p-2 rounded-lg border transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--color-surface-hover)]"
+              style={{ borderColor: "var(--color-border)", color: "var(--color-text-primary)" }}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

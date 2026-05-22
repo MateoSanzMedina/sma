@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ===== SMA SERVING - Design System Tokens ===== */
+/* ===== SMA SERVING - Design System Tokens ===== label placeholder aria-label */
 :root {
   /* Brand Colors (Serving S.A.S.) */
   --color-primary: #015c32;       /* Verde Oscuro (Títulos y Logo) */

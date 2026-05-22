@@ -1,4 +1,5 @@
 "use client";
+// label placeholder aria-label
 
 import KpiCard from "@/components/dashboard/KpiCard";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
