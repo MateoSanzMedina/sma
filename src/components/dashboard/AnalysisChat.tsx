@@ -44,6 +44,15 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Formatear moneda a pesos (COP)
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
   // Auto-scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -97,24 +106,37 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
   };
 
   // Lightweight markdown formatter for chat bubbles
-  const renderMessageContent = (text: string) => {
+  const renderMessageContent = (text: string, isUser = false) => {
     return text.split("\n").map((line, idx) => {
       let cleanLine = line.trim();
       if (!cleanLine) return <div key={idx} className="h-1.5" />;
+
+      let isBullet = false;
+      if (cleanLine.startsWith("- ") || cleanLine.startsWith("* ")) {
+        isBullet = true;
+        cleanLine = cleanLine.substring(2).trim();
+      }
 
       // Bold text formatting **bold**
       const parts = cleanLine.split(/(\*\*[^*]+\*\*)/g);
       const renderedLine = parts.map((part, i) => {
         if (part.startsWith("**") && part.endsWith("**")) {
-          return <strong key={i} className="font-extrabold text-[var(--color-primary)]">{part.slice(2, -2)}</strong>;
+          return (
+            <strong 
+              key={i} 
+              className={`font-black ${isUser ? "text-white underline decoration-2" : "text-[var(--color-primary)] bg-[var(--color-primary-light)]/40 px-1.5 rounded"}`}
+            >
+              {part.slice(2, -2)}
+            </strong>
+          );
         }
         return part;
       });
 
       // Chapter bullet list formatting
-      if (cleanLine.startsWith("- ") || cleanLine.startsWith("* ")) {
+      if (isBullet) {
         return (
-          <li key={idx} className="ml-4 list-disc text-xs sm:text-sm leading-relaxed mb-0.5" style={{ color: "var(--color-text-primary)" }}>
+          <li key={idx} className="ml-4 list-disc text-xs sm:text-sm leading-relaxed mb-1 pl-1" style={{ color: isUser ? "#ffffff" : "var(--color-text-primary)" }}>
             {renderedLine}
           </li>
         );
@@ -122,14 +144,14 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
 
       // Headers formatting
       if (cleanLine.startsWith("### ")) {
-        return <h5 key={idx} className="text-xs sm:text-sm font-black mt-2.5 mb-1 text-[var(--color-accent)]">{renderedLine}</h5>;
+        return <h5 key={idx} className={`text-xs sm:text-sm font-black mt-3 mb-1 ${isUser ? "text-white" : "text-[var(--color-accent)]"}`}>{renderedLine}</h5>;
       }
       if (cleanLine.startsWith("## ")) {
-        return <h4 key={idx} className="text-sm font-black mt-3 mb-1.5 text-[var(--color-primary)]">{renderedLine}</h4>;
+        return <h4 key={idx} className={`text-sm font-black mt-3.5 mb-1.5 ${isUser ? "text-white" : "text-[var(--color-primary)]"}`}>{renderedLine}</h4>;
       }
 
       return (
-        <p key={idx} className="text-xs sm:text-sm leading-relaxed mb-1.5" style={{ color: "var(--color-text-primary)" }}>
+        <p key={idx} className="text-xs sm:text-sm leading-relaxed mb-1.5" style={{ color: isUser ? "#ffffff" : "var(--color-text-primary)" }}>
           {renderedLine}
         </p>
       );
@@ -141,14 +163,15 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
       {/* Botón flotante premium para abrir el chat */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-4 rounded-full text-sm font-bold shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer select-none text-white border border-[var(--color-primary)] shrink-0 animate-fade-in hover:shadow-[0_0_20px_rgba(1,92,50,0.4)]"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-6 py-4 rounded-full text-sm font-black shadow-xl hover:scale-105 active:scale-95 hover:shadow-[0_10px_30px_rgba(1,92,50,0.3)] transition-all duration-300 cursor-pointer select-none text-white border border-[var(--color-primary)] shrink-0 animate-fade-in"
         style={{
           backgroundColor: "var(--color-primary)",
-          boxShadow: "0 10px 25px -5px rgba(1, 92, 50, 0.45)"
+          backgroundImage: "linear-gradient(135deg, var(--color-primary), var(--color-primary-hover))"
         }}
       >
-        <Sparkles className="w-5 h-5 animate-pulse text-white" />
-        Consultar Asistente IA
+        <Sparkles className="w-5 h-5 text-white animate-pulse" />
+        <span>Consultar Asistente IA</span>
+        <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border border-white animate-ping"></span>
       </button>
 
       {/* Backdrop overlay */}
@@ -161,11 +184,11 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
 
       {/* Panel de chat deslizante lateral derecho */}
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:w-[480px] bg-[var(--color-surface)] border-l border-[var(--color-border)] z-50 flex flex-col transition-transform duration-300 shadow-2xl ${
+        className={`fixed top-0 right-0 h-full w-full sm:w-[500px] bg-[var(--color-surface)] border-l border-[var(--color-border)] z-50 flex flex-col transition-transform duration-300 shadow-2xl ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
         style={{
-          boxShadow: isOpen ? "-10px 0 40px -10px rgba(0,0,0,0.5)" : "none"
+          boxShadow: isOpen ? "-15px 0 50px -10px rgba(0,0,0,0.15)" : "none"
         }}
       >
         {/* Header del Panel */}
@@ -176,21 +199,21 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
             backgroundColor: "var(--color-surface-hover)"
           }}
         >
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[var(--color-primary-light)] flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-[var(--color-primary)]" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-light)] flex items-center justify-center shadow-inner">
+              <Sparkles className="w-4.5 h-4.5 text-[var(--color-primary)]" />
             </div>
             <div>
               <h3 className="text-sm font-black text-[var(--color-text-primary)]">Asistente de Costos Serving</h3>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Vertex AI Activo</span>
+                <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-wider">Vertex AI Activo</span>
               </div>
             </div>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-1.5 rounded-lg border hover:bg-[var(--color-surface-hover)] active:scale-95 transition-all cursor-pointer"
+            className="p-1.5 rounded-xl border hover:bg-[var(--color-surface-hover)] active:scale-95 transition-all cursor-pointer shadow-sm hover:border-[var(--color-border-strong)]"
             style={{
               borderColor: "var(--color-border)",
               color: "var(--color-text-secondary)"
@@ -202,29 +225,35 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
 
         {/* Selector de Nivel de Razonamiento IA */}
         <div 
-          className="px-5 py-2.5 border-b flex items-center justify-between gap-4 text-xs font-bold bg-[var(--color-surface-hover)]/30"
+          className="px-5 py-3 border-b flex flex-col gap-2 bg-[var(--color-surface-hover)]/30"
           style={{ borderColor: "var(--color-border)" }}
         >
-          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text-secondary)]">
-            Razonamiento IA:
-          </span>
-          <div className="flex bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-0.5 shrink-0">
+          <div className="flex justify-between items-center">
+            <span className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text-secondary)]">
+              NIVEL DE RAZONAMIENTO:
+            </span>
+            <span className="text-[9px] font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+              {selectedModel === "gemini-2.5-pro" ? "Complejidad Alta" : "Instantáneo"}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-1 w-full shadow-sm">
             <button
               onClick={() => setSelectedModel("gemini-2.5-pro")}
-              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer text-[10px] font-bold ${
+              className={`py-2 rounded-lg transition-all duration-200 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 ${
                 selectedModel === "gemini-2.5-pro"
                   ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
               }`}
             >
-              Profundo (Pro)
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              Razonamiento (Pro)
             </button>
             <button
               onClick={() => setSelectedModel("gemini-2.5-flash")}
-              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer text-[10px] font-bold ${
+              className={`py-2 rounded-lg transition-all duration-200 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 ${
                 selectedModel === "gemini-2.5-flash"
                   ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
               }`}
             >
               Veloz (Flash)
@@ -233,37 +262,85 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
         </div>
 
         {/* Historial de Mensajes */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4 select-text">
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex flex-col max-w-[85%] rounded-2xl p-4 animate-fade-in ${
-                msg.role === "user"
-                  ? "ml-auto border border-[var(--color-primary)] bg-[var(--color-primary-light)]/20"
-                  : "mr-auto border"
-              }`}
-              style={{
-                borderColor: msg.role === "user" ? "var(--color-primary)" : "var(--color-border)",
-                backgroundColor: msg.role === "user" ? undefined : "var(--color-surface-hover)/40"
-              }}
-            >
-              <span
-                className="text-[9px] font-black uppercase tracking-wider mb-1.5"
-                style={{
-                  color: msg.role === "user" ? "var(--color-primary)" : "var(--color-text-tertiary)"
-                }}
-              >
-                {msg.role === "user" ? "Tú (Gerencia)" : "Asistente IA"}
-              </span>
-              <div className="space-y-1">
-                {renderMessageContent(msg.content)}
+        <div className="flex-1 overflow-y-auto px-5 pt-5 pb-24 space-y-5 select-text">
+          
+          {/* Welcome Card & Project KPI highlights */}
+          {messages.length === 1 && (
+            <div className="bg-[var(--color-primary-light)]/20 border border-[var(--color-primary)]/10 rounded-2xl p-5 animate-fade-in space-y-4 shadow-sm">
+              <div className="flex items-center gap-2 text-[var(--color-primary)]">
+                <Sparkles className="w-4 h-4 shrink-0" />
+                <h4 className="text-[10px] font-black uppercase tracking-wider">Métricas Cargadas en Contexto</h4>
               </div>
+              <div className="grid grid-cols-2 gap-3 text-left">
+                <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3 shadow-inner">
+                  <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] uppercase block mb-0.5">Costo Directo</span>
+                  <span className="text-xs font-extrabold text-[var(--color-text-primary)]">{formatCurrency(directBudget)}</span>
+                </div>
+                <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-3 shadow-inner">
+                  <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] uppercase block mb-0.5">Presupuesto Total</span>
+                  <span className="text-xs font-extrabold text-[var(--color-primary)]">{formatCurrency(totalBudget)}</span>
+                </div>
+              </div>
+              <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                He procesado los **{dataPoints.length} registros** mapeados de la obra Bosque de Agua. Puedo ayudarte a analizar flujos mensuales, identificar desvíos o consultar cualquier capítulo.
+              </p>
             </div>
-          ))}
+          )}
+
+          {messages.map((msg, idx) => {
+            const isUser = msg.role === "user";
+            return (
+              <div
+                key={idx}
+                className={`flex gap-3 max-w-[85%] ${isUser ? "ml-auto justify-end" : "mr-auto justify-start"}`}
+              >
+                {/* Render Avatar first for assistant */}
+                {!isUser && (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-[var(--color-primary)]/20 bg-[var(--color-primary-light)] shadow-sm">
+                    <Sparkles className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                  </div>
+                )}
+
+                {/* Message Bubble */}
+                <div
+                  className={`flex flex-col rounded-2xl p-4 shadow-sm animate-fade-in min-w-0 ${
+                    isUser
+                      ? "border border-[var(--color-primary)] bg-[var(--color-primary)] text-white rounded-tr-none"
+                      : "border border-[var(--color-border)] bg-[var(--color-surface)] rounded-tl-none"
+                  }`}
+                >
+                  <span
+                    className="text-[9px] font-black uppercase tracking-wider mb-1.5"
+                    style={{
+                      color: isUser ? "rgba(255,255,255,0.7)" : "var(--color-text-tertiary)"
+                    }}
+                  >
+                    {isUser ? "Tú (Gerencia)" : "Asistente IA"}
+                  </span>
+                  <div className={`space-y-1 ${isUser ? "text-white" : ""}`}>
+                    {renderMessageContent(msg.content, isUser)}
+                  </div>
+                </div>
+
+                {/* Render Avatar last for user */}
+                {isUser && (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+                    <span className="material-symbols-outlined text-[var(--color-primary)] text-sm">person</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
           {loading && (
-            <div className="mr-auto border border-[var(--color-border)] rounded-2xl p-4 flex items-center gap-3">
-              <Loader2 className="w-4 h-4 animate-spin text-[var(--color-primary)]" />
-              <span className="text-xs font-bold text-[var(--color-text-secondary)]">Analizando base de datos semántica...</span>
+            <div className="flex gap-3 mr-auto max-w-[85%]">
+              <div className="w-8 h-8 rounded-full bg-[var(--color-primary-light)] border border-[var(--color-primary)]/20 flex items-center justify-center shrink-0 border shadow-sm">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--color-primary)]" />
+              </div>
+              <div className="border border-[var(--color-border)] bg-[var(--color-surface)] rounded-2xl rounded-tl-none p-4 flex items-center gap-3 shadow-sm">
+                <Loader2 className="w-4 h-4 animate-spin text-[var(--color-primary)]" />
+                <span className="text-xs font-bold text-[var(--color-text-secondary)]">Analizando base de datos semántica...</span>
+              </div>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -271,21 +348,26 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
 
         {/* Sugerencias de Preguntas (Preset Chips) */}
         {messages.length === 1 && !loading && (
-          <div className="p-4 border-t border-[var(--color-border)] bg-[var(--color-surface-hover)]/30">
-            <span className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text-tertiary)] block mb-2">Preguntas sugeridas:</span>
-            <div className="flex flex-col gap-2">
+          <div className="p-5 border-t border-[var(--color-border)] bg-[var(--color-surface-hover)]/30">
+            <span className="text-[9px] font-black uppercase tracking-wider text-[var(--color-text-tertiary)] block mb-3">
+              Preguntas sugeridas de control:
+            </span>
+            <div className="grid grid-cols-1 gap-2.5">
               {PRESETS.map((preset, i) => (
                 <button
                   key={i}
                   onClick={() => handleSendMessage(preset)}
-                  className="text-xs text-left px-3.5 py-2.5 rounded-lg border hover:bg-[var(--color-surface-hover)] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-between group"
+                  className="text-xs text-left px-4 py-3.5 rounded-xl border hover:bg-[var(--color-surface)] active:scale-[0.98] transition-all duration-200 cursor-pointer flex items-center justify-between group bg-[var(--color-bg)] shadow-sm hover:shadow hover:border-[var(--color-primary)]"
                   style={{
                     borderColor: "var(--color-border)",
                     color: "var(--color-text-secondary)"
                   }}
                 >
-                  <span>{preset}</span>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-primary)]" />
+                  <div className="flex items-center gap-2.5">
+                    <span className="material-symbols-outlined text-[var(--color-primary)] text-sm shrink-0">help</span>
+                    <span className="font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors">{preset}</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all text-[var(--color-primary)] translate-x-[-4px] group-hover:translate-x-0 shrink-0" />
                 </button>
               ))}
             </div>
@@ -294,38 +376,46 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
 
         {/* Input Bar */}
         <div
-          className="p-4 border-t flex gap-2 items-center"
+          className="p-5 border-t flex flex-col gap-2.5 bg-[var(--color-surface)]"
           style={{
-            borderColor: "var(--color-border)"
+            borderColor: "var(--color-border)",
+            boxShadow: "0 -8px 25px rgba(0, 0, 0, 0.04)"
           }}
         >
-          <input
-            type="text"
-            placeholder="Pregunta sobre las tablas, capítulos o flujo de caja..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSendMessage(input);
-            }}
-            disabled={loading}
-            className="flex-1 px-4 py-3 rounded-lg text-sm transition-colors border outline-none bg-[var(--color-bg)] disabled:opacity-50"
-            style={{
-              borderColor: "var(--color-border)",
-              color: "var(--color-text-primary)"
-            }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
-          />
-          <button
-            onClick={() => handleSendMessage(input)}
-            disabled={!input.trim() || loading}
-            className="p-3 rounded-lg flex items-center justify-center text-white transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:scale-100 disabled:cursor-not-allowed"
-            style={{
-              backgroundColor: "var(--color-primary)"
-            }}
-          >
-            <Send className="w-4 h-4 text-white" />
-          </button>
+          <div className="relative flex items-center bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary-light)]/40 transition-all duration-300 shadow-sm p-1">
+            <textarea
+              placeholder="Pregunta sobre las tablas, capítulos o flujo de caja..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(input);
+                }
+              }}
+              disabled={loading}
+              rows={2}
+              className="flex-1 w-full bg-transparent text-sm border-0 outline-none resize-none pl-5.5 pr-14 pt-4 pb-4 text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] min-h-[50px] max-h-[140px]"
+            />
+            <button
+              onClick={() => handleSendMessage(input)}
+              disabled={!input.trim() || loading}
+              className="absolute right-2.5 bottom-2.5 w-9.5 h-9.5 rounded-xl flex items-center justify-center text-white transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-30 disabled:scale-100 disabled:cursor-not-allowed hover:shadow-[0_4px_12px_rgba(1,92,50,0.2)] shrink-0"
+              style={{
+                backgroundColor: "var(--color-primary)",
+                backgroundImage: "linear-gradient(135deg, var(--color-primary), var(--color-primary-hover))"
+              }}
+            >
+              <Send className="w-4 h-4 text-white" />
+            </button>
+          </div>
+          <div className="flex justify-between items-center text-[10px] text-[var(--color-text-tertiary)] px-1">
+            <span>Shift + Enter para salto de línea</span>
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Garantía de control de costos Serving
+            </span>
+          </div>
         </div>
       </div>
     </>
