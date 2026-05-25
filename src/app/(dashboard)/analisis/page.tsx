@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import AnalysisUpload from "@/components/dashboard/AnalysisUpload";
 import BudgetTimelineChart from "@/components/dashboard/BudgetTimelineChart";
 import AnalysisTable from "@/components/dashboard/AnalysisTable";
+import AnalysisChat from "@/components/dashboard/AnalysisChat";
 import { Sparkles } from "lucide-react";
 
 // Helper to parse double asterisks into strong tags
@@ -357,6 +358,14 @@ export default function AnalysisPage() {
               totalBudget={analysisData.totalBudget}
             />
           </div>
+
+          {/* Chatbot de Inteligencia Financiera IA (Vertex AI) */}
+          <AnalysisChat 
+            dataPoints={analysisData.dataPoints}
+            analysis={analysisData.analysis}
+            directBudget={analysisData.directBudget || 8969704298.66}
+            totalBudget={analysisData.totalBudget}
+          />
         </div>
       )}
     </div>
