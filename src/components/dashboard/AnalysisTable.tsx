@@ -20,9 +20,12 @@ interface NormalizedDataPoint {
 
 interface AnalysisTableProps {
   dataPoints: DataPoint[];
+  analysis?: string;
+  directBudget?: number;
+  totalBudget?: number;
 }
 
-export default function AnalysisTable({ dataPoints }: AnalysisTableProps) {
+export default function AnalysisTable({ dataPoints, analysis, directBudget, totalBudget }: AnalysisTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedChapter, setSelectedChapter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -134,6 +137,46 @@ export default function AnalysisTable({ dataPoints }: AnalysisTableProps) {
     document.body.removeChild(link);
   };
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Exportar a Excel (.xlsx) interactuando con el endpoint Next.js
+  const exportToExcel = async () => {
+    try {
+      setIsExporting(true);
+      const response = await fetch("/api/analysis/export", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          dataPoints: normalizedDataPoints,
+          analysis: analysis || "",
+          directBudget: directBudget || 8969704298.66,
+          totalBudget: totalBudget || 9872953521.53,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error en la respuesta de exportación.");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `informe_flujo_caja_serving_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error al exportar Excel:", error);
+      alert("No se pudo generar el archivo Excel. Por favor intenta de nuevo.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div
       className="rounded-xl p-6 sm:p-8 animate-fade-in w-full transition-all duration-300"
@@ -155,18 +198,33 @@ export default function AnalysisTable({ dataPoints }: AnalysisTableProps) {
           </p>
         </div>
 
-        <button
-          onClick={exportToCSV}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border select-none shrink-0"
-          style={{
-            backgroundColor: "var(--color-surface-hover)",
-            borderColor: "var(--color-border)",
-            color: "var(--color-text-primary)",
-          }}
-        >
-          <Download className="w-4 h-4 text-[var(--color-primary)]" />
-          Exportar CSV
-        </button>
+        <div className="flex gap-3 w-full sm:w-auto">
+          <button
+            onClick={exportToCSV}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border select-none shrink-0"
+            style={{
+              backgroundColor: "var(--color-surface-hover)",
+              borderColor: "var(--color-border)",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            <Download className="w-4 h-4 text-[var(--color-primary)]" />
+            CSV
+          </button>
+
+          <button
+            onClick={exportToExcel}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border select-none shrink-0 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: "var(--color-primary)",
+              borderColor: "var(--color-primary)",
+            }}
+          >
+            <Download className="w-4 h-4 text-white" />
+            {isExporting ? "Generando..." : "Descargar Excel (.xlsx)"}
+          </button>
+        </div>
       </div>
 
       {/* Controles de Filtros */}

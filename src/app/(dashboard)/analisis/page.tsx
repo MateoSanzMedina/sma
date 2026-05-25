@@ -212,6 +212,7 @@ interface AnalysisResult {
   analysis: string;
   dataPoints: AnalysisDataPoint[];
   totalBudget: number;
+  directBudget?: number;
   isOfflineFallback?: boolean;
 }
 
@@ -349,7 +350,12 @@ export default function AnalysisPage() {
 
           {/* Fila inferior: Tabla de Detalles a Ancho Completo */}
           <div className="w-full animate-fade-in">
-            <AnalysisTable dataPoints={analysisData.dataPoints} />
+            <AnalysisTable 
+              dataPoints={analysisData.dataPoints} 
+              analysis={analysisData.analysis}
+              directBudget={analysisData.directBudget}
+              totalBudget={analysisData.totalBudget}
+            />
           </div>
         </div>
       )}

@@ -15,6 +15,7 @@ interface AnalysisResult {
   analysis: string;
   dataPoints: AnalysisDataPoint[];
   totalBudget: number;
+  directBudget?: number;
   isOfflineFallback?: boolean;
 }
 
