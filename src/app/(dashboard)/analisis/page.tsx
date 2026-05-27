@@ -1,7 +1,7 @@
 "use client";
 // label placeholder aria-label
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AnalysisUpload from "@/components/dashboard/AnalysisUpload";
 import BudgetTimelineChart from "@/components/dashboard/BudgetTimelineChart";
 import AnalysisTable from "@/components/dashboard/AnalysisTable";
@@ -212,6 +212,7 @@ interface AnalysisDataPoint {
 interface AnalysisResult {
   analysis: string;
   dataPoints: AnalysisDataPoint[];
+  distributedDataPoints?: any[];
   totalBudget: number;
   directBudget?: number;
   isOfflineFallback?: boolean;
@@ -220,13 +221,39 @@ interface AnalysisResult {
 export default function AnalysisPage() {
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
 
+  // Cargar datos persistidos al montar (Evita errores de hidratación de Next.js)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sma_analysis_data");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object" && parsed.dataPoints) {
+          setAnalysisData(parsed);
+        }
+      }
+    } catch (e) {
+      console.error("Error al cargar datos del localStorage:", e);
+    }
+  }, []);
+
+  // Guardar datos en localStorage cuando cambian
+  useEffect(() => {
+    if (analysisData) {
+      try {
+        localStorage.setItem("sma_analysis_data", JSON.stringify(analysisData));
+      } catch (e) {
+        console.error("Error al guardar datos en el localStorage:", e);
+      }
+    }
+  }, [analysisData]);
+
   const handleAnalysisComplete = (data: AnalysisResult) => {
     setAnalysisData(data);
   };
 
   return (
     <div className="space-y-8 max-w-full">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
         <div>
           <h1 className="text-2xl sm:text-4xl font-black flex items-center gap-4 tracking-tight">
             <span 
@@ -241,6 +268,30 @@ export default function AnalysisPage() {
             Correlaciona presupuestos con cronogramas automáticamente utilizando inteligencia artificial.
           </p>
         </div>
+
+        {analysisData && (
+          <button
+            onClick={() => {
+              if (confirm("¿Estás seguro de que deseas borrar los datos actuales del navegador? Esto restablecerá la pantalla.")) {
+                setAnalysisData(null);
+                try {
+                  localStorage.removeItem("sma_analysis_data");
+                } catch (e) {
+                  console.error(e);
+                }
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-black transition-all cursor-pointer select-none hover:bg-red-500/10 active:scale-95 duration-150"
+            style={{
+              backgroundColor: "rgba(239, 68, 68, 0.05)",
+              borderColor: "rgba(239, 68, 68, 0.2)",
+              color: "#f87171",
+            }}
+          >
+            <span className="material-symbols-outlined text-sm">restart_alt</span>
+            Limpiar Análisis
+          </button>
+        )}
       </div>
 
       {!analysisData ? (
@@ -344,7 +395,8 @@ export default function AnalysisPage() {
           {/* Fila intermedia: Gráfico a Ancho Completo */}
           <div className="w-full animate-fade-in">
             <BudgetTimelineChart 
-              data={analysisData.dataPoints} 
+              data={analysisData.distributedDataPoints || []} 
+              tasks={analysisData.dataPoints || []}
               totalBudget={analysisData.totalBudget} 
             />
           </div>
@@ -353,6 +405,7 @@ export default function AnalysisPage() {
           <div className="w-full animate-fade-in">
             <AnalysisTable 
               dataPoints={analysisData.dataPoints} 
+              distributedDataPoints={analysisData.distributedDataPoints}
               analysis={analysisData.analysis}
               directBudget={analysisData.directBudget}
               totalBudget={analysisData.totalBudget}
@@ -361,7 +414,7 @@ export default function AnalysisPage() {
 
           {/* Chatbot de Inteligencia Financiera IA (Vertex AI) */}
           <AnalysisChat 
-            dataPoints={analysisData.dataPoints}
+            dataPoints={analysisData.distributedDataPoints || analysisData.dataPoints}
             analysis={analysisData.analysis}
             directBudget={analysisData.directBudget || 8969704298.66}
             totalBudget={analysisData.totalBudget}

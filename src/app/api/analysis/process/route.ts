@@ -50,18 +50,15 @@ interface BudgetItem {
 }
 
 interface ScheduleItem {
+  id: string;
   name: string;
   start: string;
   end: string;
   level: number;
 }
 
-interface BudgetItemWithCandidates extends BudgetItem {
-  candidate_tasks: {
-    name: string;
-    start: string;
-    end: string;
-  }[];
+interface ScheduleItemWithCandidates extends ScheduleItem {
+  candidate_budgets: BudgetItem[];
 }
 
 // ==========================================
@@ -146,25 +143,20 @@ function calculateSemanticSimilarity(itemDesc: string, taskName: string): number
   return matchScore / itemTokens.length;
 }
 
-function getTopCandidates(item: BudgetItem, tasks: ScheduleItem[], count = 5): { name: string; start: string; end: string }[] {
-  const scored = tasks.map(task => {
-    const score = calculateSemanticSimilarity(item.desc, task.name);
-    return { task, score };
+function getTopBudgetCandidates(task: ScheduleItem, budgets: BudgetItem[], count = 5): BudgetItem[] {
+  const scored = budgets.map(budget => {
+    const score = calculateSemanticSimilarity(budget.desc, task.name);
+    return { budget, score };
   });
 
-  // Ordenar descendentemente por puntuación y alfabéticamente para romper empates
   scored.sort((a, b) => {
     if (Math.abs(a.score - b.score) > 0.001) {
       return b.score - a.score;
     }
-    return a.task.name.localeCompare(b.task.name);
+    return a.budget.desc.localeCompare(b.budget.desc);
   });
 
-  return scored.slice(0, count).map(s => ({
-    name: s.task.name,
-    start: s.task.start,
-    end: s.task.end
-  }));
+  return scored.slice(0, count).map(s => s.budget);
 }
 
 // ==========================================
@@ -280,6 +272,7 @@ function parseScheduleSheet(worksheet: xlsx.WorkSheet): ScheduleItem[] {
 
     if (name && start) {
       scheduleItems.push({
+        id: `t-${scheduleItems.length}`,
         name,
         start,
         end,
@@ -292,12 +285,45 @@ function parseScheduleSheet(worksheet: xlsx.WorkSheet): ScheduleItem[] {
 }
 
 interface MappedDataPoint {
-  date: string;
+  id: string;
+  start_date: string;
+  end_date: string;
   budget_required: number;
   task_name: string;
   chapter: string;
   budget_item_code: string;
+  date?: string; // Para retrocompatibilidad
 }
+
+// Función helper para generar días calendario consecutivos entre dos fechas
+function getCalendarDaysInRange(startStr: string, endStr: string): string[] {
+  const days: string[] = [];
+  const start = new Date(startStr + "T00:00:00");
+  const end = new Date(endStr + "T00:00:00");
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
+    if (startStr && !isNaN(start.getTime())) {
+      return [startStr];
+    }
+    return [];
+  }
+
+  const current = new Date(start);
+  while (current <= end) {
+    const yyyy = current.getFullYear();
+    const mm = String(current.getMonth() + 1).padStart(2, '0');
+    const dd = String(current.getDate()).padStart(2, '0');
+    days.push(`${yyyy}-${mm}-${dd}`);
+    current.setDate(current.getDate() + 1);
+  }
+
+  if (days.length === 0 && startStr) {
+    days.push(startStr);
+  }
+
+  return days;
+}
+
 
 type GenerateContentParams = Parameters<InstanceType<typeof GoogleGenAI>["models"]["generateContent"]>[0];
 type GenerateContentResponse = Awaited<ReturnType<InstanceType<typeof GoogleGenAI>["models"]["generateContent"]>>;
@@ -409,46 +435,35 @@ function repairTruncatedJson(text: string): string {
 
 // Mapeador determinista local de 3 capas de respaldo
 function mapItemLocally(
-  item: BudgetItemWithCandidates,
-  fallbackDate: string,
-  phaseTasks: { name: string; start: string; end: string }[]
+  task: ScheduleItemWithCandidates,
+  fallbackDate: string
 ): MappedDataPoint {
-  // 1. Si tiene tareas candidatas válidas del motor de similitud, usar la mejor
-  if (item.candidate_tasks && item.candidate_tasks.length > 0) {
-    const best = item.candidate_tasks[0];
+  const sDate = task.start || fallbackDate;
+  const eDate = task.end || sDate || fallbackDate;
+
+  // 1. Si tiene presupuestos candidatos del pre-matcher, usar el mejor
+  if (task.candidate_budgets && task.candidate_budgets.length > 0) {
+    const best = task.candidate_budgets[0];
     return {
-      date: best.start || fallbackDate,
-      budget_required: item.val,
-      task_name: best.name,
-      chapter: item.chapter,
-      budget_item_code: item.code,
+      id: task.id,
+      start_date: sDate,
+      end_date: eDate,
+      budget_required: 0, // Se calculará en el paso de Costo Split
+      task_name: task.name,
+      chapter: best.chapter,
+      budget_item_code: best.code,
     };
   }
 
-  // 2. Si no, buscar coincidencia conceptual de capítulo en tareas contenedoras
-  const cleanChapter = item.chapter.toLowerCase().trim();
-  const matchedPhase = phaseTasks.find(p => {
-    const cleanPhaseName = (p.name || "").toLowerCase().trim();
-    return cleanPhaseName.includes(cleanChapter) || cleanChapter.includes(cleanPhaseName);
-  });
-
-  if (matchedPhase) {
-    return {
-      date: matchedPhase.start || fallbackDate,
-      budget_required: item.val,
-      task_name: matchedPhase.name,
-      chapter: item.chapter,
-      budget_item_code: item.code,
-    };
-  }
-
-  // 3. Fallback final al inicio general del proyecto
+  // 2. Si no, retornar como hito de $0 COP
   return {
-    date: fallbackDate,
-    budget_required: item.val,
-    task_name: "Inicio de Proyecto (Fallback)",
-    chapter: item.chapter,
-    budget_item_code: item.code,
+    id: task.id,
+    start_date: sDate,
+    end_date: eDate,
+    budget_required: 0,
+    task_name: task.name,
+    chapter: "Otros",
+    budget_item_code: "sin_presupuesto",
   };
 }
 
@@ -531,41 +546,39 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Pre-matching semántico local de ítems de presupuesto
-    const enrichedBudgetItems: BudgetItemWithCandidates[] = budgetItems.map(item => {
-      const candidates = getTopCandidates(item, scheduleItems, 5);
+    // 4. Pre-matching semántico local de tareas del cronograma
+    const enrichedScheduleItems: ScheduleItemWithCandidates[] = scheduleItems.map(task => {
+      const candidates = getTopBudgetCandidates(task, budgetItems, 5);
       return {
-        ...item,
-        candidate_tasks: candidates
+        ...task,
+        candidate_budgets: candidates
       };
     });
 
-    console.log(`Pre-matching semántico híbrido finalizado para los ${enrichedBudgetItems.length} ítems del presupuesto.`);
+    console.log(`Pre-matching semántico híbrido finalizado para las ${enrichedScheduleItems.length} tareas del cronograma.`);
 
-    // 5. Dividir ítems enriquecidos en Lotes (Batching) para procesamiento concurrente
-    // Con Vertex AI Empresarial Tier 1, procesamos en lotes de 3 en paralelo con concurrencia controlada
+    // 5. Dividir tareas en Lotes para procesamiento concurrentemente en lotes de 3
     const batchSize = 15;
-    const batches: BudgetItemWithCandidates[][] = [];
-    for (let i = 0; i < enrichedBudgetItems.length; i += batchSize) {
-      batches.push(enrichedBudgetItems.slice(i, i + batchSize));
+    const batches: ScheduleItemWithCandidates[][] = [];
+    for (let i = 0; i < enrichedScheduleItems.length; i += batchSize) {
+      batches.push(enrichedScheduleItems.slice(i, i + batchSize));
     }
 
     console.log(`Iniciando procesamiento en paralelo de lotes de 3 en 3 con motor semántico: ${batches.length} lotes de tamaño ~${batchSize}.`);
 
     const allDataPoints: MappedDataPoint[] = [];
 
-    // Función de procesamiento individual de un lote
-    const processBatch = async (batch: BudgetItemWithCandidates[], index: number) => {
-      // Si las variables de entorno para la nube no están configuradas, mapear directo localmente
+    // Función de procesamiento de un lote
+    const processBatch = async (batch: ScheduleItemWithCandidates[], index: number) => {
       if (initialOffline) {
-        console.log(`Lote ${index + 1}/${batches.length}: Mapeando ${batch.length} ítems localmente en modo offline.`);
-        batch.forEach(item => {
-          allDataPoints.push(mapItemLocally(item, fallbackDate, phaseTasks));
+        console.log(`Lote ${index + 1}/${batches.length}: Mapeando ${batch.length} tareas localmente.`);
+        batch.forEach(task => {
+          allDataPoints.push(mapItemLocally(task, fallbackDate));
         });
         return;
       }
 
-      console.log(`[DEBUG - Flow] Procesando en paralelo Lote ${index + 1}/${batches.length} con ${batch.length} ítems enriquecidos con IA... (Config batchSize = ${batchSize})`);
+      console.log(`[DEBUG - Flow] Procesando Lote ${index + 1}/${batches.length} con ${batch.length} tareas...`);
 
       try {
         const result = await generateContentWithRetry(
@@ -573,23 +586,18 @@ export async function POST(req: NextRequest) {
           {
             model: "gemini-2.5-flash",
             contents: `
-LISTA DE ÍTEMS DEL PRESUPUESTO CON SUS TAREAS CANDIDATAS SUGERIDAS (LOTE ACTUAL):
+LISTA DE TAREAS DEL CRONOGRAMA CON ÍTEMS DE PRESUPUESTO CANDIDATOS SUGERIDOS:
 ${JSON.stringify(batch)}
-
-FASE/CAPÍTULO DE RESPALDO (SI NINGÚN CANDIDATO CORRESPONDE):
-${JSON.stringify(phaseTasks)}
 `,
             config: {
-              systemInstruction: `Eres un analista senior de control de costos en Constructora Serving S.A.S.
-Tu tarea es correlacionar cada uno de los ítems del presupuesto de este lote con la fecha real del cronograma.
+              systemInstruction: `Eres un analista senior de control de costos de Constructora Serving S.A.S.
+Tu tarea es asociar cada una de las tareas del cronograma de obra (MS Project) con el ítem de presupuesto más adecuado.
 
 REGLAS MANDATORIAS:
-1. NO RESUMAS ni agrupes. Debes generar exactamente un dataPoint por cada ítem de presupuesto recibido en este lote (recibiste exactamente ${batch.length} ítems).
-2. Para cada ítem, analiza sus "candidate_tasks" (que contienen el top de tareas semánticamente más similares calculadas de la obra). Mapea el ítem de presupuesto a la fecha de inicio ("start") del candidato que tenga la relación conceptual y de control de obra más lógica.
-3. Si consideras que NINGUNO de los "candidate_tasks" sugeridos aplica en lo absoluto, busca la fase o capítulo general de obra en la lista de "FASE/CAPÍTULO DE RESPALDO" que mejor represente el capítulo ("chapter") del ítem de presupuesto y utiliza su fecha de inicio.
-4. Únicamente si el ítem de presupuesto no tiene absolutamente ninguna relación razonable con los candidatos ni con las fases de respaldo, utiliza la fecha global de fallback: "${fallbackDate}".
-5. Para cada dataPoint retornado, es OBLIGATORIO incluir la propiedad "budget_item_code" que contenga EXACTAMENTE el código del ítem del presupuesto (el campo "code" del ítem correspondiente).
-6. Devuelve en "task_name" el nombre de la tarea o capítulo del cronograma seleccionado, en "date" su fecha de inicio (YYYY-MM-DD), en "budget_required" el valor del ítem, y en "chapter" el capítulo original del presupuesto.`,
+1. NO RESUMAS ni agrupes. Debes generar exactamente un dataPoint por cada tarea recibida en este lote (recibiste exactamente ${batch.length} tareas).
+2. Para cada tarea, analiza sus "candidate_budgets". Asocia la tarea al candidato de presupuesto que tenga la relación conceptual y de control de obra más lógica. Copia exactamente su código de presupuesto en "budget_item_code".
+3. Si consideras que NINGUNO de los "candidate_budgets" sugeridos aplica o representa un hito sin costo directo (reuniones de comité, firmas de actas, actas de vecindad, entregas de planos, etc.), es OBLIGATORIO que asignes "budget_item_code" con el valor exacto de "sin_presupuesto".
+4. Devuelve en "id" el ID único de la tarea ("id"), en "task_name" el nombre original de la tarea del cronograma, en "start_date" su fecha de inicio ("start"), en "end_date" su fecha de fin ("end"), y en "chapter" el capítulo original del presupuesto candidato seleccionado (o "Otros" si es sin presupuesto).`,
               responseMimeType: "application/json",
               responseSchema: {
                 type: "OBJECT",
@@ -599,13 +607,14 @@ REGLAS MANDATORIAS:
                     items: {
                       type: "OBJECT",
                       properties: {
-                        date: { type: "STRING" },
-                        budget_required: { type: "NUMBER" },
+                        id: { type: "STRING" },
+                        start_date: { type: "STRING" },
+                        end_date: { type: "STRING" },
                         task_name: { type: "STRING" },
                         chapter: { type: "STRING" },
                         budget_item_code: { type: "STRING" }
                       },
-                      required: ["date", "budget_required", "task_name", "chapter", "budget_item_code"]
+                      required: ["id", "start_date", "end_date", "task_name", "chapter", "budget_item_code"]
                     }
                   }
                 },
@@ -615,15 +624,14 @@ REGLAS MANDATORIAS:
               maxOutputTokens: 8192,
             },
           },
-          3,       // 3 reintentos totales
-          3000,    // 3 segundos de retardo base
-          90000    // Aumentado a 90 segundos de límite por intento (evita cortes prematuros)
+          3,
+          3000,
+          90000
         );
 
         const rawText = result.text || "{}";
         let textToParse = rawText;
 
-        // Intentar parsear el JSON tal como viene. Si falla, intentar auto-repararlo si fue cortado por tokens.
         try {
           JSON.parse(textToParse);
         } catch {
@@ -633,35 +641,29 @@ REGLAS MANDATORIAS:
         try {
           const parsed = JSON.parse(textToParse) as { dataPoints?: MappedDataPoint[] };
           const points = parsed.dataPoints || [];
-          
-          // Filtrar puntos válidos
-          const validPoints = points.filter(p => p && p.date && p.budget_item_code);
-          console.log(`Lote ${index + 1} procesado exitosamente. Retornados ${validPoints.length} de ${batch.length} dataPoints.`);
-          
+          const validPoints = points.filter(p => p && p.id && p.start_date && p.budget_item_code);
           allDataPoints.push(...validPoints);
         } catch (parseErr) {
-          console.error(`⚠️ Error parseando respuesta JSON del lote ${index + 1}. Usando mapeador local de respaldo.`, parseErr);
+          console.error(`⚠️ Error parseando respuesta JSON del lote ${index + 1}. Usando mapeador local.`, parseErr);
           fellBackToOffline = true;
-          batch.forEach(item => {
-            allDataPoints.push(mapItemLocally(item, fallbackDate, phaseTasks));
+          batch.forEach(task => {
+            allDataPoints.push(mapItemLocally(task, fallbackDate));
           });
         }
       } catch (batchErr) {
-        console.error(`❌ Falló la llamada de Vertex AI para el lote ${index + 1} (Posible desconexión, DNS blocked o timeout). Usando mapeador local de respaldo para este lote.`, batchErr);
+        console.error(`❌ Falló Vertex AI para el lote ${index + 1}. Usando mapeador local.`, batchErr);
         fellBackToOffline = true;
-        // Mapear este lote localmente de manera segura
-        batch.forEach(item => {
-          allDataPoints.push(mapItemLocally(item, fallbackDate, phaseTasks));
+        batch.forEach(task => {
+          allDataPoints.push(mapItemLocally(task, fallbackDate));
         });
       }
 
-      // Pequeño retardo entre el inicio de peticiones concurrentes para suavizar ráfagas y prevenir 429 agresivos
       if (!initialOffline && index < batches.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 800));
       }
     };
 
-    // Cola de ejecución concurrente con un límite estricto de 3 lotes simultáneos
+    // Cola de ejecución concurrentemente con un límite estricto de 3 lotes simultáneos
     const concurrencyLimit = 3;
     const queue = [...batches.entries()];
     const workers = Array.from({ length: concurrencyLimit }, async () => {
@@ -676,22 +678,146 @@ REGLAS MANDATORIAS:
 
     await Promise.all(workers);
 
-    // 6. Verificación de salvaguarda: Asegurar que ningún ítem se haya quedado por fuera (Mapeo robusto por código)
-    const mappedItemCodes = new Set(allDataPoints.map(dp => String(dp.budget_item_code).trim()));
-    const missingItems = enrichedBudgetItems.filter(b => !mappedItemCodes.has(b.code.trim()));
+    // 6. Verificación de salvaguarda 1: Asegurar que ninguna tarea se haya quedado por fuera
+    const mappedTaskIds = new Set(allDataPoints.map(dp => dp.id));
+    const missingTasks = enrichedScheduleItems.filter(t => !mappedTaskIds.has(t.id));
 
-    if (missingItems.length > 0) {
-      console.log(`⚠️ Salvaguarda: Faltaron ${missingItems.length} ítems en las respuestas de la IA. Agregándolos determinísticamente usando el motor local de respaldo...`);
-      missingItems.forEach(item => {
-        allDataPoints.push(mapItemLocally(item, fallbackDate, phaseTasks));
+    if (missingTasks.length > 0) {
+      console.log(`⚠️ Salvaguarda: Faltaron ${missingTasks.length} tareas del cronograma. Agregándolas determinísticamente...`);
+      missingTasks.forEach(task => {
+        allDataPoints.push(mapItemLocally(task, fallbackDate));
       });
     }
 
-    console.log(`Consolidados exitosamente ${allDataPoints.length} puntos de datos.`);
+    // 7. ALGORITMO COSTO SPLIT Y REDISTRIBUCIÓN HUÉRFANOS
+    // Contar tareas asignadas a cada código de presupuesto
+    const itemCodeToTasksCount: { [key: string]: number } = {};
+    allDataPoints.forEach(task => {
+      const code = String(task.budget_item_code).trim();
+      if (code !== "sin_presupuesto") {
+        itemCodeToTasksCount[code] = (itemCodeToTasksCount[code] || 0) + 1;
+      }
+    });
+
+    // Mapear presupuestos originales por código para un acceso veloz
+    const budgetItemsMap = new Map<string, BudgetItem>();
+    budgetItems.forEach(b => {
+      budgetItemsMap.set(String(b.code).trim(), b);
+    });
+
+    // Asignar el Costo Split inicial
+    allDataPoints.forEach(task => {
+      const code = String(task.budget_item_code).trim();
+      if (code !== "sin_presupuesto") {
+        const budgetItem = budgetItemsMap.get(code);
+        if (budgetItem) {
+          const M = itemCodeToTasksCount[code] || 1;
+          task.budget_required = budgetItem.val / M;
+        } else {
+          task.budget_required = 0;
+        }
+      } else {
+        task.budget_required = 0;
+      }
+    });
+
+    // Redistribuir ítems de presupuesto huérfanos (que no fueron mapeados a ninguna tarea por la IA)
+    const chapterToTasks: { [key: string]: MappedDataPoint[] } = {};
+    allDataPoints.forEach(task => {
+      const ch = task.chapter || "Otros";
+      if (!chapterToTasks[ch]) {
+        chapterToTasks[ch] = [];
+      }
+      chapterToTasks[ch].push(task);
+    });
+
+    budgetItems.forEach(b => {
+      const code = String(b.code).trim();
+      const M = itemCodeToTasksCount[code] || 0;
+      if (M === 0 && b.val > 0) {
+        const tasksInChapter = chapterToTasks[b.chapter] || [];
+        if (tasksInChapter.length > 0) {
+          console.log(`[Costo Split] Redistribuyendo ítem huérfano "${b.desc}" ($${b.val}) entre ${tasksInChapter.length} tareas del capítulo "${b.chapter}".`);
+          const share = b.val / tasksInChapter.length;
+          tasksInChapter.forEach(task => {
+            task.budget_required += share;
+          });
+        } else if (allDataPoints.length > 0) {
+          console.log(`[Costo Split] Redistribuyendo ítem huérfano "${b.desc}" ($${b.val}) entre todas las tareas registradas.`);
+          const share = b.val / allDataPoints.length;
+          allDataPoints.forEach(task => {
+            task.budget_required += share;
+          });
+        }
+      }
+    });
+
+    console.log(`Consolidados y costeados por Costo Split exitosamente ${allDataPoints.length} puntos de datos primarios.`);
+
+    // ===================================================
+    // DISTRIBUCIÓN DIARIA DE COSTOS SOBRE DÍAS CALENDARIO
+    // ===================================================
+    interface ProcessedDataPoint {
+      start_date: string;
+      end_date: string;
+      working_days: number;
+      budget_required: number; // Costo Total
+      daily_budget: number; // Costo Diario
+      task_name: string;
+      chapter: string;
+      budget_item_code: string;
+      date: string; // Para compatibilidad con frontend
+    }
+
+    interface DistributedDataPoint {
+      date: string;
+      budget_required: number; // Costo diario
+      task_name: string;
+      chapter: string;
+      budget_item_code: string;
+    }
+
+    const processedDataPoints: ProcessedDataPoint[] = [];
+    const distributedDataPoints: DistributedDataPoint[] = [];
+
+    allDataPoints.forEach(dp => {
+      const sDate = dp.start_date || dp.date || fallbackDate;
+      const eDate = dp.end_date || sDate;
+
+      // Calcular días calendario consecutivos
+      const calendarDays = getCalendarDaysInRange(sDate, eDate);
+      const duration = calendarDays.length;
+
+      const totalVal = dp.budget_required || 0;
+      const dailyVal = duration > 0 ? totalVal / duration : totalVal;
+
+      processedDataPoints.push({
+        start_date: sDate,
+        end_date: eDate,
+        working_days: duration,
+        budget_required: totalVal,
+        daily_budget: dailyVal,
+        task_name: dp.task_name,
+        chapter: dp.chapter || "Otros",
+        budget_item_code: dp.budget_item_code,
+        date: sDate
+      });
+
+      // Distribuir el costo día a día
+      calendarDays.forEach(dayStr => {
+        distributedDataPoints.push({
+          date: dayStr,
+          budget_required: dailyVal,
+          task_name: dp.task_name,
+          chapter: dp.chapter || "Otros",
+          budget_item_code: dp.budget_item_code
+        });
+      });
+    });
 
     // 7. Generación del Análisis Ejecutivo Global (Con fallback local determinista si la red falla)
     const chapterTotals: { [key: string]: number } = {};
-    allDataPoints.forEach(dp => {
+    processedDataPoints.forEach(dp => {
       chapterTotals[dp.chapter] = (chapterTotals[dp.chapter] || 0) + (dp.budget_required || 0);
     });
 
@@ -699,7 +825,7 @@ REGLAS MANDATORIAS:
       .map(([ch, tot]) => `- **${ch}**: $${new Intl.NumberFormat("es-CO").format(Math.round(tot))} COP`)
       .join("\n");
 
-    const directBudgetSum = allDataPoints.reduce((sum, dp) => sum + (dp.budget_required || 0), 0);
+    const directBudgetSum = processedDataPoints.reduce((sum, dp) => sum + (dp.budget_required || 0), 0);
     // Aplicar el factor de 1.1007 para calcular el total incluyendo indirectos (9.5% AI + 3% IVA sobre utilidad)
     // para coincidir exactamente con el total general de $9,872,953,522 COP
     const totalBudgetSum = directBudgetSum * 1.1007;
@@ -796,7 +922,8 @@ ${formattedChapters}
     // 8. Retornar el JSON estructurado final
     const finalResult = {
       analysis: globalAnalysis,
-      dataPoints: allDataPoints,
+      dataPoints: processedDataPoints,
+      distributedDataPoints: distributedDataPoints,
       directBudget: directBudgetSum,
       totalBudget: totalBudgetSum,
       isOfflineFallback: fellBackToOffline,

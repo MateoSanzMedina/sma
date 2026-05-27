@@ -4,7 +4,7 @@ import * as xlsx from "xlsx";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { dataPoints, analysis, directBudget, totalBudget } = body;
+    const { dataPoints, distributedDataPoints, analysis, directBudget, totalBudget } = body;
 
     if (!dataPoints || !Array.isArray(dataPoints)) {
       return NextResponse.json(
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       [],
       ["2. ESTADÍSTICAS DEL MAPEO CON EL CRONOGRAMA"],
       ["Ítems de Obra Correlacionados", dataPoints.length, "Total de partidas físicas alineadas temporalmente"],
-      ["Fecha de Inicio de Ejecución de Obra", dataPoints.length > 0 ? dataPoints[0].date : "2026-02-02", "Fecha de arranque de actividades según MS Project"],
+      ["Fecha de Inicio de Ejecución de Obra", dataPoints.length > 0 ? (dataPoints[0].start_date || dataPoints[0].date) : "2026-02-02", "Fecha de arranque de actividades según MS Project"],
       [],
       ["3. ANÁLISIS EJECUTIVO COMPLETO DE COSTOS (GENERADO POR IA)"],
       ["El siguiente informe gerencial analiza la coherencia temporal del presupuesto frente al cronograma de obra:"],
@@ -60,25 +60,37 @@ export async function POST(req: NextRequest) {
     // 2. PESTAÑA: DETALLE DE FLUJO DE CAJA MAPEADO (GRANULAR)
     // ===================================================
     const detailedData = dataPoints.map(dp => {
-      const direct = dp.budget_required || 0;
-      const total = direct * 1.1007; // Aplicar indirectos por ítem
+      const totalDirect = dp.budget_required || 0;
+      const totalWithIndirect = totalDirect * 1.1007;
+      const days = dp.working_days || 1;
+      const dailyDirect = dp.daily_budget || (totalDirect / days);
+      const dailyWithIndirect = dailyDirect * 1.1007;
+
       return {
-        "Fecha de Inicio": dp.date,
+        "Fecha de Inicio": dp.start_date || dp.date,
+        "Fecha de Fin": dp.end_date || dp.date,
+        "Duración (Días Calendario)": days,
         "Capítulo del Presupuesto": dp.chapter || "Otros",
         "Ítem de Obra / Actividad del Cronograma": dp.task_name,
-        "Costo Directo (COP)": direct,
-        "Costo con Indirectos (COP)": total
+        "Costo Directo Total (COP)": totalDirect,
+        "Costo con Indirectos Total (COP)": totalWithIndirect,
+        "Costo Diario Directo (COP)": dailyDirect,
+        "Costo Diario con Indirectos (COP)": dailyWithIndirect
       };
     });
 
     const wsDetailed = xlsx.utils.json_to_sheet(detailedData);
 
     wsDetailed["!cols"] = [
-      { wch: 15 },
-      { wch: 35 },
-      { wch: 60 },
-      { wch: 22 },
-      { wch: 22 }
+      { wch: 15 }, // Fecha Inicio
+      { wch: 15 }, // Fecha Fin
+      { wch: 22 }, // Duración (Días)
+      { wch: 35 }, // Capítulo
+      { wch: 60 }, // Actividad
+      { wch: 25 }, // Costo Directo Total
+      { wch: 25 }, // Costo con Indirectos Total
+      { wch: 25 }, // Costo Diario Directo
+      { wch: 25 }  // Costo Diario con Indirectos
     ];
 
     xlsx.utils.book_append_sheet(wb, wsDetailed, "Flujo de Caja Mapeado");
@@ -87,7 +99,8 @@ export async function POST(req: NextRequest) {
     // 3. PESTAÑA: FLUJO MENSUAL (PIVOT PLANO PARA GRÁFICOS)
     // ===================================================
     const monthlyTotals: { [key: string]: { direct: number; total: number } } = {};
-    dataPoints.forEach(dp => {
+    const pointsForMonthly = (distributedDataPoints && distributedDataPoints.length > 0) ? distributedDataPoints : dataPoints;
+    pointsForMonthly.forEach((dp: any) => {
       if (!dp.date) return;
       const monthKey = dp.date.slice(0, 7); // YYYY-MM
       if (!monthlyTotals[monthKey]) {

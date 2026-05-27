@@ -5,7 +5,11 @@ import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface DataPoint {
   date: string;
+  start_date?: string;
+  end_date?: string;
+  working_days?: number;
   budget_required: number;
+  daily_budget?: number;
   task_name: string;
   chapter?: string;
   process_name?: string;
@@ -13,19 +17,24 @@ interface DataPoint {
 
 interface NormalizedDataPoint {
   date: string;
+  start_date: string;
+  end_date: string;
+  working_days: number;
   budget_required: number;
+  daily_budget: number;
   task_name: string;
   chapter: string;
 }
 
 interface AnalysisTableProps {
   dataPoints: DataPoint[];
+  distributedDataPoints?: any[];
   analysis?: string;
   directBudget?: number;
   totalBudget?: number;
 }
 
-export default function AnalysisTable({ dataPoints, analysis, directBudget, totalBudget }: AnalysisTableProps) {
+export default function AnalysisTable({ dataPoints, distributedDataPoints, analysis, directBudget, totalBudget }: AnalysisTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedChapter, setSelectedChapter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,12 +44,23 @@ export default function AnalysisTable({ dataPoints, analysis, directBudget, tota
 
   // Normalizar los datos de entrada garantizando que chapter no sea undefined
   const normalizedDataPoints = useMemo<NormalizedDataPoint[]>(() => {
-    return dataPoints.map((dp) => ({
-      date: dp.date,
-      budget_required: dp.budget_required,
-      task_name: dp.task_name,
-      chapter: dp.chapter || dp.process_name || "Otros",
-    }));
+    return dataPoints.map((dp) => {
+      const sDate = dp.start_date || dp.date;
+      const eDate = dp.end_date || sDate;
+      const days = dp.working_days || 1;
+      const daily = dp.daily_budget || (dp.budget_required / days);
+
+      return {
+        date: sDate,
+        start_date: sDate,
+        end_date: eDate,
+        working_days: days,
+        budget_required: dp.budget_required,
+        daily_budget: daily,
+        task_name: dp.task_name,
+        chapter: dp.chapter || dp.process_name || "Otros",
+      };
+    });
   }, [dataPoints]);
 
   // Formatear moneda a pesos (COP)
@@ -116,12 +136,15 @@ export default function AnalysisTable({ dataPoints, analysis, directBudget, tota
 
   // Exportar a CSV
   const exportToCSV = () => {
-    const headers = ["Fecha", "Capitulo", "Item de Obra", "Presupuesto Requerido (COP)"];
+    const headers = ["Fecha Inicio", "Fecha Fin", "Duracion (Dias)", "Capitulo", "Item de Obra / Tarea", "Presupuesto Total (COP)", "Presupuesto Diario (COP)"];
     const rows = filteredAndSortedData.map((dp) => [
-      dp.date,
+      dp.start_date,
+      dp.end_date,
+      dp.working_days,
       `"${dp.chapter.replace(/"/g, '""')}"`,
       `"${dp.task_name.replace(/"/g, '""')}"`,
       dp.budget_required,
+      Math.round(dp.daily_budget),
     ]);
 
     const csvContent =
@@ -150,6 +173,7 @@ export default function AnalysisTable({ dataPoints, analysis, directBudget, tota
         },
         body: JSON.stringify({
           dataPoints: normalizedDataPoints,
+          distributedDataPoints: distributedDataPoints || [],
           analysis: analysis || "",
           directBudget: directBudget || 8969704298.66,
           totalBudget: totalBudget || 9872953521.53,
@@ -320,11 +344,16 @@ export default function AnalysisTable({ dataPoints, analysis, directBudget, tota
                 className="p-4 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
               >
                 <div className="flex items-center gap-1.5">
-                  Fecha
+                  Intervalo de Fechas
                   {sortField === "date" && (
                     <span className="text-[10px]">{sortOrder === "asc" ? "▲" : "▼"}</span>
                   )}
                 </div>
+              </th>
+              <th
+                className="p-4 font-semibold text-xs uppercase tracking-wider select-none text-[var(--color-text-secondary)]"
+              >
+                Duración
               </th>
               <th
                 onClick={() => handleSort("chapter")}
@@ -353,11 +382,16 @@ export default function AnalysisTable({ dataPoints, analysis, directBudget, tota
                 className="p-4 font-semibold text-xs uppercase tracking-wider cursor-pointer select-none text-right text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
               >
                 <div className="flex items-center justify-end gap-1.5">
-                  Presupuesto (COP)
+                  Costo Total
                   {sortField === "budget_required" && (
                     <span className="text-[10px]">{sortOrder === "asc" ? "▲" : "▼"}</span>
                   )}
                 </div>
+              </th>
+              <th
+                className="p-4 font-semibold text-xs uppercase tracking-wider text-right text-[var(--color-text-secondary)]"
+              >
+                Costo Diario
               </th>
             </tr>
           </thead>
@@ -369,7 +403,13 @@ export default function AnalysisTable({ dataPoints, analysis, directBudget, tota
                   className="hover:bg-[var(--color-surface-hover)] transition-colors duration-150 group"
                 >
                   <td className="p-4 whitespace-nowrap font-mono text-xs text-[var(--color-text-secondary)]">
-                    {dp.date}
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-bold text-[var(--color-text-primary)]">{dp.start_date}</span>
+                      <span className="text-[10px] opacity-70">hasta {dp.end_date}</span>
+                    </div>
+                  </td>
+                  <td className="p-4 whitespace-nowrap font-medium text-xs text-[var(--color-text-primary)]">
+                    {dp.working_days} {dp.working_days === 1 ? "día" : "días"}
                   </td>
                   <td className="p-4 font-medium text-xs">
                     <span
@@ -385,14 +425,27 @@ export default function AnalysisTable({ dataPoints, analysis, directBudget, tota
                   <td className="p-4 text-[var(--color-text-primary)] font-medium leading-snug max-w-md break-words">
                     {dp.task_name}
                   </td>
-                  <td className="p-4 text-right font-mono font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-warning)] transition-colors">
-                    {formatCurrency(dp.budget_required)}
+                  <td className="p-4 text-right font-mono font-bold text-[var(--color-text-primary)] transition-colors">
+                    {dp.budget_required === 0 ? (
+                      <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] border border-[var(--color-border)]">
+                        Hito (Sin costo)
+                      </span>
+                    ) : (
+                      formatCurrency(dp.budget_required)
+                    )}
+                  </td>
+                  <td className="p-4 text-right font-mono font-extrabold text-[var(--color-warning)] transition-colors">
+                    {dp.budget_required === 0 ? (
+                      <span className="text-xs text-[var(--color-text-tertiary)] italic font-normal">—</span>
+                    ) : (
+                      formatCurrency(dp.daily_budget)
+                    )}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="p-12 text-center text-[var(--color-text-tertiary)] italic">
+                <td colSpan={6} className="p-12 text-center text-[var(--color-text-tertiary)] italic">
                   Ningún registro coincide con los filtros aplicados.
                 </td>
               </tr>
