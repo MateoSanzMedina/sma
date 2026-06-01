@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from app.services.analysis_service import process_analysis
 import json
 
@@ -7,7 +7,8 @@ router = APIRouter()
 @router.post("/analysis/process")
 async def analyze_files(
     schedule: UploadFile = File(...),
-    budget: UploadFile = File(...)
+    budget: UploadFile = File(...),
+    prorate_orphans: bool = Form(True)
 ):
     """
     Recibe un archivo de cronograma (CSV/XLSX) y un presupuesto (XLSX).
@@ -23,7 +24,8 @@ async def analyze_files(
             schedule_content, 
             schedule.filename,
             budget_content,
-            budget.filename
+            budget.filename,
+            prorate_orphans
         )
         
         return {"success": True, "data": result}

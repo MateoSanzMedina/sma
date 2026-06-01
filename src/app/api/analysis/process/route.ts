@@ -101,51 +101,75 @@ function getWordTokens(text: string): string[] {
     .filter(w => w.length > 1 && !stopwords.has(w));
 }
 
-function calculateSemanticSimilarity(itemDesc: string, taskName: string): number {
-  const itemTokens = getWordTokens(itemDesc);
+function calculateSemanticSimilarity(itemDesc: string, itemChapter: string, taskName: string): number {
+  const descTokens = getWordTokens(itemDesc);
+  const chapterTokens = getWordTokens(itemChapter);
   const taskTokens = getWordTokens(taskName);
 
-  if (itemTokens.length === 0 || taskTokens.length === 0) return 0;
+  if (taskTokens.length === 0) return 0;
 
-  let matchScore = 0;
-
-  itemTokens.forEach(iTok => {
-    let bestTokenScore = 0;
-
-    taskTokens.forEach(tTok => {
-      let currentScore = 0;
-
-      // 1. Coincidencia exacta
-      if (iTok === tTok) {
-        currentScore = 1.0;
-      }
-      // 2. Coincidencia por raíces / prefijos comunes (mínimo 4 caracteres)
-      else if (iTok.length >= 4 && tTok.length >= 4 && (iTok.startsWith(tTok.substring(0, 4)) || tTok.startsWith(iTok.substring(0, 4)))) {
-        currentScore = 0.8;
-      }
-      // 3. Coincidencia por grupo de sinónimos de construcción
-      else {
-        const shareGroup = SYNONYM_GROUPS.some(group => group.includes(iTok) && group.includes(tTok));
-        if (shareGroup) {
-          currentScore = 0.6;
+  // 1. Similitud con la descripción (Costo Directo)
+  let descScore = 0;
+  if (descTokens.length > 0) {
+    let matchScore = 0;
+    descTokens.forEach(iTok => {
+      let bestTokenScore = 0;
+      taskTokens.forEach(tTok => {
+        let currentScore = 0;
+        if (iTok === tTok) {
+          currentScore = 1.0;
+        } else if (iTok.length >= 4 && tTok.length >= 4 && (iTok.startsWith(tTok.substring(0, 4)) || tTok.startsWith(iTok.substring(0, 4)))) {
+          currentScore = 0.8;
+        } else {
+          const shareGroup = SYNONYM_GROUPS.some(group => group.includes(iTok) && group.includes(tTok));
+          if (shareGroup) {
+            currentScore = 0.6;
+          }
         }
-      }
-
-      if (currentScore > bestTokenScore) {
-        bestTokenScore = currentScore;
-      }
+        if (currentScore > bestTokenScore) {
+          bestTokenScore = currentScore;
+        }
+      });
+      matchScore += bestTokenScore;
     });
+    // Coeficiente de Traslape para evitar penalización por descripciones largas
+    descScore = matchScore / Math.min(descTokens.length, taskTokens.length);
+  }
 
-    matchScore += bestTokenScore;
-  });
+  // 2. Similitud con el Capítulo (Contexto de Obra)
+  let chapterScore = 0;
+  if (chapterTokens.length > 0) {
+    let matchScore = 0;
+    chapterTokens.forEach(cTok => {
+      let bestTokenScore = 0;
+      taskTokens.forEach(tTok => {
+        let currentScore = 0;
+        if (cTok === tTok) {
+          currentScore = 1.0;
+        } else if (cTok.length >= 4 && tTok.length >= 4 && (cTok.startsWith(tTok.substring(0, 4)) || tTok.startsWith(cTok.substring(0, 4)))) {
+          currentScore = 0.8;
+        } else {
+          const shareGroup = SYNONYM_GROUPS.some(group => group.includes(cTok) && group.includes(tTok));
+          if (shareGroup) {
+            currentScore = 0.6;
+          }
+        }
+        if (currentScore > bestTokenScore) {
+          bestTokenScore = currentScore;
+        }
+      });
+      matchScore += bestTokenScore;
+    });
+    chapterScore = matchScore / Math.min(chapterTokens.length, taskTokens.length);
+  }
 
-  // Normalizar dividiendo por el total de tokens de la descripción del presupuesto
-  return matchScore / itemTokens.length;
+  // Ponderación final (Costo Directo + 30% del Capítulo de Contexto)
+  return descScore + 0.3 * chapterScore;
 }
 
-function getTopBudgetCandidates(task: ScheduleItem, budgets: BudgetItem[], count = 5): BudgetItem[] {
+function getTopBudgetCandidates(task: ScheduleItem, budgets: BudgetItem[], count = 12): BudgetItem[] {
   const scored = budgets.map(budget => {
-    const score = calculateSemanticSimilarity(budget.desc, task.name);
+    const score = calculateSemanticSimilarity(budget.desc, budget.chapter, task.name);
     return { budget, score };
   });
 
@@ -476,6 +500,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const scheduleFile = formData.get("schedule") as File | null;
     const budgetFile = formData.get("budget") as File | null;
+    const prorateOrphans = formData.get("prorateOrphans") !== "false";
 
     if (!scheduleFile || !budgetFile) {
       return NextResponse.json(
@@ -500,18 +525,18 @@ export async function POST(req: NextRequest) {
     const scheduleWorksheet = scheduleWorkbook.Sheets[scheduleSheetName];
     const scheduleItemsRaw = parseScheduleSheet(scheduleWorksheet);
 
-    // Filtrar para quedarnos únicamente con tareas específicas de nivel 3 o superior (tareas granulares)
-    let scheduleItems = scheduleItemsRaw.filter(t => t.level >= 3);
+    // Filtrar para quedarnos con tareas de nivel 2 o superior (tareas de control y granulares), excluyendo el nodo raíz (nivel 1)
+    let scheduleItems = scheduleItemsRaw.filter(t => t.level >= 2);
     if (scheduleItems.length === 0) {
       scheduleItems = scheduleItemsRaw;
     }
 
-    // Extraer tareas contenedoras / capítulos de nivel inferior a 3 (fases) para servir como backup jerárquico secundario
+    // Extraer tareas contenedoras / capítulos de nivel inferior a 2 (nodo raíz) para servir como backup jerárquico secundario
     const phaseTasks = scheduleItemsRaw
-      .filter(t => t.level < 3 && t.name && t.start)
+      .filter(t => t.level < 2 && t.name && t.start)
       .map(t => ({ name: t.name, start: t.start, end: t.end }));
 
-    console.log(`Cronograma: Parseadas ${scheduleItemsRaw.length} tareas totales. Granulares (nivel >= 3): ${scheduleItems.length}. Fases/Capítulos: ${phaseTasks.length}.`);
+    console.log(`Cronograma: Parseadas ${scheduleItemsRaw.length} tareas totales. De control/granulares (nivel >= 2): ${scheduleItems.length}. Fases/Capítulos: ${phaseTasks.length}.`);
 
     // Fecha de inicio por defecto del proyecto como fallback
     const fallbackDate = scheduleItems.find(t => t.start && t.start.includes("-"))?.start || "2026-02-02";
@@ -548,7 +573,7 @@ export async function POST(req: NextRequest) {
 
     // 4. Pre-matching semántico local de tareas del cronograma
     const enrichedScheduleItems: ScheduleItemWithCandidates[] = scheduleItems.map(task => {
-      const candidates = getTopBudgetCandidates(task, budgetItems, 5);
+      const candidates = getTopBudgetCandidates(task, budgetItems, 12);
       return {
         ...task,
         candidate_budgets: candidates
@@ -591,13 +616,15 @@ ${JSON.stringify(batch)}
 `,
             config: {
               systemInstruction: `Eres un analista senior de control de costos de Constructora Serving S.A.S.
-Tu tarea es asociar cada una de las tareas del cronograma de obra (MS Project) con el ítem de presupuesto más adecuado.
+Tu tarea es asociar cada una de las tareas del cronograma de obra (MS Project) con el ítem de presupuesto más adecuado de sus candidatos.
 
 REGLAS MANDATORIAS:
 1. NO RESUMAS ni agrupes. Debes generar exactamente un dataPoint por cada tarea recibida en este lote (recibiste exactamente ${batch.length} tareas).
 2. Para cada tarea, analiza sus "candidate_budgets". Asocia la tarea al candidato de presupuesto que tenga la relación conceptual y de control de obra más lógica. Copia exactamente su código de presupuesto en "budget_item_code".
-3. Si consideras que NINGUNO de los "candidate_budgets" sugeridos aplica o representa un hito sin costo directo (reuniones de comité, firmas de actas, actas de vecindad, entregas de planos, etc.), es OBLIGATORIO que asignes "budget_item_code" con el valor exacto de "sin_presupuesto".
-4. Devuelve en "id" el ID único de la tarea ("id"), en "task_name" el nombre original de la tarea del cronograma, en "start_date" su fecha de inicio ("start"), en "end_date" su fecha de fin ("end"), y en "chapter" el capítulo original del presupuesto candidato seleccionado (o "Otros" si es sin presupuesto).`,
+3. Sé flexible con sinónimos, capítulos y contextos jerárquicos. Por ejemplo, la tarea 'pavimentación' en el cronograma debe asociarse al ítem de presupuesto 'Suministro y colocacion de pavimento' (aunque este último esté bajo el capítulo 'ESTRUCTURA'). Del mismo modo, tareas con nombres de 'base', 'subbase' o 'cajeo de vía' deben asociarse a sus respectivos ítems de bases granulares o excavaciones en el presupuesto, y tareas de 'cordoneria' o 'vaciado de anden' deben asociarse a andenes, sardineles y bordillos.
+4. Tareas que mencionan 'porteria' (por ejemplo, 'Vía externa y urbanismo porteria (eje 1)') representan la portería física de la obra, y deben asociarse a los ítems de presupuesto del capítulo 'PORTERIA' (como 'Construccion de porteria' o 'Cubierta metalica para la portería').
+5. Si consideras que NINGUNO de los "candidate_budgets" sugeridos aplica en absoluto, o representa un hito puramente administrativo/logístico sin costo de obra física (comités de obra, actas de vecindad, entregas de planos, firmas de contratos, etc.), asigna "budget_item_code" con el valor exacto de "sin_presupuesto".
+6. Devuelve en "id" el ID único de la tarea ("id"), en "task_name" el nombre original de la tarea del cronograma, en "start_date" su fecha de inicio ("start"), en "end_date" su fecha de fin ("end"), y en "chapter" el capítulo original del presupuesto candidato seleccionado (o "Otros" si es sin presupuesto).`,
               responseMimeType: "application/json",
               responseSchema: {
                 type: "OBJECT",
@@ -722,35 +749,55 @@ REGLAS MANDATORIAS:
     });
 
     // Redistribuir ítems de presupuesto huérfanos (que no fueron mapeados a ninguna tarea por la IA)
-    const chapterToTasks: { [key: string]: MappedDataPoint[] } = {};
-    allDataPoints.forEach(task => {
-      const ch = task.chapter || "Otros";
-      if (!chapterToTasks[ch]) {
-        chapterToTasks[ch] = [];
-      }
-      chapterToTasks[ch].push(task);
-    });
+    if (prorateOrphans) {
+      const chapterToTasks: { [key: string]: MappedDataPoint[] } = {};
+      allDataPoints.forEach(task => {
+        const ch = task.chapter || "Otros";
+        if (!chapterToTasks[ch]) {
+          chapterToTasks[ch] = [];
+        }
+        chapterToTasks[ch].push(task);
+      });
 
-    budgetItems.forEach(b => {
-      const code = String(b.code).trim();
-      const M = itemCodeToTasksCount[code] || 0;
-      if (M === 0 && b.val > 0) {
-        const tasksInChapter = chapterToTasks[b.chapter] || [];
-        if (tasksInChapter.length > 0) {
-          console.log(`[Costo Split] Redistribuyendo ítem huérfano "${b.desc}" ($${b.val}) entre ${tasksInChapter.length} tareas del capítulo "${b.chapter}".`);
-          const share = b.val / tasksInChapter.length;
-          tasksInChapter.forEach(task => {
-            task.budget_required += share;
-          });
-        } else if (allDataPoints.length > 0) {
-          console.log(`[Costo Split] Redistribuyendo ítem huérfano "${b.desc}" ($${b.val}) entre todas las tareas registradas.`);
-          const share = b.val / allDataPoints.length;
-          allDataPoints.forEach(task => {
-            task.budget_required += share;
+      budgetItems.forEach(b => {
+        const code = String(b.code).trim();
+        const M = itemCodeToTasksCount[code] || 0;
+        if (M === 0 && b.val > 0) {
+          const tasksInChapter = chapterToTasks[b.chapter] || [];
+          if (tasksInChapter.length > 0) {
+            console.log(`[Costo Split] Redistribuyendo ítem huérfano "${b.desc}" ($${b.val}) entre ${tasksInChapter.length} tareas del capítulo "${b.chapter}".`);
+            const share = b.val / tasksInChapter.length;
+            tasksInChapter.forEach(task => {
+              task.budget_required += share;
+            });
+          } else if (allDataPoints.length > 0) {
+            console.log(`[Costo Split] Redistribuyendo ítem huérfano "${b.desc}" ($${b.val}) entre todas las tareas registradas.`);
+            const share = b.val / allDataPoints.length;
+            allDataPoints.forEach(task => {
+              task.budget_required += share;
+            });
+          }
+        }
+      });
+    } else {
+      // Si no se prorratea, cada ítem de presupuesto huérfano se lista de forma individual
+      // al final como un proceso virtual en el capítulo especial "Presupuesto Sin Asignar / Huérfano"
+      budgetItems.forEach(b => {
+        const code = String(b.code).trim();
+        const M = itemCodeToTasksCount[code] || 0;
+        if (M === 0 && b.val > 0) {
+          allDataPoints.push({
+            id: `orphan-${code}`,
+            start_date: "", // Se mantiene vacío al no tener fecha
+            end_date: "",
+            budget_required: b.val,
+            task_name: `[PROCESO NO ASIGNADO] ${b.desc}`,
+            chapter: "Presupuesto Sin Asignar / Huérfano",
+            budget_item_code: code,
           });
         }
-      }
-    });
+      });
+    }
 
     console.log(`Consolidados y costeados por Costo Split exitosamente ${allDataPoints.length} puntos de datos primarios.`);
 
@@ -781,15 +828,16 @@ REGLAS MANDATORIAS:
     const distributedDataPoints: DistributedDataPoint[] = [];
 
     allDataPoints.forEach(dp => {
-      const sDate = dp.start_date || dp.date || fallbackDate;
-      const eDate = dp.end_date || sDate;
+      const isOrphan = dp.chapter === "Presupuesto Sin Asignar / Huérfano";
+      const sDate = isOrphan ? "" : (dp.start_date || dp.date || fallbackDate);
+      const eDate = isOrphan ? "" : (dp.end_date || sDate);
 
       // Calcular días calendario consecutivos
-      const calendarDays = getCalendarDaysInRange(sDate, eDate);
+      const calendarDays = isOrphan ? [] : getCalendarDaysInRange(sDate, eDate);
       const duration = calendarDays.length;
 
       const totalVal = dp.budget_required || 0;
-      const dailyVal = duration > 0 ? totalVal / duration : totalVal;
+      const dailyVal = duration > 0 ? totalVal / duration : 0;
 
       processedDataPoints.push({
         start_date: sDate,

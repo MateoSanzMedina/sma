@@ -48,41 +48,71 @@ def get_word_tokens(text):
     }
     return [w.strip() for w in words if len(w.strip()) > 1 and w.strip() not in stopwords]
 
-def calculate_semantic_similarity(item_desc, task_name):
-    item_tokens = get_word_tokens(item_desc)
+def calculate_semantic_similarity(item_desc, item_chapter, task_name):
+    desc_tokens = get_word_tokens(item_desc)
+    chapter_tokens = get_word_tokens(item_chapter)
     task_tokens = get_word_tokens(task_name)
     
-    if not item_tokens or not task_tokens:
+    if not task_tokens:
         return 0
         
-    match_score = 0
-    for i_tok in item_tokens:
-        best_token_score = 0
-        for t_tok in task_tokens:
-            current_score = 0
-            if i_tok == t_tok:
-                current_score = 1.0
-            elif len(i_tok) >= 4 and len(t_tok) >= 4 and (i_tok.startswith(t_tok[:4]) or t_tok.startswith(i_tok[:4])):
-                current_score = 0.8
-            else:
-                share_group = False
-                for group in SYNONYM_GROUPS:
-                    if i_tok in group and t_tok in group:
-                        share_group = True
-                        break
-                if share_group:
-                    current_score = 0.6
-                    
-            if current_score > best_token_score:
-                best_token_score = current_score
-        match_score += best_token_score
+    # 1. Similitud con la descripción (Costo Directo)
+    desc_score = 0
+    if desc_tokens:
+        match_score = 0
+        for i_tok in desc_tokens:
+            best_token_score = 0
+            for t_tok in task_tokens:
+                current_score = 0
+                if i_tok == t_tok:
+                    current_score = 1.0
+                elif len(i_tok) >= 4 and len(t_tok) >= 4 and (i_tok.startswith(t_tok[:4]) or t_tok.startswith(i_tok[:4])):
+                    current_score = 0.8
+                else:
+                    share_group = False
+                    for group in SYNONYM_GROUPS:
+                        if i_tok in group and t_tok in group:
+                            share_group = True
+                            break
+                    if share_group:
+                        current_score = 0.6
+                if current_score > best_token_score:
+                    best_token_score = current_score
+            match_score += best_token_score
+        desc_score = match_score / min(len(desc_tokens), len(task_tokens))
         
-    return match_score / len(item_tokens)
+    # 2. Similitud con el Capítulo (Contexto de Obra)
+    chapter_score = 0
+    if chapter_tokens:
+        match_score = 0
+        for c_tok in chapter_tokens:
+            best_token_score = 0
+            for t_tok in task_tokens:
+                current_score = 0
+                if c_tok == t_tok:
+                    current_score = 1.0
+                elif len(c_tok) >= 4 and len(t_tok) >= 4 and (c_tok.startswith(t_tok[:4]) or t_tok.startswith(c_tok[:4])):
+                    current_score = 0.8
+                else:
+                    share_group = False
+                    for group in SYNONYM_GROUPS:
+                        if c_tok in group and t_tok in group:
+                            share_group = True
+                            break
+                    if share_group:
+                        current_score = 0.6
+                if current_score > best_token_score:
+                    best_token_score = current_score
+            match_score += best_token_score
+        chapter_score = match_score / min(len(chapter_tokens), len(task_tokens))
+        
+    # Ponderación final (Costo Directo + 30% del Capítulo de Contexto)
+    return desc_score + 0.3 * chapter_score
 
-def get_top_budget_candidates(task, budgets, count=5):
+def get_top_budget_candidates(task, budgets, count=12):
     scored = []
     for b in budgets:
-        score = calculate_semantic_similarity(b["desc"], task["name"])
+        score = calculate_semantic_similarity(b["desc"], b["chapter"], task["name"])
         scored.append({"budget": b, "score": score})
     
     scored.sort(key=lambda x: (-x["score"], x["budget"]["desc"]))
@@ -107,7 +137,7 @@ def parse_spanish_date(date_str):
     except:
         return date_str
 
-async def process_analysis(schedule_content: bytes, schedule_name: str, budget_content: bytes, budget_name: str):
+async def process_analysis(schedule_content: bytes, schedule_name: str, budget_content: bytes, budget_name: str, prorate_orphans: bool = True):
     """
     Servicio lógico de análisis de costos con mapeo de procesos (Tasks -> Budget Items) y Costo Split.
     """
@@ -142,7 +172,7 @@ async def process_analysis(schedule_content: bytes, schedule_name: str, budget_c
                         "level": level_val
                     })
                     
-        schedule_items = [t for t in schedule_items_raw if t["level"] >= 3]
+        schedule_items = [t for t in schedule_items_raw if t["level"] >= 2]
         if not schedule_items:
             schedule_items = schedule_items_raw
 
@@ -226,7 +256,7 @@ async def process_analysis(schedule_content: bytes, schedule_name: str, budget_c
         # 3. Pre-matching semántico local de tareas del cronograma
         enriched_schedule_items = []
         for task in schedule_items:
-            candidates = get_top_budget_candidates(task, budget_items, 5)
+            candidates = get_top_budget_candidates(task, budget_items, 12)
             enriched_schedule_items.append({
                 **task,
                 "candidate_budgets": candidates
@@ -285,8 +315,10 @@ LISTA DE TAREAS DEL CRONOGRAMA CON ÍTEMS DE PRESUPUESTO CANDIDATOS SUGERIDOS:
 INSTRUCCIONES MANDATORIAS:
 1. NO RESUMAS ni agrupes. Debes generar exactamente un dataPoint por cada tarea recibida en este lote (recibiste exactamente {len(batch)} tareas).
 2. Para cada tarea, analiza sus "candidate_budgets". Asocia la tarea al candidato de presupuesto que tenga la relación conceptual y de control de obra más lógica. Copia exactamente su código de presupuesto en "budget_item_code".
-3. Si consideras que NINGUNO de los "candidate_budgets" sugeridos aplica o representa un hito sin costo directo (reuniones de comité, firmas de actas, actas de vecindad, entregas de planos, etc.), es OBLIGATORIO que asignes "budget_item_code" con el valor exacto de "sin_presupuesto".
-4. Devuelve en "id" el ID único de la tarea ("id"), en "task_name" el nombre original de la tarea del cronograma, en "start_date" su fecha de inicio ("start"), en "end_date" su fecha de fin ("end"), y en "chapter" el capítulo original del presupuesto candidato seleccionado (o "Otros" si es sin presupuesto).
+3. Sé flexible con sinónimos, capítulos y contextos jerárquicos. Por ejemplo, la tarea 'pavimentación' en el cronograma debe asociarse al ítem de presupuesto 'Suministro y colocacion de pavimento' (aunque este último esté bajo el capítulo 'ESTRUCTURA'). Del mismo modo, tareas con nombres de 'base', 'subbase' o 'cajeo de vía' deben asociarse a sus respectivos ítems de bases granulares o excavaciones en el presupuesto, y tareas de 'cordoneria' o 'vaciado de anden' deben asociarse a andenes, sardineles y bordillos.
+4. Tareas que mencionan 'porteria' (por ejemplo, 'Vía externa y urbanismo porteria (eje 1)') representan la portería física de la obra, y deben asociarse a los ítems de presupuesto del capítulo 'PORTERIA' (como 'Construccion de porteria' o 'Cubierta metalica para la portería').
+5. Si consideras que NINGUNO de los "candidate_budgets" sugeridos aplica en absoluto, o representa un hito puramente administrativo/logístico sin costo de obra física (comités de obra, actas de vecindad, entregas de planos, firmas de contratos, etc.), asigna "budget_item_code" con el valor exacto de "sin_presupuesto".
+6. Devuelve en "id" el ID único de la tarea ("id"), en "task_name" el nombre original de la tarea del cronograma, en "start_date" su fecha de inicio ("start"), en "end_date" su fecha de fin ("end"), y en "chapter" el capítulo original del presupuesto candidato seleccionado (o "Otros" si es sin presupuesto).
 
 RESPUESTA JSON:
 {{
@@ -350,26 +382,43 @@ RESPUESTA JSON:
                 dp["budget_required"] = 0.0
 
         # Identificar ítems huérfanos y redistribuirlos por capítulos
-        chapter_to_tasks = {}
-        for dp in all_data_points:
-            ch = dp.get("chapter") or "Otros"
-            if ch not in chapter_to_tasks:
-                chapter_to_tasks[ch] = []
-            chapter_to_tasks[ch].append(dp)
+        if prorate_orphans:
+            chapter_to_tasks = {}
+            for dp in all_data_points:
+                ch = dp.get("chapter") or "Otros"
+                if ch not in chapter_to_tasks:
+                    chapter_to_tasks[ch] = []
+                chapter_to_tasks[ch].append(dp)
 
-        for b in budget_items:
-            code = str(b["code"]).strip()
-            M = item_code_to_tasks_count.get(code, 0)
-            if M == 0 and b["val"] > 0:
-                tasks_in_chapter = chapter_to_tasks.get(b["chapter"], [])
-                if tasks_in_chapter:
-                    share = b["val"] / len(tasks_in_chapter)
-                    for dp in tasks_in_chapter:
-                        dp["budget_required"] += share
-                elif all_data_points:
-                    share = b["val"] / len(all_data_points)
-                    for dp in all_data_points:
-                        dp["budget_required"] += share
+            for b in budget_items:
+                code = str(b["code"]).strip()
+                M = item_code_to_tasks_count.get(code, 0)
+                if M == 0 and b["val"] > 0:
+                    tasks_in_chapter = chapter_to_tasks.get(b["chapter"], [])
+                    if tasks_in_chapter:
+                        share = b["val"] / len(tasks_in_chapter)
+                        for dp in tasks_in_chapter:
+                            dp["budget_required"] += share
+                    elif all_data_points:
+                        share = b["val"] / len(all_data_points)
+                        for dp in all_data_points:
+                            dp["budget_required"] += share
+        else:
+            # Si no se prorratea, cada ítem de presupuesto huérfano se lista de forma individual
+            # al final como un proceso virtual en el capítulo especial "Presupuesto Sin Asignar / Huérfano"
+            for b in budget_items:
+                code = str(b["code"]).strip()
+                M = item_code_to_tasks_count.get(code, 0)
+                if M == 0 and b["val"] > 0:
+                    all_data_points.append({
+                        "id": f"orphan-{code}",
+                        "start_date": "", # Se mantiene vacío al no tener fecha
+                        "end_date": "",
+                        "budget_required": b["val"],
+                        "task_name": f"[PROCESO NO ASIGNADO] {b['desc']}",
+                        "chapter": "Presupuesto Sin Asignar / Huérfano",
+                        "budget_item_code": code
+                    })
 
         # 6. DISTRIBUCIÓN DIARIA DE COSTOS SOBRE DÍAS CALENDARIO
         def get_calendar_days_in_range(start_str, end_str):
@@ -391,14 +440,15 @@ RESPUESTA JSON:
         distributed_points = []
 
         for dp in all_data_points:
-            s_date = dp.get("start_date") or fallback_date
-            e_date = dp.get("end_date") or s_date
+            is_orphan = dp.get("chapter") == "Presupuesto Sin Asignar / Huérfano"
+            s_date = "" if is_orphan else (dp.get("start_date") or fallback_date)
+            e_date = "" if is_orphan else (dp.get("end_date") or s_date)
             
-            calendar_days = get_calendar_days_in_range(s_date, e_date)
+            calendar_days = [] if is_orphan else get_calendar_days_in_range(s_date, e_date)
             duration = len(calendar_days)
             
             total_val = dp.get("budget_required", 0.0)
-            daily_val = total_val / duration if duration > 0 else total_val
+            daily_val = total_val / duration if duration > 0 else 0.0
 
             processed_points.append({
                 "start_date": s_date,

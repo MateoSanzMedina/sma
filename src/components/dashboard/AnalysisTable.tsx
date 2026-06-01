@@ -45,10 +45,10 @@ export default function AnalysisTable({ dataPoints, distributedDataPoints, analy
   // Normalizar los datos de entrada garantizando que chapter no sea undefined
   const normalizedDataPoints = useMemo<NormalizedDataPoint[]>(() => {
     return dataPoints.map((dp) => {
-      const sDate = dp.start_date || dp.date;
-      const eDate = dp.end_date || sDate;
-      const days = dp.working_days || 1;
-      const daily = dp.daily_budget || (dp.budget_required / days);
+      const sDate = dp.start_date || dp.date || "";
+      const eDate = dp.end_date || sDate || "";
+      const days = dp.working_days || 0;
+      const daily = dp.daily_budget || (days > 0 ? dp.budget_required / days : 0);
 
       return {
         date: sDate,
@@ -115,7 +115,9 @@ export default function AnalysisTable({ dataPoints, distributedDataPoints, analy
     result.sort((a, b) => {
       let comparison = 0;
       if (sortField === "date") {
-        comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+        const timeA = a.date ? new Date(a.date).getTime() : 0;
+        const timeB = b.date ? new Date(b.date).getTime() : 0;
+        comparison = timeA - timeB;
       } else if (sortField === "budget_required") {
         comparison = a.budget_required - b.budget_required;
       } else {
@@ -403,20 +405,28 @@ export default function AnalysisTable({ dataPoints, distributedDataPoints, analy
                   className="hover:bg-[var(--color-surface-hover)] transition-colors duration-150 group"
                 >
                   <td className="p-4 whitespace-nowrap font-mono text-xs text-[var(--color-text-secondary)]">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-bold text-[var(--color-text-primary)]">{dp.start_date}</span>
-                      <span className="text-[10px] opacity-70">hasta {dp.end_date}</span>
-                    </div>
+                    {dp.chapter === "Presupuesto Sin Asignar / Huérfano" ? (
+                      <span className="text-xs text-[var(--color-text-tertiary)] italic">—</span>
+                    ) : (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-[var(--color-text-primary)]">{dp.start_date}</span>
+                        <span className="text-[10px] opacity-70">hasta {dp.end_date}</span>
+                      </div>
+                    )}
                   </td>
                   <td className="p-4 whitespace-nowrap font-medium text-xs text-[var(--color-text-primary)]">
-                    {dp.working_days} {dp.working_days === 1 ? "día" : "días"}
+                    {dp.chapter === "Presupuesto Sin Asignar / Huérfano" ? (
+                      <span className="text-xs text-[var(--color-text-tertiary)] italic">—</span>
+                    ) : (
+                      `${dp.working_days} ${dp.working_days === 1 ? "día" : "días"}`
+                    )}
                   </td>
                   <td className="p-4 font-medium text-xs">
                     <span
                       className="px-2.5 py-1 rounded-full text-[10px] font-bold"
                       style={{
-                        backgroundColor: "var(--color-primary-light)",
-                        color: "var(--color-primary)",
+                        backgroundColor: dp.chapter === "Presupuesto Sin Asignar / Huérfano" ? "rgba(239, 68, 68, 0.1)" : "var(--color-primary-light)",
+                        color: dp.chapter === "Presupuesto Sin Asignar / Huérfano" ? "var(--color-error)" : "var(--color-primary)",
                       }}
                     >
                       {dp.chapter}
@@ -435,7 +445,7 @@ export default function AnalysisTable({ dataPoints, distributedDataPoints, analy
                     )}
                   </td>
                   <td className="p-4 text-right font-mono font-extrabold text-[var(--color-warning)] transition-colors">
-                    {dp.budget_required === 0 ? (
+                    {dp.budget_required === 0 || dp.chapter === "Presupuesto Sin Asignar / Huérfano" ? (
                       <span className="text-xs text-[var(--color-text-tertiary)] italic font-normal">—</span>
                     ) : (
                       formatCurrency(dp.daily_budget)

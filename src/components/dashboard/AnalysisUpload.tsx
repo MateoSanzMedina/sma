@@ -26,6 +26,7 @@ interface AnalysisUploadProps {
 export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadProps) {
   const [scheduleFile, setScheduleFile] = useState<File | null>(null);
   const [budgetFile, setBudgetFile] = useState<File | null>(null);
+  const [prorateOrphans, setProrateOrphans] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,6 +71,7 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
     const formData = new FormData();
     formData.append("schedule", scheduleFile);
     formData.append("budget", budgetFile);
+    formData.append("prorateOrphans", String(prorateOrphans));
 
     try {
       const response = await fetch("/api/analysis/process", {
@@ -234,7 +236,28 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center pt-6 border-t mt-auto" style={{ borderColor: "var(--color-border)" }}>
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-6 border-t mt-auto gap-4" style={{ borderColor: "var(--color-border)" }}>
+        <div className="flex items-center gap-3 select-none mr-auto">
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={prorateOrphans}
+              onChange={(e) => setProrateOrphans(e.target.checked)}
+              className="sr-only peer"
+              disabled={loading}
+            />
+            <div className="w-11 h-6 bg-white/10 rounded-full peer peer-focus:ring-2 peer-focus:ring-[var(--color-primary)]/50 peer-checked:bg-[var(--color-primary)] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+          </label>
+          <div className="flex flex-col text-left">
+            <span className="text-sm font-bold" style={{ color: "var(--color-text-primary)" }}>
+              Prorratear ítems sin asignar
+            </span>
+            <span className="text-[11px]" style={{ color: "var(--color-text-secondary)" }}>
+              Si se desactiva, los excedentes se listarán individualmente al final
+            </span>
+          </div>
+        </div>
+
         <button
           onClick={handleSubmit}
           disabled={!scheduleFile || !budgetFile || loading}
