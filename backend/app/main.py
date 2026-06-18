@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.analysis import router as analysis_router
+from app.api.payroll import router as payroll_router
+from app.api.costs import router as costs_router
 import uvicorn
 
 app = FastAPI(
@@ -20,6 +22,8 @@ app.add_middleware(
 
 # Incluir routers
 app.include_router(analysis_router, prefix="/api/v1", tags=["Analysis"])
+app.include_router(payroll_router, prefix="/api/v1/payroll", tags=["Payroll"])
+app.include_router(costs_router, prefix="/api/v1/costs", tags=["Costs"])
 
 @app.get("/")
 async def root():

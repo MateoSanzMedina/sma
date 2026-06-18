@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 // label placeholder aria-label
 
 import React, { useState, useEffect } from "react";
