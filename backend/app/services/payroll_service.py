@@ -7,7 +7,6 @@ def clean_numeric(val):
         return 0.0
     if isinstance(val, (int, float)):
         return float(val)
-    # Si es string, limpiar caracteres como $, comas, espacios
     val_str = str(val).replace("$", "").replace(",", "").replace(" ", "").strip()
     try:
         return float(val_str)
@@ -17,43 +16,77 @@ def clean_numeric(val):
 def find_column(columns, keywords):
     for col in columns:
         col_str = str(col).lower().strip()
-        # Verificar si alguna palabra clave coincide exactamente o está contenida
         if any(kw in col_str for kw in keywords):
             return col
     return None
 
 async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, arus_content: bytes, arus_filename: str):
     """
-    Lee un archivo de nómina de SIIMED y una planilla de ARUS.
+    Lee un archivo de nómina de SIIMED y una planilla de ARUS (en formato Planilla seguridad social).
     Extrae cédulas, nombres, IBCs y aportes, y los compara.
-    Si no encuentra columnas válidas, procesa en modo demo para ilustrar el flujo.
     """
     
-    # 1. Intentar leer SIIMED
+    # 1. Leer SIIMED (intentar cabecera automática o fila 4/6)
     try:
         if siimed_filename.endswith(".csv"):
             df_siimed = pd.read_csv(io.BytesIO(siimed_content))
         else:
-            df_siimed = pd.read_excel(io.BytesIO(siimed_content))
+            # Buscar la cabecera real (por si hay títulos arriba)
+            df_temp = pd.read_excel(io.BytesIO(siimed_content), header=None, nrows=10)
+            header_row_idx = 0
+            for idx, row in df_temp.iterrows():
+                row_str = [str(x).lower().strip() for x in row.values]
+                if any("cedula" in s or "documento" in s or "nit" in s for s in row_str):
+                    header_row_idx = idx
+                    break
+            df_siimed = pd.read_excel(io.BytesIO(siimed_content), skiprows=header_row_idx)
     except Exception as e:
         df_siimed = pd.DataFrame()
         
-    # 2. Intentar leer ARUS
+    # 2. Leer ARUS (Buscar la hoja correcta y encontrar la fila de cabecera)
     try:
-        df_arus = pd.read_excel(io.BytesIO(arus_content))
+        xl = pd.ExcelFile(io.BytesIO(arus_content))
+        sheet_name = "Planilla seguridad social" if "Planilla seguridad social" in xl.sheet_names else xl.sheet_names[0]
+        
+        df_temp = pd.read_excel(io.BytesIO(arus_content), sheet_name=sheet_name, header=None, nrows=10)
+        header_row_idx = 0
+        for idx, row in df_temp.iterrows():
+            row_str = [str(x).lower().strip() for x in row.values]
+            if "documento cotizante" in row_str or "documento" in row_str:
+                header_row_idx = idx
+                break
+                
+        df_arus = pd.read_excel(io.BytesIO(arus_content), sheet_name=sheet_name, skiprows=header_row_idx)
     except Exception as e:
         df_arus = pd.DataFrame()
 
-    # Sanitizar columnas quitando espacios y pasando a minúsculas
+    # Sanitizar columnas quitando espacios
     siimed_cols = [str(c).strip() for c in df_siimed.columns] if not df_siimed.empty else []
     arus_cols = [str(c).strip() for c in df_arus.columns] if not df_arus.empty else []
     
-    # Buscar identificador y nombre
+    # Buscar identificador y nombre en SIIMED
     siimed_id_col = find_column(df_siimed.columns, ["cedula", "documento", "identificacion", "nit", "cc", "nro_ident"])
     siimed_name_col = find_column(df_siimed.columns, ["nombre", "empleado", "trabajador", "tercero"])
     
-    arus_id_col = find_column(df_arus.columns, ["cedula", "documento", "identificacion", "nit", "cc", "nro_ident"])
-    arus_name_col = find_column(df_arus.columns, ["nombre", "empleado", "trabajador", "cotizante"])
+    # Buscar identificador y nombre en ARUS
+    arus_id_col = find_column(df_arus.columns, ["documento cotizante", "cedula", "documento", "identificacion", "nit", "cc"])
+    
+    # Unir nombres en ARUS si vienen por separado
+    p_nombre = find_column(df_arus.columns, ["primer nombre"])
+    p_apellido = find_column(df_arus.columns, ["primer apellido"])
+    if p_nombre and p_apellido:
+        s_nombre = find_column(df_arus.columns, ["segundo nombre"])
+        s_apellido = find_column(df_arus.columns, ["segundo apellido"])
+        
+        df_arus["nombre_completo"] = (
+            df_arus[p_nombre].fillna("").astype(str) + " " +
+            (df_arus[s_nombre].fillna("").astype(str) if s_nombre else "") + " " +
+            df_arus[p_apellido].fillna("").astype(str) + " " +
+            (df_arus[s_apellido].fillna("").astype(str) if s_apellido else "")
+        ).str.replace(r"\s+", " ", regex=True).str.strip()
+        arus_name_col = "nombre_completo"
+    else:
+        arus_name_col = find_column(df_arus.columns, ["nombre", "empleado", "trabajador", "cotizante"])
 
     # Buscar IBCs en SIIMED
     siimed_ibc_salud = find_column(df_siimed.columns, ["ibc salud", "ibc_salud", "ibc de salud"]) or find_column(df_siimed.columns, ["ibc"])
@@ -61,9 +94,9 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
     siimed_ibc_arl = find_column(df_siimed.columns, ["ibc arl", "ibc_arl", "ibc de arl"]) or siimed_ibc_salud
     siimed_ibc_ccf = find_column(df_siimed.columns, ["ibc ccf", "ibc_ccf", "ibc caja", "ibc de caja"]) or siimed_ibc_salud
 
-    # Buscar IBCs en ARUS
-    arus_ibc_salud = find_column(df_arus.columns, ["ibc salud", "ibc_salud", "ibc de salud"]) or find_column(df_arus.columns, ["ibc"])
-    arus_ibc_pension = find_column(df_arus.columns, ["ibc pension", "ibc_pension", "ibc de pension"]) or arus_ibc_salud
+    # Buscar IBCs en ARUS (EPS, AFP, ARL, CCF)
+    arus_ibc_salud = find_column(df_arus.columns, ["ibc eps", "ibc salud", "ibc_salud", "ibc de salud"]) or find_column(df_arus.columns, ["ibc"])
+    arus_ibc_pension = find_column(df_arus.columns, ["ibc afp", "ibc pension", "ibc_pension", "ibc de pension"]) or arus_ibc_salud
     arus_ibc_arl = find_column(df_arus.columns, ["ibc arl", "ibc_arl", "ibc de arl"]) or arus_ibc_salud
     arus_ibc_ccf = find_column(df_arus.columns, ["ibc ccf", "ibc_ccf", "ibc caja", "ibc de caja"]) or arus_ibc_salud
 
@@ -73,11 +106,11 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
     siimed_val_arl = find_column(df_siimed.columns, ["arl", "aporte arl"])
     siimed_val_ccf = find_column(df_siimed.columns, ["caja", "ccf", "compensacion"])
 
-    # Buscar aportes en ARUS
-    arus_val_salud = find_column(df_arus.columns, ["salud", "aporte salud"])
-    arus_val_pension = find_column(df_arus.columns, ["pension", "aporte pension"])
-    arus_val_arl = find_column(df_arus.columns, ["arl", "aporte arl"])
-    arus_val_ccf = find_column(df_arus.columns, ["caja", "ccf", "compensacion"])
+    # Buscar aportes en ARUS (Cotización EPS, Cotización AFP, Cotización ARL, Aporte CCF)
+    arus_val_salud = find_column(df_arus.columns, ["cotización eps", "salud", "aporte salud"])
+    arus_val_pension = find_column(df_arus.columns, ["cotización afp", "pension", "aporte pension"])
+    arus_val_arl = find_column(df_arus.columns, ["cotización arl", "arl", "aporte arl"])
+    arus_val_ccf = find_column(df_arus.columns, ["aporte ccf", "caja", "ccf", "compensacion"])
 
     # Verificar si es viable procesar datos reales
     is_demo = False
@@ -94,13 +127,11 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
             {"id": "1033222111", "name": "PATIÑO RUIZ MANUELA", "ibc_salud": 3100000, "ibc_pension": 3100000, "ibc_arl": 3100000, "ibc_ccf": 3100000, "salud": 124000, "pension": 496000, "arl": 16182, "ccf": 124000}
         ]
         
-        # Mapeamos a ARUS con leves discrepancias
         arus_employees = {
-            "1017234567": {"ibc_salud": 1300000, "ibc_pension": 1300000, "ibc_arl": 1300000, "ibc_ccf": 1300000, "salud": 52000, "pension": 208000, "arl": 6786, "ccf": 52000}, # Ok
-            "1020444555": {"ibc_salud": 2500000, "ibc_pension": 2500000, "ibc_arl": 2500000, "ibc_ccf": 2500000, "salud": 100000, "pension": 400000, "arl": 13050, "ccf": 100000}, # Ok
-            "39444198": {"ibc_salud": 4000000, "ibc_pension": 4000000, "ibc_arl": 4000000, "ibc_ccf": 4200000, "salud": 160000, "pension": 640000, "arl": 20880, "ccf": 168000}, # Diferencia en IBC salud/pension/ARL
-            "70555666": {"ibc_salud": 1850000, "ibc_pension": 1850000, "ibc_arl": 1850000, "ibc_ccf": 1850000, "salud": 74000, "pension": 296000, "arl": 12000, "ccf": 74000}, # Diferencia centavos/redondeo ARL
-            # Patino Ruiz Manuela no aparece en ARUS (Novedad de ingreso no cargada)
+            "1017234567": {"ibc_salud": 1300000, "ibc_pension": 1300000, "ibc_arl": 1300000, "ibc_ccf": 1300000, "salud": 52000, "pension": 208000, "arl": 6786, "ccf": 52000},
+            "1020444555": {"ibc_salud": 2500000, "ibc_pension": 2500000, "ibc_arl": 2500000, "ibc_ccf": 2500000, "salud": 100000, "pension": 400000, "arl": 13050, "ccf": 100000},
+            "39444198": {"ibc_salud": 4000000, "ibc_pension": 4000000, "ibc_arl": 4000000, "ibc_ccf": 4200000, "salud": 160000, "pension": 640000, "arl": 20880, "ccf": 168000},
+            "70555666": {"ibc_salud": 1850000, "ibc_pension": 1850000, "ibc_arl": 1850000, "ibc_ccf": 1850000, "salud": 74000, "pension": 296000, "arl": 12000, "ccf": 74000},
         }
         
         comparison_rows = []
@@ -108,7 +139,6 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
             eid = emp["id"]
             name = emp["name"]
             
-            # SIIMED values
             s_ibc_salud = emp["ibc_salud"]
             s_ibc_pension = emp["ibc_pension"]
             s_ibc_arl = emp["ibc_arl"]
@@ -151,26 +181,12 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
                 "present_in_siimed": True,
                 "present_in_arus": present_in_arus,
                 "siimed": {
-                    "ibc_salud": s_ibc_salud,
-                    "ibc_pension": s_ibc_pension,
-                    "ibc_arl": s_ibc_arl,
-                    "ibc_ccf": s_ibc_ccf,
-                    "val_salud": s_val_salud,
-                    "val_pension": s_val_pension,
-                    "val_arl": s_val_arl,
-                    "val_ccf": s_val_ccf,
-                    "total": s_total
+                    "ibc_salud": s_ibc_salud, "ibc_pension": s_ibc_pension, "ibc_arl": s_ibc_arl, "ibc_ccf": s_ibc_ccf,
+                    "val_salud": s_val_salud, "val_pension": s_val_pension, "val_arl": s_val_arl, "val_ccf": s_val_ccf, "total": s_total
                 },
                 "arus": {
-                    "ibc_salud": a_ibc_salud,
-                    "ibc_pension": a_ibc_pension,
-                    "ibc_arl": a_ibc_arl,
-                    "ibc_ccf": a_ibc_ccf,
-                    "val_salud": a_val_salud,
-                    "val_pension": a_val_pension,
-                    "val_arl": a_val_arl,
-                    "val_ccf": a_val_ccf,
-                    "total": a_total
+                    "ibc_salud": a_ibc_salud, "ibc_pension": a_ibc_pension, "ibc_arl": a_ibc_arl, "ibc_ccf": a_ibc_ccf,
+                    "val_salud": a_val_salud, "val_pension": a_val_pension, "val_arl": a_val_arl, "val_ccf": a_val_ccf, "total": a_total
                 },
                 "diff": {
                     "ibc_salud": s_ibc_salud - a_ibc_salud,
@@ -189,25 +205,21 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
             "cotizantes_siimed": len(comparison_rows),
             "cotizantes_arus": sum(1 for r in comparison_rows if r["present_in_arus"]),
             "is_demo": True,
-            "message": "Cargado en Modo Demostración. Adjunte sus planillas 'Mayo S.S Conser' para ajustar la detección de columnas real."
+            "message": "Cargado en Modo Demostración. Asegúrese de subir planillas con encabezados válidos."
         }
-        
         return {"summary": summary, "details": comparison_rows}
 
     # 3. Procesar datos reales si identificamos columnas mínimas
-    # Normalizar IDs quitando decimales (ej. 1234.0 -> 1234)
     df_siimed[siimed_id_col] = df_siimed[siimed_id_col].astype(str).str.split('.').str[0].str.strip()
     df_arus[arus_id_col] = df_arus[arus_id_col].astype(str).str.split('.').str[0].str.strip()
 
-    # Agrupar / consolidar si hay duplicados por ID
-    # SIIMED
+    # Consolidar SIIMED
     siimed_records = {}
     for _, row in df_siimed.iterrows():
         eid = str(row[siimed_id_col]).strip()
         if not eid or eid == "nan" or eid == "":
             continue
         
-        # Extraer valores numéricos con limpieza
         ibc_s = clean_numeric(row[siimed_ibc_salud]) if siimed_ibc_salud else 0.0
         ibc_p = clean_numeric(row[siimed_ibc_pension]) if siimed_ibc_pension else ibc_s
         ibc_a = clean_numeric(row[siimed_ibc_arl]) if siimed_ibc_arl else ibc_s
@@ -221,7 +233,6 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
         name = str(row[siimed_name_col]).strip() if siimed_name_col else "Empleado SIIMED"
         
         if eid in siimed_records:
-            # Acumular
             siimed_records[eid]["ibc_salud"] += ibc_s
             siimed_records[eid]["ibc_pension"] += ibc_p
             siimed_records[eid]["ibc_arl"] += ibc_a
@@ -232,18 +243,11 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
             siimed_records[eid]["val_ccf"] += val_c
         else:
             siimed_records[eid] = {
-                "name": name,
-                "ibc_salud": ibc_s,
-                "ibc_pension": ibc_p,
-                "ibc_arl": ibc_a,
-                "ibc_ccf": ibc_c,
-                "val_salud": val_s,
-                "val_pension": val_p,
-                "val_arl": val_a,
-                "val_ccf": val_c
+                "name": name, "ibc_salud": ibc_s, "ibc_pension": ibc_p, "ibc_arl": ibc_a, "ibc_ccf": ibc_c,
+                "val_salud": val_s, "val_pension": val_p, "val_arl": val_a, "val_ccf": val_c
             }
 
-    # ARUS
+    # Consolidar ARUS
     arus_records = {}
     for _, row in df_arus.iterrows():
         eid = str(row[arus_id_col]).strip()
@@ -273,15 +277,8 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
             arus_records[eid]["val_ccf"] += val_c
         else:
             arus_records[eid] = {
-                "name": name,
-                "ibc_salud": ibc_s,
-                "ibc_pension": ibc_p,
-                "ibc_arl": ibc_a,
-                "ibc_ccf": ibc_c,
-                "val_salud": val_s,
-                "val_pension": val_p,
-                "val_arl": val_a,
-                "val_ccf": val_c
+                "name": name, "ibc_salud": ibc_s, "ibc_pension": ibc_p, "ibc_arl": ibc_a, "ibc_ccf": ibc_c,
+                "val_salud": val_s, "val_pension": val_p, "val_arl": val_a, "val_ccf": val_c
             }
 
     # Cruzar datos
@@ -321,26 +318,12 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
             "present_in_siimed": in_siimed,
             "present_in_arus": in_arus,
             "siimed": {
-                "ibc_salud": s_rec["ibc_salud"],
-                "ibc_pension": s_rec["ibc_pension"],
-                "ibc_arl": s_rec["ibc_arl"],
-                "ibc_ccf": s_rec["ibc_ccf"],
-                "val_salud": s_rec["val_salud"],
-                "val_pension": s_rec["val_pension"],
-                "val_arl": s_rec["val_arl"],
-                "val_ccf": s_rec["val_ccf"],
-                "total": s_total
+                "ibc_salud": s_rec["ibc_salud"], "ibc_pension": s_rec["ibc_pension"], "ibc_arl": s_rec["ibc_arl"], "ibc_ccf": s_rec["ibc_ccf"],
+                "val_salud": s_rec["val_salud"], "val_pension": s_rec["val_pension"], "val_arl": s_rec["val_arl"], "val_ccf": s_rec["val_ccf"], "total": s_total
             },
             "arus": {
-                "ibc_salud": a_rec["ibc_salud"],
-                "ibc_pension": a_rec["ibc_pension"],
-                "ibc_arl": a_rec["ibc_arl"],
-                "ibc_ccf": a_rec["ibc_ccf"],
-                "val_salud": a_rec["val_salud"],
-                "val_pension": a_rec["val_pension"],
-                "val_arl": a_rec["val_arl"],
-                "val_ccf": a_rec["val_ccf"],
-                "total": a_total
+                "ibc_salud": a_rec["ibc_salud"], "ibc_pension": a_rec["ibc_pension"], "ibc_arl": a_rec["ibc_arl"], "ibc_ccf": a_rec["ibc_ccf"],
+                "val_salud": a_rec["val_salud"], "val_pension": a_rec["val_pension"], "val_arl": a_rec["val_arl"], "val_ccf": a_rec["val_ccf"], "total": a_total
             },
             "diff": {
                 "ibc_salud": s_rec["ibc_salud"] - a_rec["ibc_salud"],
@@ -352,7 +335,6 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
             "has_discrepancy": has_diff
         })
 
-    # Ordenar por nombre
     comparison_rows.sort(key=lambda x: x["name"])
 
     summary = {
@@ -362,7 +344,7 @@ async def compare_payroll_files(siimed_content: bytes, siimed_filename: str, aru
         "cotizantes_siimed": len(siimed_records),
         "cotizantes_arus": len(arus_records),
         "is_demo": False,
-        "message": "Planilla comparada exitosamente a partir de los datos cargados."
+        "message": "Planilla comparada exitosamente a partir de los datos reales cargados."
     }
 
     return {"summary": summary, "details": comparison_rows}

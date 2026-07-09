@@ -35,12 +35,12 @@ interface RecordData {
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const siimedFile = formData.get("siimed") as File | null;
-    const arusFile = formData.get("arus") as File | null;
+    const siimedFiles = formData.getAll("siimed_files") as File[];
+    const arusFiles = formData.getAll("arus_files") as File[];
 
-    if (!siimedFile || !arusFile) {
+    if (siimedFiles.length === 0 || arusFiles.length === 0) {
       return NextResponse.json(
-        { error: "Ambos archivos (SIIMED y ARUS) son requeridos." },
+        { error: "Se requiere al menos un archivo de SIIMED y un archivo de ARUS." },
         { status: 400 }
       );
     }
@@ -48,14 +48,17 @@ export async function POST(req: NextRequest) {
     // Intentar procesar en el Backend Python primero (para conservar arquitectura distribuida)
     try {
       const pyFormData = new FormData();
-      pyFormData.append("siimed", siimedFile);
-      pyFormData.append("arus", arusFile);
+      for (const f of siimedFiles) {
+        pyFormData.append("siimed_files", f);
+      }
+      for (const f of arusFiles) {
+        pyFormData.append("arus_files", f);
+      }
 
       console.log("Intentando procesar en el backend de Python (puerto 8000)...");
       const pyResponse = await fetch("http://localhost:8000/api/v1/payroll/compare", {
         method: "POST",
         body: pyFormData,
-        // Configurar un timeout corto para fallar rápido
         signal: AbortSignal.timeout(3000),
       });
 
@@ -69,6 +72,9 @@ export async function POST(req: NextRequest) {
     }
 
     // --- PROCESAMIENTO HÍBRIDO LOCAL (Next.js + XLSX) ---
+    // Usar el primer archivo de cada lista como fallback de comparación local
+    const siimedFile = siimedFiles[0];
+    const arusFile = arusFiles[0];
 
     // 1. Leer SIIMED
     let dfSiimed: any[] = [];
@@ -76,7 +82,21 @@ export async function POST(req: NextRequest) {
       const siimedBuffer = await siimedFile.arrayBuffer();
       const workbook = xlsx.read(siimedBuffer, { type: "array" });
       const sheetName = workbook.SheetNames[0];
-      dfSiimed = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+      const sheet = workbook.Sheets[sheetName];
+      const rawData: any[] = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+      
+      let headerRowIdx = 0;
+      for (let i = 0; i < Math.min(rawData.length, 10); i++) {
+        const row = rawData[i];
+        if (Array.isArray(row)) {
+          const rowStr = row.map(x => String(x).toLowerCase().trim());
+          if (rowStr.some(s => s.includes("cedula") || s.includes("documento") || s.includes("nit"))) {
+            headerRowIdx = i;
+            break;
+          }
+        }
+      }
+      dfSiimed = xlsx.utils.sheet_to_json(sheet, { range: headerRowIdx, defval: "" });
     } catch (e) {
       console.error("Error al parsear el archivo SIIMED:", e);
     }
@@ -86,8 +106,25 @@ export async function POST(req: NextRequest) {
     try {
       const arusBuffer = await arusFile.arrayBuffer();
       const workbook = xlsx.read(arusBuffer, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      dfArus = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+      const sheetName = workbook.SheetNames.includes("Planilla seguridad social") 
+        ? "Planilla seguridad social" 
+        : workbook.SheetNames[0];
+      
+      const sheet = workbook.Sheets[sheetName];
+      const rawData: any[] = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+      
+      let headerRowIdx = 0;
+      for (let i = 0; i < Math.min(rawData.length, 10); i++) {
+        const row = rawData[i];
+        if (Array.isArray(row)) {
+          const rowStr = row.map(x => String(x).toLowerCase().trim());
+          if (rowStr.includes("documento cotizante") || rowStr.includes("documento")) {
+            headerRowIdx = i;
+            break;
+          }
+        }
+      }
+      dfArus = xlsx.utils.sheet_to_json(sheet, { range: headerRowIdx, defval: "" });
     } catch (e) {
       console.error("Error al parsear el archivo ARUS:", e);
     }
@@ -99,8 +136,26 @@ export async function POST(req: NextRequest) {
     const siimedIdCol = findColumn(siimedColumns, ["cedula", "documento", "identificacion", "nit", "cc", "nro_ident"]);
     const siimedNameCol = findColumn(siimedColumns, ["nombre", "empleado", "trabajador", "tercero"]);
 
-    const arusIdCol = findColumn(arusColumns, ["cedula", "documento", "identificacion", "nit", "cc", "nro_ident"]);
-    const arusNameCol = findColumn(arusColumns, ["nombre", "empleado", "trabajador", "cotizante"]);
+    const arusIdCol = findColumn(arusColumns, ["documento cotizante", "cedula", "documento", "identificacion", "nit", "cc"]);
+    
+    // Unir nombres en ARUS
+    const pNombreCol = findColumn(arusColumns, ["primer nombre"]);
+    const pApellidoCol = findColumn(arusColumns, ["primer apellido"]);
+    let arusNameCol: string | null = null;
+    if (pNombreCol && pApellidoCol) {
+      dfArus.forEach(row => {
+        const sNombreCol = findColumn(arusColumns, ["segundo nombre"]);
+        const sApellidoCol = findColumn(arusColumns, ["segundo apellido"]);
+        const pNom = String(row[pNombreCol] || "").trim();
+        const sNom = sNombreCol ? String(row[sNombreCol] || "").trim() : "";
+        const pApe = String(row[pApellidoCol] || "").trim();
+        const sApe = sApellidoCol ? String(row[sApellidoCol] || "").trim() : "";
+        row["nombre_completo"] = `${pNom} ${sNom} ${pApe} ${sApe}`.replace(/\s+/g, " ").trim();
+      });
+      arusNameCol = "nombre_completo";
+    } else {
+      arusNameCol = findColumn(arusColumns, ["nombre", "empleado", "trabajador", "cotizante"]);
+    }
 
     // Detección de columnas de IBC
     const siimedIbcSalud = findColumn(siimedColumns, ["ibc salud", "ibc_salud", "ibc de salud"]) || findColumn(siimedColumns, ["ibc"]);
@@ -108,8 +163,8 @@ export async function POST(req: NextRequest) {
     const siimedIbcArl = findColumn(siimedColumns, ["ibc arl", "ibc_arl", "ibc de arl"]) || siimedIbcSalud;
     const siimedIbcCcf = findColumn(siimedColumns, ["ibc ccf", "ibc_ccf", "ibc caja", "ibc de caja"]) || siimedIbcSalud;
 
-    const arusIbcSalud = findColumn(arusColumns, ["ibc salud", "ibc_salud", "ibc de salud"]) || findColumn(arusColumns, ["ibc"]);
-    const arusIbcPension = findColumn(arusColumns, ["ibc pension", "ibc_pension", "ibc de pension"]) || arusIbcSalud;
+    const arusIbcSalud = findColumn(arusColumns, ["ibc eps", "ibc salud", "ibc_salud", "ibc de salud"]) || findColumn(arusColumns, ["ibc"]);
+    const arusIbcPension = findColumn(arusColumns, ["ibc afp", "ibc pension", "ibc_pension", "ibc de pension"]) || arusIbcSalud;
     const arusIbcArl = findColumn(arusColumns, ["ibc arl", "ibc_arl", "ibc de arl"]) || arusIbcSalud;
     const arusIbcCcf = findColumn(arusColumns, ["ibc ccf", "ibc_ccf", "ibc caja", "ibc de caja"]) || arusIbcSalud;
 
@@ -119,15 +174,14 @@ export async function POST(req: NextRequest) {
     const siimedValArl = findColumn(siimedColumns, ["arl", "aporte arl"]);
     const siimedValCcf = findColumn(siimedColumns, ["caja", "ccf", "compensacion"]);
 
-    const arusValSalud = findColumn(arusColumns, ["salud", "aporte salud"]);
-    const arusValPension = findColumn(arusColumns, ["pension", "aporte pension"]);
-    const arusValArl = findColumn(arusColumns, ["arl", "aporte arl"]);
-    const arusValCcf = findColumn(arusColumns, ["caja", "ccf", "compensacion"]);
+    const arusValSalud = findColumn(arusColumns, ["cotización eps", "salud", "aporte salud"]);
+    const arusValPension = findColumn(arusColumns, ["cotización afp", "pension", "aporte pension"]);
+    const arusValArl = findColumn(arusColumns, ["cotización arl", "arl", "aporte arl"]);
+    const arusValCcf = findColumn(arusColumns, ["aporte ccf", "caja", "ccf", "compensacion"]);
 
     const isDemo = dfSiimed.length === 0 || dfArus.length === 0 || !siimedIdCol || !arusIdCol;
 
     if (isDemo) {
-      // Retornar Mock Data de demostración limpia
       const employees = [
         { id: "1017234567", name: "SILVA ARIAS ANDREA", ibc_salud: 1300000, ibc_pension: 1300000, ibc_arl: 1300000, ibc_ccf: 1300000, salud: 52000, pension: 208000, arl: 6786, ccf: 52000 },
         { id: "1020444555", name: "RESTREPO VALENCIA LUIS", ibc_salud: 2500000, ibc_pension: 2500000, ibc_arl: 2500000, ibc_ccf: 2500000, salud: 100000, pension: 400000, arl: 13050, ccf: 100000 },
@@ -202,7 +256,7 @@ export async function POST(req: NextRequest) {
         cotizantes_siimed: details.length,
         cotizantes_arus: details.filter(r => r.present_in_arus).length,
         is_demo: true,
-        message: "Cargado en Modo Demostración Local. Adjunte sus planillas 'Mayo S.S Conser' reales para configurar el mapeador definitivo."
+        message: "Cargado en Modo Demostración Local. Asegúrese de subir planillas con encabezados válidos."
       };
 
       return NextResponse.json({ success: true, data: { summary, details } });
@@ -214,7 +268,6 @@ export async function POST(req: NextRequest) {
       let eid = siimedIdCol ? String(row[siimedIdCol]).trim() : "";
       if (!eid || eid === "nan" || eid === "") return;
       
-      // Limpiar decimales del id (cédula)
       if (eid.includes(".")) {
         eid = eid.split(".")[0];
       }

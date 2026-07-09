@@ -46,13 +46,14 @@ const bottomItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [isLocked, setIsLocked] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem('sma_sidebar_locked') === 'true';
-    }
-    return false;
-  });
+  const [isLocked, setIsLocked] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    const locked = localStorage.getItem('sma_sidebar_locked') === 'true';
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsLocked(locked);
+  }, []);
 
   const toggleLock = (e: React.MouseEvent) => {
     e.stopPropagation();
