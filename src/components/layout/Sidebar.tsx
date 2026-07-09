@@ -15,7 +15,7 @@ const navGroups = [
     group: "Área Técnica",
     items: [
       { label: "Proyectos", href: "/tecnica/proyectos", icon: "construction" },
-      { label: "Análisis IA", href: "/tecnica/analisis", icon: "analytics" },
+      { label: "Flujo Gerencia", href: "/tecnica/analisis", icon: "analytics" },
       { label: "Cierre de Costos", href: "/tecnica/cierre-costos", icon: "request_quote" }
     ]
   },

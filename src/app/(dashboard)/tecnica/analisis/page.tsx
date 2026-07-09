@@ -263,7 +263,7 @@ export default function AnalysisPage() {
             >
               analytics
             </span>
-            <span style={{ color: "var(--color-text-primary)" }}>Análisis de Proyectos (IA)</span>
+            <span style={{ color: "var(--color-text-primary)" }}>Flujo Gerencia</span>
           </h1>
           <p className="text-base mt-2 max-w-2xl leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
             Correlaciona presupuestos con cronogramas automáticamente utilizando inteligencia artificial.
