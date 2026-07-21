@@ -33,7 +33,7 @@ const PRESETS = [
 
 export default function AnalysisChat({ dataPoints, analysis, directBudget, totalBudget }: AnalysisChatProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<"gemini-3.5-pro" | "gemini-3.5-flash">("gemini-3.5-pro");
+  const [selectedModel, setSelectedModel] = useState<"gemini-2.5-pro" | "gemini-2.5-flash">("gemini-2.5-pro");
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -213,54 +213,49 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
             </div>
           </div>
           <button
-            onClick={() => setIsOpen(false)}
-            className="p-1.5 rounded-xl border hover:bg-[var(--color-surface-hover)] active:scale-95 transition-all cursor-pointer shadow-sm hover:border-[var(--color-border-strong)]"
-            style={{
-              borderColor: "var(--color-border)",
-              color: "var(--color-text-secondary)"
-            }}
+          className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Selector de Modelo Gemini */}
+      <div 
+        className="px-4 py-2 bg-[var(--color-bg)]/80 border-b flex flex-col gap-1.5 shrink-0"
+        style={{ borderColor: "var(--color-border)" }}
+      >
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text-secondary)]">
+            NIVEL DE RAZONAMIENTO:
+          </span>
+          <span className="text-[9px] font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+            {selectedModel === "gemini-2.5-pro" ? "Complejidad Alta (Gemini 2.5 Pro)" : "Instantáneo (Gemini 2.5 Flash)"}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-1 w-full shadow-sm">
+          <button
+            onClick={() => setSelectedModel("gemini-2.5-pro")}
+            className={`py-2 rounded-lg transition-all duration-200 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 ${
+              selectedModel === "gemini-2.5-pro"
+                ? "bg-[var(--color-primary)] text-white shadow-sm"
+                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
+            }`}
           >
-            <X className="w-4.5 h-4.5" />
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            Razonamiento (2.5 Pro)
+          </button>
+          <button
+            onClick={() => setSelectedModel("gemini-2.5-flash")}
+            className={`py-2 rounded-lg transition-all duration-200 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 ${
+              selectedModel === "gemini-2.5-flash"
+                ? "bg-[var(--color-primary)] text-white shadow-sm"
+                : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
+            }`}
+          >
+            Veloz (2.5 Flash)
           </button>
         </div>
-
-        {/* Selector de Nivel de Razonamiento IA */}
-        <div 
-          className="px-5 py-3 border-b flex flex-col gap-2 bg-[var(--color-surface-hover)]/30"
-          style={{ borderColor: "var(--color-border)" }}
-        >
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-black uppercase tracking-wider text-[var(--color-text-secondary)]">
-              NIVEL DE RAZONAMIENTO:
-            </span>
-            <span className="text-[9px] font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-0.5 rounded-full uppercase tracking-wide">
-              {selectedModel === "gemini-3.5-pro" ? "Complejidad Alta" : "Instantáneo"}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-1 w-full shadow-sm">
-            <button
-              onClick={() => setSelectedModel("gemini-3.5-pro")}
-              className={`py-2 rounded-lg transition-all duration-200 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 ${
-                selectedModel === "gemini-3.5-pro"
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              Razonamiento (3.5 Pro)
-            </button>
-            <button
-              onClick={() => setSelectedModel("gemini-3.5-flash")}
-              className={`py-2 rounded-lg transition-all duration-200 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 ${
-                selectedModel === "gemini-3.5-flash"
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
-              }`}
-            >
-              Veloz (3.5 Flash)
-            </button>
-          </div>
-        </div>
+      </div>
 
         {/* Historial de Mensajes */}
         <div className="flex-1 overflow-y-auto px-5 pt-5 pb-24 space-y-5 select-text">

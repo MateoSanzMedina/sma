@@ -579,7 +579,7 @@ export default function BudgetTimelineChart({ data, tasks, totalBudget }: Budget
                   
                   {/* Timeline del Eje X */}
                   <div className="flex-1 min-w-0" style={{ height: "55px" }}>
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                       <BarChart
                         layout="vertical"
                         data={ganttChartData}
@@ -628,7 +628,7 @@ export default function BudgetTimelineChart({ data, tasks, totalBudget }: Budget
 
                   {/* Cuerpo del Gráfico de Recharts */}
                   <div className="flex-1 min-w-0" style={{ height: "100%" }}>
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                       <BarChart
                         layout="vertical"
                         data={ganttChartData}

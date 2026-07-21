@@ -609,7 +609,7 @@ export async function POST(req: NextRequest) {
         const result = await generateContentWithRetry(
           globalClient!,
           {
-            model: "gemini-3.5-flash",
+          model: "gemini-2.5-flash",
             contents: `
 LISTA DE TAREAS DEL CRONOGRAMA CON ÍTEMS DE PRESUPUESTO CANDIDATOS SUGERIDOS:
 ${JSON.stringify(batch)}
@@ -890,7 +890,7 @@ REGLAS MANDATORIAS:
       const summaryResult = await generateContentWithRetry(
         globalClient!,
         {
-          model: "gemini-3.5-flash",
+          model: "gemini-2.5-flash",
           contents: `
 Genera un análisis de control de costos ejecutivo para la gerencia de Constructora Serving S.A.S. en base a estos datos reales consolidados del proyecto Bosque de Agua:
 
