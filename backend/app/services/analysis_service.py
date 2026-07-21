@@ -300,7 +300,7 @@ async def process_analysis(schedule_content: bytes, schedule_name: str, budget_c
         else:
             try:
                 genai.configure(api_key=api_key)
-                model = genai.GenerativeModel('gemini-2.5-flash')
+                model = genai.GenerativeModel('gemini-3.5-flash')
                 
                 # Dividir tareas en lotes de 15 para evitar sobrepasar límites de salida de tokens
                 batch_size = 15

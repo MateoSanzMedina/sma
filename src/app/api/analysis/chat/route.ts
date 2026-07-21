@@ -140,7 +140,7 @@ REGLAS CRÍTICAS DE RESPUESTA:
 
     const userPrompt = messages[messages.length - 1].content;
 
-    const selectedModel = model === "gemini-2.5-flash" ? "gemini-2.5-flash" : "gemini-2.5-pro";
+    const selectedModel = model === "gemini-3.5-flash" ? "gemini-3.5-flash" : "gemini-3.5-pro";
 
     // Llamar a Gemini mediante Vertex AI
     const response = await client.models.generateContent({
