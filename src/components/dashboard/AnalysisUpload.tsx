@@ -27,6 +27,9 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
   const [scheduleFile, setScheduleFile] = useState<File | null>(null);
   const [budgetFile, setBudgetFile] = useState<File | null>(null);
   const [prorateOrphans, setProrateOrphans] = useState(true);
+  const [enableAnticipo, setEnableAnticipo] = useState(true);
+  const [anticipoPercentage, setAnticipoPercentage] = useState(30);
+  const [anticipoMonths, setAnticipoMonths] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,6 +75,9 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
     formData.append("schedule", scheduleFile);
     formData.append("budget", budgetFile);
     formData.append("prorateOrphans", String(prorateOrphans));
+    formData.append("enableAnticipo", String(enableAnticipo));
+    formData.append("anticipoPercentage", String(anticipoPercentage));
+    formData.append("anticipoMonths", String(anticipoMonths));
 
     try {
       const response = await fetch("/api/analysis/process", {
@@ -234,30 +240,106 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
             )}
           </div>
         </div>
+
+        {/* Panel de Parámetros de Flujo Gerencial */}
+        <div 
+          className="p-4 rounded-xl mb-6 border bg-[var(--color-surface-hover)]/30 flex flex-col gap-3"
+          style={{ borderColor: "var(--color-border)" }}
+        >
+          <div className="text-xs font-black uppercase tracking-wider text-[var(--color-primary)]">
+            ⚙️ PARÁMETROS DE FLUJO GERENCIAL (DOCUMENTO DIST. COSTOS FLUJO)
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            {/* Prorratear ítems sin asignar */}
+            <div className="flex items-center gap-3 select-none">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={prorateOrphans}
+                  onChange={(e) => setProrateOrphans(e.target.checked)}
+                  className="sr-only peer"
+                  disabled={loading}
+                />
+                <div className="w-10 h-5 bg-white/10 rounded-full peer peer-focus:ring-2 peer-focus:ring-[var(--color-primary)]/50 peer-checked:bg-[var(--color-primary)] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+              </label>
+              <div className="flex flex-col text-left">
+                <span className="text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>
+                  Prorratear ítems sin asignar
+                </span>
+                <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+                  Reasociar huérfanos entre las tareas del capítulo
+                </span>
+              </div>
+            </div>
+
+            {/* Distribución de Anticipo 30% / 70% */}
+            <div className="flex items-center gap-3 select-none">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={enableAnticipo}
+                  onChange={(e) => setEnableAnticipo(e.target.checked)}
+                  className="sr-only peer"
+                  disabled={loading}
+                />
+                <div className="w-10 h-5 bg-white/10 rounded-full peer peer-focus:ring-2 peer-focus:ring-[var(--color-primary)]/50 peer-checked:bg-[var(--color-primary)] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+              </label>
+              <div className="flex flex-col text-left">
+                <span className="text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>
+                  Desembolso de Anticipo ({anticipoPercentage}% / {100 - anticipoPercentage}%)
+                </span>
+                <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+                  Anticipar insumos N meses antes de la tarea
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Opciones adicionales cuando el anticipo está activo */}
+          {enableAnticipo && (
+            <div className="mt-2 pt-3 border-t grid grid-cols-1 sm:grid-cols-2 gap-4 select-none animate-fade-in" style={{ borderColor: "var(--color-border)" }}>
+              <div>
+                <label className="block text-[11px] font-bold mb-1" style={{ color: "var(--color-text-secondary)" }}>
+                  Porcentaje de Anticipo Inicial:
+                </label>
+                <select
+                  value={anticipoPercentage}
+                  onChange={(e) => setAnticipoPercentage(Number(e.target.value))}
+                  disabled={loading}
+                  className="w-full text-xs font-bold p-2 rounded-lg border bg-[var(--color-surface)] text-[var(--color-text-primary)] cursor-pointer"
+                  style={{ borderColor: "var(--color-border)" }}
+                >
+                  <option value={30}>30% Anticipo / 70% Ejecución (Estándar % Flujo)</option>
+                  <option value={20}>20% Anticipo / 80% Ejecución</option>
+                  <option value={40}>40% Anticipo / 60% Ejecución</option>
+                  <option value={50}>50% Anticipo / 50% Ejecución</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold mb-1" style={{ color: "var(--color-text-secondary)" }}>
+                  ¿Cuántos meses antes se desembolsa el anticipo?
+                </label>
+                <select
+                  value={anticipoMonths}
+                  onChange={(e) => setAnticipoMonths(Number(e.target.value))}
+                  disabled={loading}
+                  className="w-full text-xs font-bold p-2 rounded-lg border bg-[var(--color-surface)] text-[var(--color-text-primary)] cursor-pointer"
+                  style={{ borderColor: "var(--color-border)" }}
+                >
+                  <option value={1}>1 Mes de anticipación (30 días antes)</option>
+                  <option value={2}>2 Meses de anticipación (60 días antes)</option>
+                  <option value={3}>3 Meses de anticipación (90 días antes)</option>
+                  <option value={4}>4 Meses de anticipación (120 días antes)</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-6 border-t mt-auto gap-4" style={{ borderColor: "var(--color-border)" }}>
-        <div className="flex items-center gap-3 select-none mr-auto">
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={prorateOrphans}
-              onChange={(e) => setProrateOrphans(e.target.checked)}
-              className="sr-only peer"
-              disabled={loading}
-            />
-            <div className="w-11 h-6 bg-white/10 rounded-full peer peer-focus:ring-2 peer-focus:ring-[var(--color-primary)]/50 peer-checked:bg-[var(--color-primary)] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-          </label>
-          <div className="flex flex-col text-left">
-            <span className="text-sm font-bold" style={{ color: "var(--color-text-primary)" }}>
-              Prorratear ítems sin asignar
-            </span>
-            <span className="text-[11px]" style={{ color: "var(--color-text-secondary)" }}>
-              Si se desactiva, los excedentes se listarán individualmente al final
-            </span>
-          </div>
-        </div>
-
+      <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center pt-6 border-t mt-auto gap-4" style={{ borderColor: "var(--color-border)" }}>
         <button
           onClick={handleSubmit}
           disabled={!scheduleFile || !budgetFile || loading}

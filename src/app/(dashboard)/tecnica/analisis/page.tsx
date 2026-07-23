@@ -2,11 +2,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect */
 // label placeholder aria-label
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import AnalysisUpload from "@/components/dashboard/AnalysisUpload";
 import BudgetTimelineChart from "@/components/dashboard/BudgetTimelineChart";
 import AnalysisTable from "@/components/dashboard/AnalysisTable";
 import AnalysisChat from "@/components/dashboard/AnalysisChat";
+import AnticipoManagerPanel from "@/components/dashboard/AnticipoManagerPanel";
+import { AnticipoRule, recalculateDistributedPoints } from "@/lib/anticipoUtils";
 import { Sparkles } from "lucide-react";
 
 // Helper to parse double asterisks into strong tags
@@ -221,6 +223,7 @@ interface AnalysisResult {
 
 export default function AnalysisPage() {
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
+  const [anticipoRules, setAnticipoRules] = useState<{ [key: string]: AnticipoRule }>({});
 
   // Cargar datos persistidos al montar (Evita errores de hidratación de Next.js)
   useEffect(() => {
@@ -230,6 +233,13 @@ export default function AnalysisPage() {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === "object" && parsed.dataPoints) {
           setAnalysisData(parsed);
+        }
+      }
+      const savedRules = localStorage.getItem("sma_anticipo_rules");
+      if (savedRules) {
+        const parsedRules = JSON.parse(savedRules);
+        if (parsedRules && typeof parsedRules === "object") {
+          setAnticipoRules(parsedRules);
         }
       }
     } catch (e) {
@@ -247,6 +257,28 @@ export default function AnalysisPage() {
       }
     }
   }, [analysisData]);
+
+  useEffect(() => {
+    if (anticipoRules) {
+      try {
+        localStorage.setItem("sma_anticipo_rules", JSON.stringify(anticipoRules));
+      } catch (e) {
+        console.error("Error al guardar reglas de anticipo en localStorage:", e);
+      }
+    }
+  }, [anticipoRules]);
+
+  // Recalcular dinámicamente los puntos distribuidos de flujo de caja en tiempo real
+  const activeDistributedPoints = useMemo(() => {
+    if (!analysisData || !analysisData.dataPoints) return [];
+    return recalculateDistributedPoints(
+      analysisData.dataPoints,
+      anticipoRules,
+      true, // anticipo global por defecto activo
+      30,   // 30% por defecto
+      60    // 60 días por defecto (2 meses)
+    );
+  }, [analysisData, anticipoRules]);
 
   const handleAnalysisComplete = (data: AnalysisResult) => {
     setAnalysisData(data);
@@ -393,10 +425,19 @@ export default function AnalysisPage() {
             </div>
           </div>
 
+          {/* Panel Dinámico de Configuración de Anticipos y Desembolsos */}
+          <div className="w-full animate-fade-in">
+            <AnticipoManagerPanel
+              dataPoints={analysisData.dataPoints || []}
+              rules={anticipoRules}
+              onUpdateRules={(newRules) => setAnticipoRules(newRules)}
+            />
+          </div>
+
           {/* Fila intermedia: Gráfico a Ancho Completo */}
           <div className="w-full animate-fade-in">
             <BudgetTimelineChart 
-              data={analysisData.distributedDataPoints || []} 
+              data={activeDistributedPoints} 
               tasks={analysisData.dataPoints || []}
               totalBudget={analysisData.totalBudget} 
             />
@@ -406,7 +447,7 @@ export default function AnalysisPage() {
           <div className="w-full animate-fade-in">
             <AnalysisTable 
               dataPoints={analysisData.dataPoints} 
-              distributedDataPoints={analysisData.distributedDataPoints}
+              distributedDataPoints={activeDistributedPoints}
               analysis={analysisData.analysis}
               directBudget={analysisData.directBudget}
               totalBudget={analysisData.totalBudget}
@@ -415,7 +456,7 @@ export default function AnalysisPage() {
 
           {/* Chatbot de Inteligencia Financiera IA (Vertex AI) */}
           <AnalysisChat 
-            dataPoints={analysisData.distributedDataPoints || analysisData.dataPoints}
+            dataPoints={activeDistributedPoints}
             analysis={analysisData.analysis}
             directBudget={analysisData.directBudget || 8969704298.66}
             totalBudget={analysisData.totalBudget}

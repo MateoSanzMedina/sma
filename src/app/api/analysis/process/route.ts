@@ -495,12 +495,27 @@ function mapItemLocally(
 // RUTA POST PRINCIPAL
 // ==========================================
 
-export async function POST(req: NextRequest) {
+function subtractMonthsFromDate(dateStr: string, months: number): string {
+  if (!dateStr) return dateStr;
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  d.setMonth(d.getMonth() - months);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const scheduleFile = formData.get("schedule") as File | null;
     const budgetFile = formData.get("budget") as File | null;
     const prorateOrphans = formData.get("prorateOrphans") !== "false";
+    const enableAnticipo = formData.get("enableAnticipo") !== "false";
+    const anticipoPercentage = parseFloat(String(formData.get("anticipoPercentage") || "30")) || 30;
+    const anticipoMonths = parseInt(String(formData.get("anticipoMonths") || "1"), 10) || 1;
 
     if (!scheduleFile || !budgetFile) {
       return NextResponse.json(
@@ -837,30 +852,62 @@ REGLAS MANDATORIAS:
       const duration = calendarDays.length;
 
       const totalVal = dp.budget_required || 0;
-      const dailyVal = duration > 0 ? totalVal / duration : 0;
 
       processedDataPoints.push({
         start_date: sDate,
         end_date: eDate,
         working_days: duration,
         budget_required: totalVal,
-        daily_budget: dailyVal,
+        daily_budget: duration > 0 ? totalVal / duration : 0,
         task_name: dp.task_name,
         chapter: dp.chapter || "Otros",
         budget_item_code: dp.budget_item_code,
         date: sDate
       });
 
-      // Distribuir el costo día a día
-      calendarDays.forEach(dayStr => {
+      if (enableAnticipo && !isOrphan && totalVal > 0 && sDate) {
+        const anticipoRatio = Math.min(100, Math.max(0, anticipoPercentage)) / 100;
+        const execRatio = 1 - anticipoRatio;
+
+        const anticipoVal = totalVal * anticipoRatio;
+        const execTotalVal = totalVal * execRatio;
+        const dailyExecVal = duration > 0 ? execTotalVal / duration : 0;
+
+        // Fecha del desembolso de anticipo (N meses antes de la fecha de inicio de la tarea)
+        const anticipoDate = subtractMonthsFromDate(sDate, anticipoMonths);
+
+        // 1. Asignar el 30% de anticipo N meses antes del inicio
         distributedDataPoints.push({
-          date: dayStr,
-          budget_required: dailyVal,
-          task_name: dp.task_name,
+          date: anticipoDate,
+          budget_required: anticipoVal,
+          task_name: `[ANTICIPO ${anticipoPercentage}%] ${dp.task_name}`,
           chapter: dp.chapter || "Otros",
           budget_item_code: dp.budget_item_code
         });
-      });
+
+        // 2. Distribuir el 70% restante día a día durante la ejecución física de la tarea
+        calendarDays.forEach(dayStr => {
+          distributedDataPoints.push({
+            date: dayStr,
+            budget_required: dailyExecVal,
+            task_name: dp.task_name,
+            chapter: dp.chapter || "Otros",
+            budget_item_code: dp.budget_item_code
+          });
+        });
+      } else {
+        // Distribución estándar uniforme de costo (sin anticipo o en ítems huérfanos)
+        const dailyVal = duration > 0 ? totalVal / duration : 0;
+        calendarDays.forEach(dayStr => {
+          distributedDataPoints.push({
+            date: dayStr,
+            budget_required: dailyVal,
+            task_name: dp.task_name,
+            chapter: dp.chapter || "Otros",
+            budget_item_code: dp.budget_item_code
+          });
+        });
+      }
     });
 
     // 7. Generación del Análisis Ejecutivo Global (Con fallback local determinista si la red falla)
