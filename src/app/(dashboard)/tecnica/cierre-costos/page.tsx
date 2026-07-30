@@ -13,7 +13,10 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
-  AlertCircle
+  AlertCircle,
+  Download,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
 
 interface Resource {
@@ -46,6 +49,20 @@ interface Resource {
   };
 }
 
+interface ConcreteValidationItem {
+  apu_code: string;
+  apu_name: string;
+  ficha_title: string;
+  cemento_reg: number;
+  arena_reg: number;
+  triturado_reg: number;
+  cemento_expected_arena: number;
+  cemento_expected_triturado: number;
+  dev_pct_arena: number;
+  dev_pct_triturado: number;
+  status: "OK" | "Revisar";
+}
+
 interface APUItem {
   code: string;
   name: string;
@@ -69,6 +86,7 @@ interface CostsResult {
     total_items: number;
     total_alerts: number;
     total_reutilizations: number;
+    total_concrete_audits?: number;
   };
   alerts: {
     type: "danger" | "warning";
@@ -88,7 +106,9 @@ interface CostsResult {
     qty: number;
     message: string;
   }[];
+  concrete_validation?: ConcreteValidationItem[];
   details: APUItem[];
+  excel_b64?: string;
 }
 
 export default function CierreCostosPage() {
@@ -141,7 +161,6 @@ export default function CierreCostosPage() {
       }
 
       setResult(data.data);
-      // Inicializar todos los APUs como colapsados
       const initialExpanded: Record<string, boolean> = {};
       data.data.details.forEach((apu: APUItem) => {
         initialExpanded[apu.code] = false;
@@ -151,6 +170,32 @@ export default function CierreCostosPage() {
       setError(err instanceof Error ? err.message : "Error de red al conectar con el servidor.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const downloadExcel = () => {
+    if (!result?.excel_b64) return;
+    try {
+      const byteCharacters = atob(result.excel_b64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Cierre_Costos_Procesado_${result.summary.project_name || "SMA"}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (e) {
+      console.error("Error al descargar el archivo Excel:", e);
     }
   };
 
@@ -169,7 +214,6 @@ export default function CierreCostosPage() {
     }).format(val);
   };
 
-  // Filtrado de APUs
   const filteredApus = result
     ? result.details.filter(apu => {
         const matchesSearch = 
@@ -190,21 +234,36 @@ export default function CierreCostosPage() {
   return (
     <div className="space-y-8 max-w-full">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-3">
-          <span 
-            className="material-symbols-outlined text-4xl"
-            style={{ color: "var(--color-primary)" }}
-          >
-            construction
-          </span>
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-            Control y Cierre de Costos (SAO)
-          </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <span 
+              className="material-symbols-outlined text-4xl"
+              style={{ color: "var(--color-primary)" }}
+            >
+              construction
+            </span>
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight" style={{ color: "var(--color-text-primary)" }}>
+              Control y Cierre de Costos (SAO)
+            </h1>
+          </div>
+          <p className="text-base mt-2" style={{ color: "var(--color-text-secondary)" }}>
+            Monitorea desviaciones de rendimientos unitarios, proyecta sobrantes de materiales y concilia APUs de obra.
+          </p>
         </div>
-        <p className="text-base mt-2" style={{ color: "var(--color-text-secondary)" }}>
-          Monitorea desviaciones de rendimientos unitarios, proyecta sobrantes de materiales y concilia APUs de obra.
-        </p>
+
+        {result?.excel_b64 && (
+          <button
+            onClick={downloadExcel}
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 cursor-pointer shrink-0"
+            style={{
+              background: "linear-gradient(135deg, #10B981, #059669)",
+            }}
+          >
+            <Download className="w-5 h-5" />
+            Descargar Excel Procesado (.xlsx)
+          </button>
+        )}
       </div>
 
       {/* Main Upload and Info Section */}
@@ -329,15 +388,15 @@ export default function CierreCostosPage() {
                 Validación de Cierre de Costos
               </h3>
               <p className="text-xs max-w-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
-                Sube el archivo Excel de control de presupuestos para que el motor detecte desviaciones de obra física, projeciones de costo a fin de obra y sugiera reutilización de materiales sobrantes.
+                Sube el archivo Excel de control de presupuestos para que el motor detecte desviaciones de obra física, proyecciones de costo a fin de obra y sugiera reutilización de materiales sobrantes.
               </p>
               <div className="mt-6 flex gap-3 text-left max-w-md rounded-xl p-3.5 bg-emerald-500/5 border border-emerald-500/10 text-xs" style={{ color: "var(--color-text-secondary)" }}>
                 <Info className="w-5 h-5 flex-shrink-0 text-[var(--color-primary)]" />
-                <span>Si no tienes el archivo real a la mano, puedes subir cualquier Excel para activar el <strong>Modo Demostración</strong> interactivo del proyecto Bosque de Agua.</span>
+                <span>Al procesar el archivo, podrás **descargar la versión completada en Excel** con las 7 columnas de fórmulas y la pestaña de mezclas de concreto.</span>
               </div>
             </div>
           ) : (
-            // Results Summary Dashboard
+            /* Results Summary Dashboard */
             <div className="space-y-6 flex-1 flex flex-col justify-between">
               {/* Dynamic Projection Toggle Card */}
               <div 
@@ -402,7 +461,7 @@ export default function CierreCostosPage() {
                   <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Ejecución Real</p>
                   <p className="text-xl font-black mt-1" style={{ color: "var(--color-text-primary)" }}>{formatCurrency(result.summary.total_ejec)}</p>
                   <p className="text-[9px] mt-1" style={{ color: "var(--color-text-tertiary)" }}>
-                    {((result.summary.total_ejec / result.summary.total_base) * 100).toFixed(1)}% avance costo
+                    {((result.summary.total_ejec / (result.summary.total_base || 1)) * 100).toFixed(1)}% avance costo
                   </p>
                 </div>
 
@@ -425,7 +484,7 @@ export default function CierreCostosPage() {
                             <TrendingDown className="w-3.5 h-3.5 text-emerald-500" />
                           )}
                           <span className={`text-[9px] font-bold ${dev > 0 ? "text-red-500" : "text-emerald-500"}`}>
-                            {dev > 0 ? "+" : ""}{formatCurrency(dev)} ({((dev / result.summary.total_base) * 100).toFixed(1)}%)
+                            {dev > 0 ? "+" : ""}{formatCurrency(dev)} ({((dev / (result.summary.total_base || 1)) * 100).toFixed(1)}%)
                           </span>
                         </>
                       );
@@ -446,7 +505,7 @@ export default function CierreCostosPage() {
                   <AlertCircle className={`w-4 h-4 ${result.summary.total_alerts > 0 ? "text-red-500" : "text-[var(--color-primary)]"}`} />
                   <span style={{ color: "var(--color-text-secondary)" }}>
                     {result.summary.total_alerts > 0 
-                      ? `Se detectaron ${result.summary.total_alerts} alertas críticas por sobrecosto de insumos.`
+                      ? `Se detectaron ${result.summary.total_alerts} alertas críticas por sobrecosto o desviación en mezclas.`
                       : "No se registran sobrecostos críticos en los insumos."}
                   </span>
                 </div>
@@ -464,7 +523,7 @@ export default function CierreCostosPage() {
       {/* Alertas & Reutilizaciones Panels */}
       {result && (result.reutilizaciones.length > 0 || result.alerts.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Reutilization Recommendations (Blue Cards) */}
+          {/* Reutilization Recommendations */}
           {result.reutilizaciones.length > 0 && (
             <div 
               className="rounded-xl border p-6 space-y-4"
@@ -497,7 +556,7 @@ export default function CierreCostosPage() {
             </div>
           )}
 
-          {/* Deviation Alerts (Red/Yellow Cards) */}
+          {/* Deviation Alerts */}
           {result.alerts.length > 0 && (
             <div 
               className="rounded-xl border p-6 space-y-4"
@@ -532,6 +591,81 @@ export default function CierreCostosPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Concrete Mix Validation Section */}
+      {result && result.concrete_validation && result.concrete_validation.length > 0 && (
+        <div 
+          className="rounded-xl border p-6 space-y-6"
+          style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)", boxShadow: "var(--shadow-md)" }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: "var(--color-text-primary)" }}>
+                <span className="material-symbols-outlined text-amber-500">water_drop</span>
+                Validación de Mezclas de Concreto (Cemento vs. Arena y Triturado)
+              </h3>
+              <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                Compara el Cemento registrado en el APU contra el Cemento teórico esperable según las dosificaciones de Arena y Triturado. (Tolerancia: ±15%).
+              </p>
+            </div>
+
+            <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20">
+              {result.concrete_validation.length} APUs Auditados
+            </span>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--color-border)" }}>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="bg-[var(--color-surface-hover)] border-b" style={{ borderColor: "var(--color-border)" }}>
+                <tr>
+                  <th className="px-4 py-3 font-extrabold uppercase text-[var(--color-text-secondary)]">Código APU</th>
+                  <th className="px-4 py-3 font-extrabold uppercase text-[var(--color-text-secondary)]">Nombre Actividad</th>
+                  <th className="px-4 py-3 font-extrabold uppercase text-[var(--color-text-secondary)]">Ficha Usada</th>
+                  <th className="px-4 py-3 font-extrabold uppercase text-[var(--color-text-secondary)] text-right">Cemento Reg. (sc)</th>
+                  <th className="px-4 py-3 font-extrabold uppercase text-[var(--color-text-secondary)] text-right">Arena Reg. (m³)</th>
+                  <th className="px-4 py-3 font-extrabold uppercase text-[var(--color-text-secondary)] text-right">Triturado Reg. (m³)</th>
+                  <th className="px-4 py-3 font-extrabold uppercase text-[var(--color-text-secondary)] text-right">Cto. Esp. (Arena)</th>
+                  <th className="px-4 py-3 font-extrabold uppercase text-[var(--color-text-secondary)] text-right">Cto. Esp. (Triturado)</th>
+                  <th className="px-4 py-3 font-extrabold uppercase text-[var(--color-text-secondary)] text-right">Dif % Arena</th>
+                  <th className="px-4 py-3 font-extrabold uppercase text-[var(--color-text-secondary)] text-right">Dif % Triturado</th>
+                  <th className="px-4 py-3 font-extrabold uppercase text-[var(--color-text-secondary)] text-center">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: "var(--color-border)" }}>
+                {result.concrete_validation.map((item, idx) => (
+                  <tr key={idx} className="hover:bg-[var(--color-surface-hover)]/30 transition-colors">
+                    <td className="px-4 py-3 font-mono font-bold text-[var(--color-primary)]">{item.apu_code}</td>
+                    <td className="px-4 py-3 uppercase font-medium" style={{ color: "var(--color-text-primary)" }}>{item.apu_name}</td>
+                    <td className="px-4 py-3 font-semibold" style={{ color: "var(--color-text-secondary)" }}>{item.ficha_title}</td>
+                    <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--color-text-primary)" }}>{item.cemento_reg.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--color-text-secondary)" }}>{item.arena_reg.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--color-text-secondary)" }}>{item.triturado_reg.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-emerald-500 font-semibold">{item.cemento_expected_arena.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-emerald-500 font-semibold">{item.cemento_expected_triturado.toFixed(2)}</td>
+                    <td className={`px-4 py-3 text-right font-mono font-bold ${Math.abs(item.dev_pct_arena) > 15 ? "text-red-500" : "text-emerald-500"}`}>
+                      {item.dev_pct_arena > 0 ? "+" : ""}{item.dev_pct_arena.toFixed(1)}%
+                    </td>
+                    <td className={`px-4 py-3 text-right font-mono font-bold ${Math.abs(item.dev_pct_triturado) > 15 ? "text-red-500" : "text-emerald-500"}`}>
+                      {item.dev_pct_triturado > 0 ? "+" : ""}{item.dev_pct_triturado.toFixed(1)}%
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {item.status === "OK" ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> OK
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-red-500/10 text-red-500 border border-red-500/20 animate-pulse">
+                          <XCircle className="w-3.5 h-3.5" /> Revisar
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -599,7 +733,6 @@ export default function CierreCostosPage() {
                   filteredApus.map((apu) => {
                     const isExpanded = !!expandedApus[apu.code];
                     
-                    // Sumas para el padre APU
                     const apuBaseCost = apu.resources.reduce((acc, r) => acc + (r.base_qty * r.base_price), 0);
                     const apuProjCost = apu.resources.reduce((acc, r) => {
                       const cost = projectionMode === "historical" ? r.proj_hist?.cost : r.proj_theo?.cost;
@@ -674,7 +807,6 @@ export default function CierreCostosPage() {
                               <td className="px-4 py-3 text-center" style={{ color: "var(--color-text-tertiary)" }}>
                                 {res.unit}
                               </td>
-                              {/* Quantities */}
                               <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--color-text-secondary)" }}>
                                 {res.base_qty.toLocaleString("es-CO", { maximumFractionDigits: 1 })}
                               </td>
@@ -684,7 +816,6 @@ export default function CierreCostosPage() {
                               <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--color-text-tertiary)" }}>
                                 {(resProj?.qty ? (resProj.qty - res.ejec_qty) : 0).toLocaleString("es-CO", { maximumFractionDigits: 1 })}
                               </td>
-                              {/* Yields (Unitary Quantity) */}
                               <td className="px-4 py-3 text-right font-mono text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
                                 <span>{uBase.toFixed(3)}</span>
                                 {res.ejec_qty > 0 && (
@@ -693,18 +824,15 @@ export default function CierreCostosPage() {
                                   </span>
                                 )}
                               </td>
-                              {/* Price */}
                               <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--color-text-secondary)" }}>
                                 {formatCurrency(res.base_price)}
                               </td>
-                              {/* Subtotals */}
                               <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--color-text-secondary)" }}>
                                 {formatCurrency(res.base_qty * res.base_price)}
                               </td>
                               <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--color-text-secondary)" }}>
                                 {formatCurrency(resCostProj)}
                               </td>
-                              {/* Deviation */}
                               <td className={`px-4 py-3 text-right font-mono font-bold ${
                                 resDevCost > 0 ? "text-red-400 bg-red-500/[0.01]" : "text-emerald-500"
                               }`}>
