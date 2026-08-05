@@ -23,8 +23,23 @@ HEADER_SEARCH_ROWS = 30
 TOLERANCIA_CONCRETO = 0.15
 
 
+def set_cell_value_safe(ws, row, col, value):
+    """Establece un valor de celda de forma segura, incluso si es una celda combinada (MergedCell)."""
+    cell = ws.cell(row, col)
+    if type(cell).__name__ == 'MergedCell':
+        for merged_range in ws.merged_cells.ranges:
+            if cell.coordinate in merged_range:
+                top_left = ws.cell(merged_range.min_row, merged_range.min_col)
+                top_left.value = value
+                return top_left
+        return cell
+    else:
+        cell.value = value
+        return cell
+
+
 def copy_cell_style(src, dst):
-    if src and src.has_style:
+    if src and src.has_style and type(dst).__name__ != 'MergedCell':
         dst.font          = copy(src.font)
         dst.border        = copy(src.border)
         dst.fill          = copy(src.fill)
@@ -82,27 +97,53 @@ def clean_numeric(val):
         return 0.0
 
 
-def read_accumulated_values(wb):
-    ws = wb.worksheets[0]
-    item_row, item_col = find_header_cell(ws, SHEET0_ITEM_KEYWORDS, match_all=False)
-    accum_row, accum_col = find_header_cell(ws, SHEET0_ACCUM_KEYWORDS, match_all=True)
+def find_apu_sheet(wb):
+    """Encuentra dinámicamente la hoja que contiene la tabla principal de APUs mediante puntuación."""
+    best_ws = wb.worksheets[0]
+    best_score = -1
 
-    if item_col is None or accum_col is None:
-        item_row, item_col = 7, 2
-        accum_row, accum_col = 7, 10
+    for ws in wb.worksheets:
+        score = 0
+        for r in range(1, min(HEADER_SEARCH_ROWS, ws.max_row + 1)):
+            row_str = ' '.join(normalize(ws.cell(r, c).value) for c in range(1, min(25, ws.max_column + 1)))
+            if 'análisis unitario ejecución' in row_str or 'analisis unitario ejecucion' in row_str:
+                score += 100
+            elif 'ejecuci' in row_str:
+                score += 50
+            if 'análisis unitario base' in row_str or 'analisis unitario base' in row_str or 'base' in row_str:
+                score += 30
+            if 'código' in row_str or 'codigo' in row_str:
+                score += 20
+            if 'insumo' in row_str:
+                score += 20
 
-    data_start = max(item_row or 0, accum_row or 0) + 1
+        if score > best_score:
+            best_score = score
+            best_ws = ws
+
+    return best_ws
+
+
+def read_accumulated_values(wb, apu_sheet_title):
     accum_dict = {}
+    for ws in wb.worksheets:
+        if ws.title == apu_sheet_title:
+            continue
+        item_row, item_col = find_header_cell(ws, SHEET0_ITEM_KEYWORDS, match_all=False)
+        accum_row, accum_col = find_header_cell(ws, SHEET0_ACCUM_KEYWORDS, match_all=True)
 
-    for r in range(data_start, ws.max_row + 1):
-        code_val  = ws.cell(r, item_col).value
-        accum_val = ws.cell(r, accum_col).value
-        if code_val is None:
-            continue
-        code_str = str(code_val).strip()
-        if not code_str:
-            continue
-        accum_dict[code_str] = clean_numeric(accum_val)
+        if item_col is not None and accum_col is not None:
+            data_start = max(item_row or 0, accum_row or 0) + 1
+            for r in range(data_start, ws.max_row + 1):
+                code_val  = ws.cell(r, item_col).value
+                accum_val = ws.cell(r, accum_col).value
+                if code_val is None:
+                    continue
+                code_str = str(code_val).strip()
+                if not code_str:
+                    continue
+                accum_dict[code_str] = clean_numeric(accum_val)
+            break
 
     return accum_dict
 
@@ -112,6 +153,21 @@ def detect_sheet1_headers(ws):
     insumo_row, insumo_col = find_header_cell(ws, SHEET1_INSUMO_KEYWORDS, match_all=False)
     name_row, name_col = find_header_cell(ws, SHEET1_NAME_KEYWORDS, match_all=False)
     group_row, group_col = find_header_cell(ws, SHEET1_GROUP_KEYWORDS, match_all=False)
+
+    header_row = group_row or code_row or 2
+
+    base_group_col = 5
+    ejec_group_col = 9
+    faltante_group_col = None
+
+    for c in range(1, ws.max_column + 1):
+        v = normalize(ws.cell(header_row, c).value)
+        if 'base' in v:
+            base_group_col = c
+        elif 'ejecuci' in v:
+            ejec_group_col = c
+        elif 'faltante' in v or 'obra faltante' in v:
+            faltante_group_col = c
 
     ejecutada_col = None
     subheader_row = None
@@ -140,37 +196,37 @@ def detect_sheet1_headers(ws):
             if unitaria_col and precio_col:
                 break
 
-    # Fallbacks
     if code_col is None:
         code_col = 1
     if insumo_col is None:
         insumo_col = code_col + 1
     if name_col is None:
         name_col = code_col + 2
-    if ejecutada_col is None or subheader_row is None:
-        subheader_row, ejecutada_col = 3, 9
+    if subheader_row is None:
+        subheader_row = header_row + 1
+    if ejecutada_col is None:
+        ejecutada_col = ejec_group_col
     if unitaria_col is None:
         unitaria_col = ejecutada_col + 1
     if precio_col is None:
         precio_col = ejecutada_col + 2
 
     return {
-        'code_col':         code_col,
-        'insumo_col':       insumo_col,
-        'name_col':         name_col,
-        'group_header_row': group_row or subheader_row,
-        'subheader_row':    subheader_row,
-        'ejecutada_col':    ejecutada_col,
-        'unitaria_col':     unitaria_col,
-        'precio_col':       precio_col,
+        'code_col':           code_col,
+        'insumo_col':         insumo_col,
+        'name_col':           name_col,
+        'group_header_row':   header_row,
+        'subheader_row':      subheader_row,
+        'base_group_col':     base_group_col,
+        'ejec_group_col':     ejec_group_col,
+        'faltante_group_col': faltante_group_col,
+        'ejecutada_col':      ejecutada_col,
+        'unitaria_col':       unitaria_col,
+        'precio_col':         precio_col,
     }
 
 
-def populate_excel_calculated_columns(wb, accum_dict):
-    """Genera las 7 columnas calculadas directamente sobre el workbook openpyxl."""
-    ws = wb.worksheets[1]
-    h = detect_sheet1_headers(ws)
-
+def populate_excel_calculated_columns(wb, ws, accum_dict, h):
     code_col         = h['code_col']
     insumo_col       = h['insumo_col']
     group_header_row = h['group_header_row']
@@ -178,6 +234,7 @@ def populate_excel_calculated_columns(wb, accum_dict):
     ejecutada_col    = h['ejecutada_col']
     unitaria_col     = h['unitaria_col']
     precio_col       = h['precio_col']
+    faltante_col     = h['faltante_group_col']
 
     col_accum = None
     for c in range(1, ws.max_column + 1):
@@ -260,8 +317,7 @@ def populate_excel_calculated_columns(wb, accum_dict):
         (col_total,    "Analisis unitario ejecucion"),
         (col_diff,     "Analisis unitario ejecucion"),
     ]:
-        cell = ws.cell(group_header_row, col)
-        cell.value = label
+        cell = set_cell_value_safe(ws, group_header_row, col, label)
         copy_cell_style(grp_src, cell)
 
     sub_src = ws.cell(subheader_row, ejecutada_col)
@@ -274,8 +330,7 @@ def populate_excel_calculated_columns(wb, accum_dict):
         (col_total,    "Total Unitaria"),
         (col_diff,     "Diferencia"),
     ]:
-        cell = ws.cell(subheader_row, col)
-        cell.value = label
+        cell = set_cell_value_safe(ws, subheader_row, col, label)
         copy_cell_style(sub_src, cell)
 
     data_start_row = subheader_row + 1
@@ -289,59 +344,62 @@ def populate_excel_calculated_columns(wb, accum_dict):
         if not code_str:
             continue
 
-        is_parent = insumo is None or str(insumo).strip() == ""
+        is_parent = insumo is None or str(insumo).strip() == "" or str(insumo).lower() in ("none", "nan")
         src_cell  = ws.cell(r, ejecutada_col)
 
         if is_parent:
+            dst_cell = set_cell_value_safe(ws, r, col_accum, None)
+            copy_cell_style(src_cell, dst_cell)
+
             if code_str in accum_dict:
-                dst_cell = ws.cell(r, col_accum)
-                copy_cell_style(src_cell, dst_cell)
                 dst_cell.value = accum_dict[code_str]
-                current_parent_row = r
+            elif faltante_col is not None:
+                dst_cell.value = clean_numeric(ws.cell(r, faltante_col).value)
+            else:
+                b_q = clean_numeric(ws.cell(r, h['base_group_col']).value)
+                e_q = clean_numeric(src_cell.value)
+                dst_cell.value = max(0.0, b_q - e_q) if b_q > e_q else e_q
+
+            current_parent_row = r
+
             for col in (col_ratio, col_unitaria, col_precio, col_costo, col_total, col_diff):
-                ws.cell(r, col).value = None
+                set_cell_value_safe(ws, r, col, None)
         else:
             raw_val = src_cell.value
-            dst_cell = ws.cell(r, col_accum)
-            if raw_val is not None:
-                copy_cell_style(src_cell, dst_cell)
-                dst_cell.value = raw_val
+            dst_cell = set_cell_value_safe(ws, r, col_accum, raw_val)
+            copy_cell_style(src_cell, dst_cell)
 
-            ratio_cell = ws.cell(r, col_ratio)
+            ratio_cell = set_cell_value_safe(ws, r, col_ratio, None)
             copy_cell_style(src_cell, ratio_cell)
             if current_parent_row is not None:
                 ratio_cell.value = (
                     f"=IF(AND(ISNUMBER({col_accum_letter}{current_parent_row}), {col_accum_letter}{current_parent_row}<>0),"
                     f"{col_accum_letter}{r}/{col_accum_letter}{current_parent_row},\"\")"
                 )
-            else:
-                ratio_cell.value = None
 
             u_src  = ws.cell(r, unitaria_col)
-            u_cell = ws.cell(r, col_unitaria)
+            u_cell = set_cell_value_safe(ws, r, col_unitaria, u_src.value)
             copy_cell_style(u_src, u_cell)
-            u_cell.value = u_src.value
 
             p_src  = ws.cell(r, precio_col)
-            p_cell = ws.cell(r, col_precio)
+            p_cell = set_cell_value_safe(ws, r, col_precio, p_src.value)
             copy_cell_style(p_src, p_cell)
-            p_cell.value = p_src.value
 
-            c_cell = ws.cell(r, col_costo)
+            c_cell = set_cell_value_safe(ws, r, col_costo, None)
             copy_cell_style(p_src, c_cell)
             if current_parent_row is not None:
                 c_cell.value = (
                     f'=IF({col_ratio_letter}{r}<>"", {col_precio_letter}{r}*{col_ratio_letter}{r}, "")'
                 )
 
-            t_cell = ws.cell(r, col_total)
+            t_cell = set_cell_value_safe(ws, r, col_total, None)
             copy_cell_style(u_src, t_cell)
             if current_parent_row is not None:
                 t_cell.value = (
                     f'=IF(AND(ISNUMBER({col_accum_letter}{current_parent_row}), {col_accum_letter}{current_parent_row}<>0), {col_unitaria_letter}{r}*{col_accum_letter}{current_parent_row}, "")'
                 )
 
-            d_cell = ws.cell(r, col_diff)
+            d_cell = set_cell_value_safe(ws, r, col_diff, None)
             copy_cell_style(u_src, d_cell)
             if current_parent_row is not None:
                 d_cell.value = (
@@ -358,14 +416,13 @@ def populate_excel_calculated_columns(wb, accum_dict):
 
 
 def create_concrete_validation_sheet(wb, apu_ws_title, h, qty_col):
-    """Crea o actualiza la pestaña 'Validacion Mezcla Concreto' en el workbook."""
     ws_apu = wb[apu_ws_title]
     code_col = h['code_col']
     insumo_col = h['insumo_col']
     nombre_col = h['name_col']
 
     fichas = []
-    exclude_titles = {wb.worksheets[0].title, apu_ws_title}
+    exclude_titles = {apu_ws_title}
 
     for ws in wb.worksheets:
         if ws.title in exclude_titles:
@@ -402,7 +459,6 @@ def create_concrete_validation_sheet(wb, apu_ws_title, h, qty_col):
     if not fichas:
         return
 
-    # Buscar ítems de concreto en APU
     items = []
     current = None
     for r in range(h['subheader_row'] + 1, ws_apu.max_row + 1):
@@ -414,7 +470,7 @@ def create_concrete_validation_sheet(wb, apu_ws_title, h, qty_col):
         if not code_str:
             continue
 
-        is_parent = insumo is None or str(insumo).strip() == ""
+        is_parent = insumo is None or str(insumo).strip() == "" or str(insumo).lower() in ("none", "nan")
 
         if is_parent:
             if current and {'cemento', 'arena', 'triturado'} <= current['rows'].keys():
@@ -549,9 +605,110 @@ def create_concrete_validation_sheet(wb, apu_ws_title, h, qty_col):
     vs.freeze_panes = "A5"
 
 
+def create_alerts_sheet(wb, alerts):
+    if not alerts:
+        return
+    sheet_name = "Alertas y Desviaciones"
+    if sheet_name in wb.sheetnames:
+        del wb[sheet_name]
+    vs = wb.create_sheet(sheet_name)
+
+    header_fill = PatternFill("solid", fgColor="C00000")
+    header_font = Font(bold=True, color="FFFFFF")
+    thin = Side(style='thin', color='B7B7B7')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    wrap = Alignment(wrap_text=True, vertical='center', horizontal='left')
+
+    vs['A1'] = "Reporte de Alertas Críticas de Costos y Rendimientos"
+    vs['A1'].font = Font(bold=True, size=13)
+    vs['A2'] = "Generado automáticamente por el motor de análisis SAO."
+    vs['A2'].font = Font(italic=True, size=9, color="555555")
+
+    headers = ["Nivel / Gravedad", "Código APU", "Código Insumo", "Tipo de Alerta", "Descripción / Mensaje"]
+    header_row = 4
+    for j, htext in enumerate(headers, start=1):
+        cell = vs.cell(header_row, j, htext)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = wrap
+        cell.border = border
+
+    row = header_row + 1
+    for a in alerts:
+        severity = "CRÍTICO" if a.get("type") == "danger" else "ADVERTENCIA"
+        vs.cell(row, 1, severity)
+        vs.cell(row, 2, a.get("apu_code", ""))
+        vs.cell(row, 3, a.get("insumo_code", ""))
+        vs.cell(row, 4, a.get("title", ""))
+        vs.cell(row, 5, a.get("message", ""))
+
+        for c in range(1, 6):
+            cell = vs.cell(row, c)
+            cell.border = border
+            if c == 1:
+                fill_color = "F8CBAD" if severity == "CRÍTICO" else "FFF2CC"
+                cell.fill = PatternFill("solid", fgColor=fill_color)
+                cell.font = Font(bold=True)
+        row += 1
+
+    widths = [18, 16, 16, 32, 80]
+    for j, w in enumerate(widths, start=1):
+        vs.column_dimensions[get_column_letter(j)].width = w
+    vs.freeze_panes = "A5"
+
+
+def create_reutilization_sheet(wb, reutilizaciones):
+    if not reutilizaciones:
+        return
+    sheet_name = "Oportunidades Reutilizacion"
+    if sheet_name in wb.sheetnames:
+        del wb[sheet_name]
+    vs = wb.create_sheet(sheet_name)
+
+    header_fill = PatternFill("solid", fgColor="385723")
+    header_font = Font(bold=True, color="FFFFFF")
+    thin = Side(style='thin', color='B7B7B7')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    wrap = Alignment(wrap_text=True, vertical='center', horizontal='left')
+
+    vs['A1'] = "Oportunidades de Reutilización y Compensación de Materiales"
+    vs['A1'].font = Font(bold=True, size=13)
+    vs['A2'] = "Identifica sobrantes proyectados en APUs para cubrir faltantes en otros APUs."
+    vs['A2'].font = Font(italic=True, size=9, color="555555")
+
+    headers = ["Código Insumo", "Nombre Material", "Unidad", "APU Origen (Excedente)", "APU Destino (Faltante)", "Cantidad a Reutilizar", "Recomendación de Obra"]
+    header_row = 4
+    for j, htext in enumerate(headers, start=1):
+        cell = vs.cell(header_row, j, htext)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = wrap
+        cell.border = border
+
+    row = header_row + 1
+    for r in reutilizaciones:
+        vs.cell(row, 1, r.get("insumo_code", ""))
+        vs.cell(row, 2, r.get("insumo_name", ""))
+        vs.cell(row, 3, r.get("unit", ""))
+        vs.cell(row, 4, f"{r.get('from_apu_code', '')} - {r.get('from_apu_name', '')}")
+        vs.cell(row, 5, f"{r.get('to_apu_code', '')} - {r.get('to_apu_name', '')}")
+        vs.cell(row, 6, r.get("qty", 0.0))
+        vs.cell(row, 6).number_format = '#,##0.00'
+        vs.cell(row, 7, r.get("message", ""))
+
+        for c in range(1, 8):
+            vs.cell(row, c).border = border
+
+        row += 1
+
+    widths = [16, 25, 10, 35, 35, 20, 75]
+    for j, w in enumerate(widths, start=1):
+        vs.column_dimensions[get_column_letter(j)].width = w
+    vs.freeze_panes = "A5"
+
+
 def find_concrete_validation_data(wb, apu_ws, headers_info):
-    """Extrae resumen de validación de mezclas de concreto para la respuesta JSON."""
-    exclude_titles = {wb.worksheets[0].title, apu_ws.title}
+    exclude_titles = {apu_ws.title}
     fichas = []
     
     for ws in wb.worksheets:
@@ -608,7 +765,7 @@ def find_concrete_validation_data(wb, apu_ws, headers_info):
         if not code_str:
             continue
 
-        is_parent = insumo_val is None or str(insumo_val).strip() == ""
+        is_parent = insumo_val is None or str(insumo_val).strip() == "" or str(insumo_val).lower() in ("none", "nan")
 
         if is_parent:
             if current and {'cemento', 'arena', 'triturado'} <= current['insumos'].keys():
@@ -679,7 +836,7 @@ def find_concrete_validation_data(wb, apu_ws, headers_info):
 
 async def process_sao_costs(file_content: bytes, filename: str):
     """
-    Procesa el archivo Excel de SAO.
+    Procesa cualquier archivo Excel de SAO (1 o múltiples hojas).
     Retorna el análisis JSON + la versión modificada en Excel en formato Base64.
     """
     try:
@@ -687,25 +844,23 @@ async def process_sao_costs(file_content: bytes, filename: str):
     except Exception as e:
         raise ValueError(f"No se pudo leer el archivo Excel con openpyxl: {str(e)}")
 
-    if len(wb.sheetnames) < 2:
-        raise ValueError(f"El archivo Excel debe tener al menos 2 hojas. Se encontraron {len(wb.sheetnames)}.")
+    if not wb.sheetnames:
+        raise ValueError("El archivo Excel no contiene hojas de cálculo.")
 
-    accum_dict = read_accumulated_values(wb)
-
-    ws_apu = wb.worksheets[1]
+    ws_apu = find_apu_sheet(wb)
     apu_ws_title = ws_apu.title
-    for ws in wb.worksheets:
-        r, c = find_header_cell(ws, SHEET1_GROUP_KEYWORDS, match_all=False)
-        if c is not None:
-            ws_apu = ws
-            apu_ws_title = ws.title
-            break
+
+    accum_dict = read_accumulated_values(wb, apu_ws_title)
 
     h = detect_sheet1_headers(ws_apu)
     code_col = h['code_col']
     insumo_col = h['insumo_col']
     name_col = h['name_col']
     subheader_row = h['subheader_row']
+    base_group_col = h['base_group_col']
+    ejec_group_col = h['ejec_group_col']
+    faltante_group_col = h['faltante_group_col']
+
     ejecutada_col = h['ejecutada_col']
     unitaria_col = h['unitaria_col']
     precio_col = h['precio_col']
@@ -731,30 +886,36 @@ async def process_sao_costs(file_content: bytes, filename: str):
         unit_cell = ws_apu.cell(r, name_col + 1).value
         unidad = str(unit_cell).strip() if unit_cell is not None else ""
 
-        is_parent = not insumo_str or insumo_str == "nan"
+        is_parent = not insumo_str or insumo_str.lower() in ("none", "nan", "")
 
         if is_parent:
+            base_qty = clean_numeric(ws_apu.cell(r, base_group_col).value)
             ejec_qty = clean_numeric(ws_apu.cell(r, ejecutada_col).value)
-            accum_qty = accum_dict.get(clean_code, 0.0)
-            obra_faltante = accum_qty if accum_qty > 0 else ejec_qty
+
+            if clean_code in accum_dict:
+                obra_faltante = accum_dict[clean_code]
+            elif faltante_group_col is not None:
+                obra_faltante = clean_numeric(ws_apu.cell(r, faltante_group_col).value)
+            else:
+                obra_faltante = max(0.0, base_qty - ejec_qty) if base_qty > ejec_qty else ejec_qty
 
             current_apu = {
                 "code": clean_code,
                 "name": nombre,
                 "unit": unidad,
-                "base_qty": clean_numeric(ws_apu.cell(r, code_col + 4).value),
+                "base_qty": base_qty,
                 "ejec_qty": ejec_qty,
-                "faltante_qty_teorica": accum_qty,
+                "faltante_qty_teorica": obra_faltante,
                 "obra_faltante_qty": obra_faltante,
                 "resources": []
             }
             apus.append(current_apu)
 
         elif insumo_str != "99999" and "subtotal" not in insumo_str.lower() and current_apu:
-            base_qty = clean_numeric(ws_apu.cell(r, code_col + 4).value)
-            base_unit_qty = clean_numeric(ws_apu.cell(r, code_col + 5).value)
-            base_price = clean_numeric(ws_apu.cell(r, code_col + 6).value)
-            base_subtotal = clean_numeric(ws_apu.cell(r, code_col + 7).value)
+            base_qty = clean_numeric(ws_apu.cell(r, base_group_col).value)
+            base_unit_qty = clean_numeric(ws_apu.cell(r, base_group_col + 1).value)
+            base_price = clean_numeric(ws_apu.cell(r, base_group_col + 2).value)
+            base_subtotal = clean_numeric(ws_apu.cell(r, base_group_col + 3).value) or (base_qty * base_price)
 
             ejec_qty = clean_numeric(ws_apu.cell(r, ejecutada_col).value)
             ejec_unit_qty = clean_numeric(ws_apu.cell(r, unitaria_col).value)
@@ -889,8 +1050,7 @@ async def process_sao_costs(file_content: bytes, filename: str):
                 "insumo_code": "CONCRETO"
             })
 
-    # Modificar el libro Excel en memoria para adjuntar las 7 columnas y la pestaña de mezclas
-    populate_excel_calculated_columns(wb, accum_dict)
+    populate_excel_calculated_columns(wb, ws_apu, accum_dict, h)
     
     col_obra_faltante = None
     for c in range(1, ws_apu.max_column + 1):
@@ -900,8 +1060,9 @@ async def process_sao_costs(file_content: bytes, filename: str):
     qty_col = col_obra_faltante if col_obra_faltante else ejecutada_col
     
     create_concrete_validation_sheet(wb, apu_ws_title, h, qty_col)
+    create_alerts_sheet(wb, alerts)
+    create_reutilization_sheet(wb, reutilization_tips)
 
-    # Guardar en memoria y codificar en Base64
     out_buffer = io.BytesIO()
     wb.save(out_buffer)
     out_buffer.seek(0)

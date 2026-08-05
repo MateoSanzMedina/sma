@@ -88,16 +88,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Intentar llamar al backend de Python (puerto 8000)
+    // 1. Llamar al backend de Python (puerto 8000) con timeout suficiente para procesamiento completo
     try {
       const pyFormData = new FormData();
       pyFormData.append("file", file);
 
-      console.log("Intentando procesar costos en el backend de Python (puerto 8000)...");
+      console.log("Procesando costos en el backend de Python (puerto 8000)...");
       const pyResponse = await fetch("http://localhost:8000/api/v1/costs/process", {
         method: "POST",
         body: pyFormData,
-        signal: AbortSignal.timeout(3000), // Timeout corto de 3s
+        signal: AbortSignal.timeout(20000), // Timeout extendido de 20s para archivos grandes
       });
 
       if (pyResponse.ok) {
@@ -105,8 +105,8 @@ export async function POST(req: NextRequest) {
         console.log("✅ Procesado con éxito en el backend de Python (Cierre de Costos).");
         return NextResponse.json(pyResult);
       }
-    } catch {
-      console.warn("⚠️ El backend de Python no respondió. Procesando localmente en Next.js...");
+    } catch (pyErr) {
+      console.warn("⚠️ Error o timeout conectando al backend de Python:", pyErr);
     }
 
     // 2. --- FALLBACK LOCAL DETALLES (XLSX en JS) ---
@@ -117,14 +117,13 @@ export async function POST(req: NextRequest) {
     let sheetName = workbook.SheetNames[0];
     for (const name of workbook.SheetNames) {
       const lowerName = name.toLowerCase();
-      if (lowerName.includes("costos") || lowerName.includes("sao") || lowerName.includes("niveles")) {
+      if (lowerName.includes("costos") || lowerName.includes("sao") || lowerName.includes("niveles") || lowerName.includes("apu")) {
         sheetName = name;
         break;
       }
     }
 
     const worksheet = workbook.Sheets[sheetName];
-    // Obtener filas como matriz 2D
     const rows = xlsx.utils.sheet_to_json<unknown[]>(worksheet, { header: 1, defval: "" });
 
     const apus: APUItem[] = [];
@@ -137,7 +136,6 @@ export async function POST(req: NextRequest) {
       const col0 = String(row[0] || "").trim();
       if (!col0 || col0 === "nan") continue;
 
-      // Comprobar si parece un código (numérico entero)
       const cleanCode = col0.replace(/\.0$/, "").replace(/\./g, "").trim();
       if (!/^\d+$/.test(cleanCode)) continue;
 
@@ -145,7 +143,6 @@ export async function POST(req: NextRequest) {
       const nombre = String(row[2] || "").trim();
       const unidad = String(row[3] || "").trim();
 
-      // A. Ítem Padre
       if (!insumoVal || insumoVal === "nan" || insumoVal === "") {
         const baseQty = cleanNumeric(row[4]);
         const ejecQty = cleanNumeric(row[8]);
@@ -168,7 +165,6 @@ export async function POST(req: NextRequest) {
         };
         apus.push(currentApu);
       }
-      // B. Recurso Hijo
       else if (insumoVal !== "99999" && !insumoVal.toLowerCase().includes("subtotal") && currentApu) {
         currentApu.resources.push({
           insumo: insumoVal.replace(/\.0$/, "").trim(),
@@ -190,7 +186,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 3. Cálculos de Desviaciones, Proyecciones y Reutilización
     const materialBalances: Record<
       string,
       {
@@ -209,7 +204,6 @@ export async function POST(req: NextRequest) {
       for (const res of apu.resources) {
         const insCode = res.insumo;
 
-        // Proyección Teórica
         const projTheoRemQty = qRem * res.base_unit_qty;
         const projTheoRemCost = projTheoRemQty * res.base_price;
         res.proj_theo = {
@@ -219,7 +213,6 @@ export async function POST(req: NextRequest) {
           dev_cost: ((res.ejec_qty * res.ejec_price) + projTheoRemCost) - (res.base_qty * res.base_price)
         };
 
-        // Proyección Histórica
         const uProj = res.ejec_qty > 0 ? res.ejec_unit_qty : res.base_unit_qty;
         const pProj = res.ejec_qty > 0 ? res.ejec_price : res.base_price;
         const projHistRemQty = qRem * uProj;
@@ -231,7 +224,6 @@ export async function POST(req: NextRequest) {
           dev_cost: ((res.ejec_qty * res.ejec_price) + projHistRemCost) - (res.base_qty * res.base_price)
         };
 
-        // Almacenar desviaciones históricas para balances de reutilización
         const devQty = res.proj_hist.dev_qty;
         if (Math.abs(devQty) > 0.01) {
           if (!materialBalances[insCode]) {
@@ -258,7 +250,6 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        // Generar alertas
         const devCost = res.proj_hist.dev_cost;
         const baseCost = res.base_qty * res.base_price;
         if (devCost > 500000) {
@@ -284,7 +275,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Emparejar excedentes y faltantes para reutilización
     for (const [insCode, balance] of Object.entries(materialBalances)) {
       const surpluses = balance.surpluses;
       const deficits = balance.deficits;
@@ -313,7 +303,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Totales de resumen
     let totalBase = 0;
     let totalEjec = 0;
     let totalProjTheo = 0;
@@ -352,10 +341,10 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Error comparando costos en Next.js local fallback:", error);
-    return NextResponse.json(
-      { error: "Error interno en el procesamiento de costos local: " + (error instanceof Error ? error.message : "Desconocido") },
-      { status: 500 }
-    );
+      console.error("Error comparando costos en Next.js local fallback:", error);
+      return NextResponse.json(
+        { error: "Error interno en el procesamiento de costos local: " + (error instanceof Error ? error.message : "Desconocido") },
+        { status: 500 }
+      );
   }
 }

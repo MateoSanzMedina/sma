@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import * as xlsx from "xlsx";
+import { matchPrerequisiteBudgetItem } from "@/lib/constructiveRulesEngine";
+import { checkImplicitPrerequisite } from "@/lib/constructionKnowledge";
 
 const meses: { [key: string]: string } = {
   enero: "01",
@@ -556,21 +558,26 @@ export async function POST(req: Request) {
     // Fecha de inicio por defecto del proyecto como fallback
     const fallbackDate = scheduleItems.find(t => t.start && t.start.includes("-"))?.start || "2026-02-02";
 
-    // 3. Inicializar Vertex AI (con soporte de conmutación a modo offline si no está configurado)
+    // 3. Inicializar Cliente IA (Priorizando Google AI Studio si hay GEMINI_API_KEY, o Vertex AI)
+    const apiKey = process.env.GEMINI_API_KEY;
     const projectId = process.env.GCP_PROJECT_ID;
     const location = process.env.GCP_LOCATION;
-    const initialOffline = !projectId || !location;
-    let fellBackToOffline = initialOffline;
 
-    if (initialOffline) {
-      console.warn("⚠️ Las variables GCP_PROJECT_ID o GCP_LOCATION no están configuradas. Activando procesamiento local 100% resiliente.");
+    let globalClient: InstanceType<typeof GoogleGenAI> | null = null;
+    let initialOffline = true;
+
+    if (apiKey && apiKey.trim() !== "") {
+      console.log("⚡ [IA Engine] Inicializando Google AI Studio con GEMINI_API_KEY.");
+      try {
+        globalClient = new GoogleGenAI({ apiKey: apiKey.trim() });
+        initialOffline = false;
+      } catch (e) {
+        console.warn("⚠️ Error inicializando AI Studio con API Key:", e);
+      }
     }
 
-    // Inicializar el cliente GoogleGenAI global/compartido una sola vez para Vertex AI.
-    // Esto evita que en cada lote se tengan que recargar credenciales e intercambiar tokens OAuth2,
-    // ahorrando tiempo y eliminando fallos de red por reconexión.
-    let globalClient: InstanceType<typeof GoogleGenAI> | null = null;
-    if (!initialOffline) {
+    if (initialOffline && projectId && location) {
+      console.log("☁️ [IA Engine] Inicializando Google Cloud Vertex AI con Proyecto GCP:", projectId);
       const tempKey = process.env.GEMINI_API_KEY;
       delete process.env.GEMINI_API_KEY;
       try {
@@ -579,11 +586,19 @@ export async function POST(req: Request) {
           project: projectId,
           location: location,
         });
+        initialOffline = false;
+      } catch (e) {
+        console.warn("⚠️ Error inicializando Vertex AI:", e);
       } finally {
         if (tempKey) {
           process.env.GEMINI_API_KEY = tempKey;
         }
       }
+    }
+
+    let fellBackToOffline = initialOffline;
+    if (initialOffline) {
+      console.warn("⚠️ Sin credenciales válidas en la nube. Activando procesamiento local 100% resiliente.");
     }
 
     // 4. Pre-matching semántico local de tareas del cronograma
@@ -636,7 +651,10 @@ Tu tarea es asociar cada una de las tareas del cronograma de obra (MS Project) c
 REGLAS MANDATORIAS:
 1. NO RESUMAS ni agrupes. Debes generar exactamente un dataPoint por cada tarea recibida en este lote (recibiste exactamente ${batch.length} tareas).
 2. Para cada tarea, analiza sus "candidate_budgets". Asocia la tarea al candidato de presupuesto que tenga la relación conceptual y de control de obra más lógica. Copia exactamente su código de presupuesto en "budget_item_code".
-3. Sé flexible con sinónimos, capítulos y contextos jerárquicos. Por ejemplo, la tarea 'pavimentación' en el cronograma debe asociarse al ítem de presupuesto 'Suministro y colocacion de pavimento' (aunque este último esté bajo el capítulo 'ESTRUCTURA'). Del mismo modo, tareas con nombres de 'base', 'subbase' o 'cajeo de vía' deben asociarse a sus respectivos ítems de bases granulares o excavaciones en el presupuesto, y tareas de 'cordoneria' o 'vaciado de anden' deben asociarse a andenes, sardineles y bordillos.
+3. APLICA LA CADENA DE PRERREQUISITOS CONSTRUCTIVOS:
+   - Toda instalación de tubería (Novafort, Acueducto, Gas) presupone implícitamente excavación de zanja, cama de apoyo y solera en pozos/cámaras. Si la tarea del cronograma menciona instalación de tubería, asóciala con su ítem de tubería o su prerrequisito de obra civil correspondiente en el presupuesto.
+   - Toda pavimentación o conformación de vía presupone cajeo, subbase, base granular, geotextil vial y cordonería/sardineles de confinamiento.
+   - Toda edificación (Portería, EBAR, Muros) presupone excavación estructural, solera de limpieza, hierro de refuerzo y vaciado de concreto.
 4. Tareas que mencionan 'porteria' (por ejemplo, 'Vía externa y urbanismo porteria (eje 1)') representan la portería física de la obra, y deben asociarse a los ítems de presupuesto del capítulo 'PORTERIA' (como 'Construccion de porteria' o 'Cubierta metalica para la portería').
 5. Si consideras que NINGUNO de los "candidate_budgets" sugeridos aplica en absoluto, o representa un hito puramente administrativo/logístico sin costo de obra física (comités de obra, actas de vecindad, entregas de planos, firmas de contratos, etc.), asigna "budget_item_code" con el valor exacto de "sin_presupuesto".
 6. Devuelve en "id" el ID único de la tarea ("id"), en "task_name" el nombre original de la tarea del cronograma, en "start_date" su fecha de inicio ("start"), en "end_date" su fecha de fin ("end"), y en "chapter" el capítulo original del presupuesto candidato seleccionado (o "Otros" si es sin presupuesto).`,
@@ -801,13 +819,68 @@ REGLAS MANDATORIAS:
         const code = String(b.code).trim();
         const M = itemCodeToTasksCount[code] || 0;
         if (M === 0 && b.val > 0) {
+          // Buscar si este ítem de presupuesto es un prerrequisito implícito de alguna tarea del cronograma
+          let matchedTaskDate = "";
+          let matchedEndDate = "";
+          let matchedChapter = b.chapter || "Otros";
+          let matchedTaskName = `[PRERREQUISITO CONSTRUCTIVO] ${b.desc}`;
+
+          for (const task of scheduleItems) {
+            const checkK = checkImplicitPrerequisite(b.desc, b.chapter, task.name);
+            const prereqResult = checkK.isPrerequisite ? { isMatch: true, daysShiftBeforeStart: checkK.daysShift } : matchPrerequisiteBudgetItem(b.desc, b.chapter, task.name, "");
+            if (prereqResult.isMatch && task.start) {
+              matchedTaskDate = task.start;
+              matchedEndDate = task.end || task.start;
+              matchedChapter = b.chapter || "Otros";
+              matchedTaskName = `[PRERREQUISITO CONSTRUCTIVO] ${b.desc} (vía ${task.name})`;
+              break;
+            }
+          }
+
+          // Si no se encontró tarea específica, determinar el intervalo de tiempo adecuado (Capítulo u Horizonte de Proyecto)
+          if (!matchedTaskDate) {
+            const cleanCh = (b.chapter || "").toUpperCase();
+            const isAdminChapter = cleanCh.includes("ADMINISTRATIVO") || 
+                                   cleanCh.includes("PERSONAL DIRECCION") || 
+                                   cleanCh.includes("PERSONAL OPERATIVO") || 
+                                   cleanCh.includes("SEGURIDAD Y SALUD") || 
+                                   cleanCh.includes("CONTROL AMBIENTAL") || 
+                                   cleanCh.includes("CONSUMIBLE");
+
+            const allStarts = allDataPoints.map(t => t.start_date).filter(Boolean).sort();
+            const allEnds = allDataPoints.map(t => t.end_date).filter(Boolean).sort();
+            const projStart = allStarts[0] || fallbackDate;
+            const projEnd = allEnds[allEnds.length - 1] || projStart;
+
+            if (isAdminChapter) {
+              // Los gastos administrativos y de personal cubren la totalidad del proyecto
+              matchedTaskDate = projStart;
+              matchedEndDate = projEnd;
+              matchedTaskName = `[GASTO ADMINISTRATIVO TRANSVERSAL] ${b.desc}`;
+            } else {
+              // Los ítems de obra física heredan el intervalo de tiempo completo (inicio a fin) de su capítulo
+              const tasksInChapter = chapterToTasks[b.chapter] || [];
+              if (tasksInChapter.length > 0) {
+                const startDates = tasksInChapter.map(t => t.start_date).filter(Boolean).sort();
+                const endDates = tasksInChapter.map(t => t.end_date).filter(Boolean).sort();
+                matchedTaskDate = startDates[0] || projStart;
+                matchedEndDate = endDates[endDates.length - 1] || matchedTaskDate;
+                matchedTaskName = `[PRESUPUESTO CAPÍTULO] ${b.desc}`;
+              } else {
+                matchedTaskDate = projStart;
+                matchedEndDate = projEnd;
+                matchedTaskName = `[PRESUPUESTO OBRA GENERAL] ${b.desc}`;
+              }
+            }
+          }
+
           allDataPoints.push({
-            id: `orphan-${code}`,
-            start_date: "", // Se mantiene vacío al no tener fecha
-            end_date: "",
+            id: `prereq-${code}`,
+            start_date: matchedTaskDate,
+            end_date: matchedEndDate,
             budget_required: b.val,
-            task_name: `[PROCESO NO ASIGNADO] ${b.desc}`,
-            chapter: "Presupuesto Sin Asignar / Huérfano",
+            task_name: matchedTaskName,
+            chapter: matchedChapter,
             budget_item_code: code,
           });
         }

@@ -91,15 +91,25 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Error al comunicarse con el chatbot");
+        let errMessage = "Error al comunicarse con el servicio de Inteligencia Financiera.";
+        if (typeof data.error === "string") {
+          errMessage = data.error;
+        } else if (data.error?.message) {
+          errMessage = data.error.message;
+        }
+        throw new Error(errMessage);
       }
 
       setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      const userFacingErr = err?.message?.includes("PERMISSION_DENIED") || err?.message?.includes("dunning")
+        ? "⚠️ **Aviso de Servicio**: El servicio de IA en la nube (Vertex AI) se encuentra temporalmente en mantenimiento de facturación/cuota. Se ha activado el **Modo Local Resiliente de Control Financiero** para responder con las métricas del proyecto."
+        : "Lo siento, experimenté una interrupción de red al comunicarse con el servicio. Por favor reintenta en un momento.";
+
       setMessages(prev => [
         ...prev,
-        { role: "assistant", content: "Lo siento, experimenté una interrupción de red al intentar conectarme con el servicio de análisis de Vertex AI. Por favor, reintenta en un momento." }
+        { role: "assistant", content: userFacingErr }
       ]);
     } finally {
       setLoading(false);

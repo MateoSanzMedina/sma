@@ -14,31 +14,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const apiKey = process.env.GEMINI_API_KEY;
     const projectId = process.env.GCP_PROJECT_ID;
     const location = process.env.GCP_LOCATION;
-    const initialOffline = !projectId || !location;
 
-    if (initialOffline) {
-      return NextResponse.json(
-        { error: "El servicio en la nube (Vertex AI) no está configurado." },
-        { status: 503 }
-      );
+    let client: GoogleGenAI | null = null;
+
+    if (apiKey && apiKey.trim() !== "") {
+      try {
+        client = new GoogleGenAI({ apiKey: apiKey.trim() });
+      } catch (e) {
+        console.warn("⚠️ Error inicializando AI Studio con GEMINI_API_KEY en chat:", e);
+      }
     }
 
-    // Inicializar el cliente de Vertex AI
-    const tempKey = process.env.GEMINI_API_KEY;
-    delete process.env.GEMINI_API_KEY;
-    
-    let client: GoogleGenAI;
-    try {
-      client = new GoogleGenAI({
-        vertexai: true,
-        project: projectId,
-        location: location,
-      });
-    } finally {
-      if (tempKey) {
-        process.env.GEMINI_API_KEY = tempKey;
+    if (!client && projectId && location) {
+      const tempKey = process.env.GEMINI_API_KEY;
+      delete process.env.GEMINI_API_KEY;
+      try {
+        client = new GoogleGenAI({
+          vertexai: true,
+          project: projectId,
+          location: location,
+        });
+      } catch (e) {
+        console.warn("⚠️ Error inicializando Vertex AI en chat:", e);
+      } finally {
+        if (tempKey) {
+          process.env.GEMINI_API_KEY = tempKey;
+        }
       }
     }
 
@@ -139,21 +143,48 @@ REGLAS CRÍTICAS DE RESPUESTA:
 5. Emplea formato Markdown limpio (negritas para montos en COP, listas ordenadas, tablas pequeñas de 2 o 3 columnas si es útil) para facilitar la lectura en pantalla.`;
 
     const userPrompt = messages[messages.length - 1].content;
-
     const selectedModel = model === "gemini-2.5-flash" ? "gemini-2.5-flash" : "gemini-2.5-pro";
 
-    // Llamar a Gemini mediante Vertex AI
-    const response = await client.models.generateContent({
-      model: selectedModel,
-      contents: userPrompt,
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.25,
-        maxOutputTokens: 2048
-      }
-    });
+    let botReply = "";
 
-    const botReply = response.text || "No pude generar una respuesta en este momento.";
+    try {
+      // Llamar a Gemini mediante Vertex AI
+      const response = await client.models.generateContent({
+        model: selectedModel,
+        contents: userPrompt,
+        config: {
+          systemInstruction: systemInstruction,
+          temperature: 0.25,
+          maxOutputTokens: 2048
+        }
+      });
+      botReply = response.text || "";
+    } catch (apiErr) {
+      console.warn("⚠️ Vertex AI en estado de suspensión o cuota excedida. Usando motor local de respaldo CFO:", apiErr);
+      botReply = generateLocalCfoReply(
+        userPrompt,
+        directBudget,
+        totalBudget,
+        monthlyTotals,
+        maxDailyCost,
+        maxDailyDate,
+        maxDailyTask,
+        topExpensiveItems
+      );
+    }
+
+    if (!botReply) {
+      botReply = generateLocalCfoReply(
+        userPrompt,
+        directBudget,
+        totalBudget,
+        monthlyTotals,
+        maxDailyCost,
+        maxDailyDate,
+        maxDailyTask,
+        topExpensiveItems
+      );
+    }
 
     return NextResponse.json({ success: true, reply: botReply });
 
@@ -164,4 +195,43 @@ REGLAS CRÍTICAS DE RESPUESTA:
       { status: 500 }
     );
   }
+}
+
+function generateLocalCfoReply(
+  userPrompt: string,
+  directBudget: number,
+  totalBudget: number,
+  monthlyTotals: { [key: string]: number },
+  maxDailyCost: number,
+  maxDailyDate: string,
+  maxDailyTask: string,
+  topExpensiveItems: string
+): string {
+  const cleanPrompt = userPrompt.toLowerCase();
+
+  if (cleanPrompt.includes("presupuesto") || cleanPrompt.includes("costo") || cleanPrompt.includes("total") || cleanPrompt.includes("directo") || cleanPrompt.includes("aiu")) {
+    return `### 📊 Resumen Financiero Ejecutivo (Modo Local Resiliente)
+- **Costo Directo Mapeado**: **$${new Intl.NumberFormat("es-CO").format(Math.round(directBudget))} COP**
+- **Costo Total con Indirectos**: **$${new Intl.NumberFormat("es-CO").format(Math.round(totalBudget))} COP** (incluye 9.5% AI + 3% IVA sobre utilidad).
+- **Factor AIU/Indirectos**: **$${new Intl.NumberFormat("es-CO").format(Math.round(totalBudget - directBudget))} COP**.`;
+  }
+
+  if (cleanPrompt.includes("mes") || cleanPrompt.includes("flujo") || cleanPrompt.includes("mensual") || cleanPrompt.includes("concentrac")) {
+    const sortedMonths = Object.keys(monthlyTotals).sort();
+    const list = sortedMonths.map(m => `- **${m}**: $${new Intl.NumberFormat("es-CO").format(Math.round(monthlyTotals[m]))} COP`).join("\n");
+    return `### 🗓️ Distribución Mensual del Flujo de Caja
+${list}
+
+- **Pico Máximo Diario**: **$${new Intl.NumberFormat("es-CO").format(Math.round(maxDailyCost))} COP** el día **${maxDailyDate}** (*${maxDailyTask}*).`;
+  }
+
+  if (cleanPrompt.includes("costoso") || cleanPrompt.includes("mayor") || cleanPrompt.includes("partida") || cleanPrompt.includes("top")) {
+    return `### 💎 Top Partidas con Mayor Impacto Presupuestal
+${topExpensiveItems.split("\n").slice(0, 7).join("\n")}`;
+  }
+
+  return `### 🏛️ Informe Financiero General (Modo Local Resiliente)
+- **Presupuesto Directo Total**: **$${new Intl.NumberFormat("es-CO").format(Math.round(directBudget))} COP**
+- **Presupuesto Total con Indirectos**: **$${new Intl.NumberFormat("es-CO").format(Math.round(totalBudget))} COP**
+- **Día de Mayor Desembolso**: **$${new Intl.NumberFormat("es-CO").format(Math.round(maxDailyCost))} COP** el **${maxDailyDate}** (*${maxDailyTask}*).`;
 }
