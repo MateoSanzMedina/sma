@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import * as xlsx from "xlsx";
 import { matchPrerequisiteBudgetItem } from "@/lib/constructiveRulesEngine";
@@ -781,16 +781,18 @@ REGLAS MANDATORIAS:
       }
     });
 
+    // Mapear tareas por capítulo
+    const chapterToTasks: { [key: string]: MappedDataPoint[] } = {};
+    allDataPoints.forEach(task => {
+      const ch = task.chapter || "Otros";
+      if (!chapterToTasks[ch]) {
+        chapterToTasks[ch] = [];
+      }
+      chapterToTasks[ch].push(task);
+    });
+
     // Redistribuir ítems de presupuesto huérfanos (que no fueron mapeados a ninguna tarea por la IA)
     if (prorateOrphans) {
-      const chapterToTasks: { [key: string]: MappedDataPoint[] } = {};
-      allDataPoints.forEach(task => {
-        const ch = task.chapter || "Otros";
-        if (!chapterToTasks[ch]) {
-          chapterToTasks[ch] = [];
-        }
-        chapterToTasks[ch].push(task);
-      });
 
       budgetItems.forEach(b => {
         const code = String(b.code).trim();

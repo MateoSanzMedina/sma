@@ -101,9 +101,10 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
       }
 
       setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      const userFacingErr = err?.message?.includes("PERMISSION_DENIED") || err?.message?.includes("dunning")
+      const errMsg = err instanceof Error ? err.message : "";
+      const userFacingErr = errMsg.includes("PERMISSION_DENIED") || errMsg.includes("dunning")
         ? "⚠️ **Aviso de Servicio**: El servicio de IA en la nube (Vertex AI) se encuentra temporalmente en mantenimiento de facturación/cuota. Se ha activado el **Modo Local Resiliente de Control Financiero** para responder con las métricas del proyecto."
         : "Lo siento, experimenté una interrupción de red al comunicarse con el servicio. Por favor reintenta en un momento.";
 

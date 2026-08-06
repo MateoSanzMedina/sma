@@ -134,8 +134,9 @@ export function matchPrerequisiteBudgetItem(
   budgetItemDesc: string,
   budgetItemChapter: string,
   taskName: string,
-  taskChapter: string
+  _taskChapter: string
 ): { isMatch: boolean; ruleId?: string; daysShiftBeforeStart?: number; requiredType?: string } {
+  void _taskChapter;
   const cleanItem = budgetItemDesc.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const cleanTask = taskName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 

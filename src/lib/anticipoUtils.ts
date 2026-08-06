@@ -53,14 +53,26 @@ export function getCalendarDaysInRange(startDateStr: string, endDateStr: string)
   return days;
 }
 
+export interface DataPoint {
+  date?: string;
+  start_date?: string;
+  end_date?: string;
+  budget_required: number;
+  task_name: string;
+  chapter?: string;
+  budget_item_code?: string;
+  isAnticipo?: boolean;
+  [key: string]: unknown;
+}
+
 export function recalculateDistributedPoints(
-  dataPoints: any[],
+  dataPoints: DataPoint[],
   rules: { [key: string]: AnticipoRule },
   defaultGlobalAnticipo = true,
   defaultPercentage = 30,
   defaultDays = 60
-): any[] {
-  const distributedDataPoints: any[] = [];
+): DataPoint[] {
+  const distributedDataPoints: DataPoint[] = [];
 
   dataPoints.forEach((dp) => {
     const isOrphan = dp.chapter === "Presupuesto Sin Asignar / Huérfano";

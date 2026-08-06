@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { AnticipoRule } from "@/lib/anticipoUtils";
+import { AnticipoRule, DataPoint } from "@/lib/anticipoUtils";
 import { SlidersHorizontal, ChevronDown, ChevronUp, Plus, Trash2, Percent, ListFilter, CornerDownRight } from "lucide-react";
 
 interface AnticipoManagerPanelProps {
-  dataPoints: any[];
+  dataPoints: DataPoint[];
   rules: { [key: string]: AnticipoRule };
   onUpdateRules: (newRules: { [key: string]: AnticipoRule }) => void;
 }

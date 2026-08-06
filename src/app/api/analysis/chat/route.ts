@@ -148,6 +148,9 @@ REGLAS CRÍTICAS DE RESPUESTA:
     let botReply = "";
 
     try {
+      if (!client) {
+        throw new Error("Cliente de IA no configurado");
+      }
       // Llamar a Gemini mediante Vertex AI
       const response = await client.models.generateContent({
         model: selectedModel,
