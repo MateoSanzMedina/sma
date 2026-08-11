@@ -54,7 +54,7 @@ export function getCalendarDaysInRange(startDateStr: string, endDateStr: string)
 }
 
 export interface DataPoint {
-  date?: string;
+  date: string;
   start_date?: string;
   end_date?: string;
   budget_required: number;
@@ -76,8 +76,8 @@ export function recalculateDistributedPoints(
 
   dataPoints.forEach((dp) => {
     const isOrphan = dp.chapter === "Presupuesto Sin Asignar / Huérfano";
-    const sDate = isOrphan ? "" : (dp.start_date || dp.date);
-    const eDate = isOrphan ? "" : (dp.end_date || sDate);
+    const sDate = isOrphan ? "" : (dp.start_date || dp.date || "");
+    const eDate = isOrphan ? "" : (dp.end_date || sDate || "");
 
     const calendarDays = isOrphan ? [] : getCalendarDaysInRange(sDate, eDate);
     const duration = calendarDays.length;

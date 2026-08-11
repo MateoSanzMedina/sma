@@ -367,6 +367,19 @@ export default function CierreCostosPage() {
                 </>
               )}
             </button>
+
+            {result?.excel_b64 && (
+              <button
+                onClick={downloadExcel}
+                className="w-full mt-3 py-3 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 active:scale-95 text-white shadow-md hover:shadow-lg"
+                style={{
+                  background: "linear-gradient(135deg, #10B981, #059669)",
+                }}
+              >
+                <Download className="w-5 h-5" />
+                Descargar Excel Final Procesado (.xlsx)
+              </button>
+            )}
           </div>
         </div>
 

@@ -2,18 +2,11 @@
 
 import React, { useState, useCallback } from "react";
 import { UploadCloud, FileSpreadsheet, Loader2, CheckCircle } from "lucide-react";
+import { DataPoint } from "@/lib/anticipoUtils";
 
-interface AnalysisDataPoint {
-  date: string;
-  budget_required: number;
-  task_name: string;
-  chapter?: string;
-  process_name?: string;
-}
-
-interface AnalysisResult {
+export interface AnalysisResult {
   analysis: string;
-  dataPoints: AnalysisDataPoint[];
+  dataPoints: DataPoint[];
   totalBudget: number;
   directBudget?: number;
   isOfflineFallback?: boolean;

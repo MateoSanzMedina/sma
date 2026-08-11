@@ -15,13 +15,23 @@ export async function POST(req: NextRequest) {
       pyFormData.append("files", file);
     }
 
-    const pyResponse = await fetch("http://localhost:8000/api/v1/payroll/generate/ingresos", {
-      method: "POST",
-      body: pyFormData,
-    });
+    let pyResponse: Response;
+    try {
+      pyResponse = await fetch("http://localhost:8000/api/v1/payroll/generate/ingresos", {
+        method: "POST",
+        body: pyFormData,
+      });
+    } catch (e) {
+      console.error("Error conectando al backend de Python en puerto 8000:", e);
+      return NextResponse.json(
+        { error: "El backend de Python en el puerto 8000 no está iniciado. Inicia el servidor ejecutando en la terminal: cd backend && python -m uvicorn app.main:app --port 8000" },
+        { status: 503 }
+      );
+    }
 
     if (!pyResponse.ok) {
-      throw new Error(`Error en el backend de Python: ${pyResponse.statusText}`);
+      const errJson = await pyResponse.json().catch(() => ({}));
+      throw new Error(errJson.detail || `Error en el backend de Python: ${pyResponse.statusText}`);
     }
 
     const blob = await pyResponse.blob();

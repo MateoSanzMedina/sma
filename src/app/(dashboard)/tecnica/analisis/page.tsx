@@ -3,12 +3,12 @@
 // label placeholder aria-label
 
 import React, { useState, useEffect, useMemo } from "react";
-import AnalysisUpload from "@/components/dashboard/AnalysisUpload";
+import AnalysisUpload, { AnalysisResult } from "@/components/dashboard/AnalysisUpload";
 import BudgetTimelineChart from "@/components/dashboard/BudgetTimelineChart";
 import AnalysisTable from "@/components/dashboard/AnalysisTable";
 import AnalysisChat from "@/components/dashboard/AnalysisChat";
 import AnticipoManagerPanel from "@/components/dashboard/AnticipoManagerPanel";
-import { AnticipoRule, recalculateDistributedPoints } from "@/lib/anticipoUtils";
+import { AnticipoRule, DataPoint, recalculateDistributedPoints } from "@/lib/anticipoUtils";
 import { Sparkles } from "lucide-react";
 
 // Helper to parse double asterisks into strong tags
@@ -203,23 +203,6 @@ const renderMarkdown = (text: string) => {
   
   return elements;
 };
-
-interface AnalysisDataPoint {
-  date: string;
-  budget_required: number;
-  task_name: string;
-  chapter?: string;
-  process_name?: string;
-}
-
-interface AnalysisResult {
-  analysis: string;
-  dataPoints: AnalysisDataPoint[];
-  distributedDataPoints?: any[];
-  totalBudget: number;
-  directBudget?: number;
-  isOfflineFallback?: boolean;
-}
 
 export default function AnalysisPage() {
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);

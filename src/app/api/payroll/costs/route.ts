@@ -330,13 +330,16 @@ export async function POST(req: NextRequest) {
       total_reutilizations: reutilizaciones.length
     };
 
+    const excel_b64 = xlsx.write(workbook, { type: "base64", bookType: "xlsx" });
+
     return NextResponse.json({
       success: true,
       data: {
         summary,
         alerts,
         reutilizaciones,
-        details: apus
+        details: apus,
+        excel_b64
       }
     });
 
