@@ -354,7 +354,7 @@ function getCalendarDaysInRange(startStr: string, endStr: string): string[] {
 type GenerateContentParams = Parameters<InstanceType<typeof GoogleGenAI>["models"]["generateContent"]>[0];
 type GenerateContentResponse = Awaited<ReturnType<InstanceType<typeof GoogleGenAI>["models"]["generateContent"]>>;
 
-// Función auxiliar para llamar a Gemini con reintentos automáticos, soporte de timeout por intento y resiliencia de red
+// Función auxiliar para llamar a Gemini con reintentos automáticos, soporte de timeout y fallback de modelos
 async function generateContentWithRetry(
   client: InstanceType<typeof GoogleGenAI>,
   params: GenerateContentParams,
@@ -362,20 +362,30 @@ async function generateContentWithRetry(
   delayMs = 3000,
   timeoutMs = 50000 // 50 segundos por intento por defecto
 ): Promise<GenerateContentResponse> {
-  console.log(`[DEBUG - VertexAI] Iniciando llamada a Gemini. Intentos max: ${retries}, delayMs: ${delayMs}ms, timeoutMs: ${timeoutMs}ms`);
+  const primaryModel = params.model;
+  console.log(`[DEBUG - VertexAI] Iniciando llamada a Gemini (${primaryModel}). Intentos max: ${retries}, delayMs: ${delayMs}ms, timeoutMs: ${timeoutMs}ms`);
+  
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      // Aplicamos el timeout individual para cada intento de llamada a Vertex AI
+      // Aplicamos el timeout individual para cada intento de llamada
       return await withTimeout(
         client.models.generateContent(params),
         timeoutMs,
-        `Vertex AI attempt ${attempt} call`
+        `AI model ${params.model} attempt ${attempt} call`
       );
     } catch (error) {
       const err = error as Error & { status?: number };
       const errorMsg = String(err.message || "").toUpperCase();
       const errorStatus = err.status || 0;
       
+      // Fallback dinámico de modelo si la versión 3.7 o 3.1 no está disponible en la región
+      if ((errorMsg.includes("NOT FOUND") || errorMsg.includes("NOT_FOUND") || errorStatus === 404 || errorMsg.includes("UNSUPPORTED")) && params.model.includes("3.")) {
+        const fallbackModel = params.model.includes("pro") ? "gemini-2.5-pro" : "gemini-2.5-flash";
+        console.warn(`⚠️ Modelo ${params.model} no disponible en la región/cuenta. Conmutando a fallback SOTA ${fallbackModel}...`);
+        params.model = fallbackModel;
+        return await client.models.generateContent(params);
+      }
+
       const isRateLimit = errorMsg.includes("429") || errorStatus === 429 || errorMsg.includes("RESOURCE_EXHAUSTED") || errorMsg.includes("QUOTA");
       const isNetworkError = 
         errorMsg.includes("ECONNRESET") || 
@@ -639,7 +649,7 @@ export async function POST(req: Request) {
         const result = await generateContentWithRetry(
           globalClient!,
           {
-          model: "gemini-2.5-flash",
+            model: "gemini-3.7-flash",
             contents: `
 LISTA DE TAREAS DEL CRONOGRAMA CON ÍTEMS DE PRESUPUESTO CANDIDATOS SUGERIDOS:
 ${JSON.stringify(batch)}
@@ -903,6 +913,7 @@ REGLAS MANDATORIAS:
       task_name: string;
       chapter: string;
       budget_item_code: string;
+      budget_item_desc?: string;
       date: string; // Para compatibilidad con frontend
     }
 
@@ -912,6 +923,7 @@ REGLAS MANDATORIAS:
       task_name: string;
       chapter: string;
       budget_item_code: string;
+      budget_item_desc?: string;
     }
 
     const processedDataPoints: ProcessedDataPoint[] = [];
@@ -927,6 +939,8 @@ REGLAS MANDATORIAS:
       const duration = calendarDays.length;
 
       const totalVal = dp.budget_required || 0;
+      const cleanCode = String(dp.budget_item_code || "").trim();
+      const itemDesc = budgetItemsMap.get(cleanCode)?.desc || dp.task_name;
 
       processedDataPoints.push({
         start_date: sDate,
@@ -937,6 +951,7 @@ REGLAS MANDATORIAS:
         task_name: dp.task_name,
         chapter: dp.chapter || "Otros",
         budget_item_code: dp.budget_item_code,
+        budget_item_desc: itemDesc,
         date: sDate
       });
 
@@ -1012,7 +1027,7 @@ REGLAS MANDATORIAS:
       const summaryResult = await generateContentWithRetry(
         globalClient!,
         {
-          model: "gemini-2.5-flash",
+          model: "gemini-3.1-pro-preview",
           contents: `
 Genera un análisis de control de costos ejecutivo para la gerencia de Constructora Serving S.A.S. en base a estos datos reales consolidados del proyecto Bosque de Agua:
 

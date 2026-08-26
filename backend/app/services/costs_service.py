@@ -3,9 +3,11 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.formatting.rule import CellIsRule
 import io
+import os
 import re
 import math
 import base64
+import tempfile
 from copy import copy
 
 # ---------------------------------------------------------------------------
@@ -92,7 +94,9 @@ def clean_numeric(val):
 # Sheet-0 reader (Hoja 0)
 # ---------------------------------------------------------------------------
 def read_accumulated_values(wb):
+    """Lee la primera hoja (Hoja 0) y construye dict { item_code_str -> float(acumulado) }."""
     ws = wb.worksheets[0]
+
     item_row, item_col = find_header_cell(ws, SHEET0_ITEM_KEYWORDS, match_all=False)
     accum_row, accum_col = find_header_cell(ws, SHEET0_ACCUM_KEYWORDS, match_all=True)
 
@@ -114,7 +118,7 @@ def read_accumulated_values(wb):
         try:
             accum_dict[code_str] = float(accum_val) if accum_val is not None else 0.0
         except (ValueError, TypeError):
-            accum_dict[code_str] = clean_numeric(accum_val)
+            accum_dict[code_str] = accum_val
 
     return accum_dict
 
@@ -127,19 +131,21 @@ def detect_sheet1_headers(ws):
     insumo_row, insumo_col = find_header_cell(ws, SHEET1_INSUMO_KEYWORDS, match_all=False)
     group_row, group_col = find_header_cell(ws, SHEET1_GROUP_KEYWORDS, match_all=False)
 
-    ejecutada_col = None
-    subheader_row = None
+    ejecutada_col  = None
+    subheader_row  = None
 
     if group_row is not None and group_col is not None:
         for r in range(group_row + 1, min(group_row + HEADER_SEARCH_ROWS, ws.max_row + 1)):
-            col = find_column_in_row(ws, r, SHEET1_SUBHDR_KEYWORDS, match_all=True, col_start=group_col)
+            col = find_column_in_row(ws, r, SHEET1_SUBHDR_KEYWORDS,
+                                     match_all=True, col_start=group_col)
             if col is not None:
                 ejecutada_col = col
                 subheader_row = r
                 break
 
     if ejecutada_col is None:
-        subheader_row, ejecutada_col = find_header_cell(ws, SHEET1_SUBHDR_KEYWORDS, match_all=True)
+        subheader_row, ejecutada_col = find_header_cell(
+            ws, SHEET1_SUBHDR_KEYWORDS, match_all=True)
 
     unitaria_col = None
     precio_col   = None
@@ -189,11 +195,19 @@ def detect_sheet1_headers(ws):
 
 
 # ---------------------------------------------------------------------------
-# Map accumulated & insert calculated columns in workbook (Paso 1)
-# Exactly matching analisis_apus_final.py
+# Map accumulated in place (Paso 1 del Script)
 # ---------------------------------------------------------------------------
-def map_accumulated_wb(wb, accum_dict):
-    ws = wb.worksheets[1] if len(wb.worksheets) > 1 else wb.worksheets[0]
+def map_accumulated_in_place(input_path):
+    wb_ro = openpyxl.load_workbook(input_path, data_only=True)
+    accum_dict = read_accumulated_values(wb_ro)
+    wb_ro.close()
+
+    wb = openpyxl.load_workbook(input_path)
+
+    if len(wb.sheetnames) < 2:
+        return False
+
+    ws = wb.worksheets[1]
     h = detect_sheet1_headers(ws)
 
     code_col         = h['code_col']
@@ -204,12 +218,13 @@ def map_accumulated_wb(wb, accum_dict):
     unitaria_col     = h['unitaria_col']
     precio_col       = h['precio_col']
 
-    # Step 3a: find or reuse 'Obra faltante'
+    # Step 3a: find or insert 'Obra faltante'
     col_accum = None
     for c in range(1, ws.max_column + 1):
         if normalize(ws.cell(group_header_row, c).value) == 'obra faltante':
             col_accum = c
             break
+
     if col_accum is None:
         last_col = 1
         for c in range(1, ws.max_column + 1):
@@ -220,77 +235,83 @@ def map_accumulated_wb(wb, accum_dict):
         col_accum = last_col + 1
     col_accum_letter = get_column_letter(col_accum)
 
-    # Step 3b: find or reuse 'Proporción'
+    # Step 3b: find or insert 'Proporcion'
     col_ratio = None
     for c in range(1, ws.max_column + 1):
         if normalize(ws.cell(group_header_row, c).value) == 'proporcion':
             col_ratio = c
             break
+
     if col_ratio is None:
         col_ratio = col_accum + 1
     col_ratio_letter = get_column_letter(col_ratio)
 
-    # Step 3c: find or reuse 'Cant. Unitaria'
+    # Step 3c: find or insert 'Cant. Unitaria'
     col_unitaria = None
     for c in range(1, ws.max_column + 1):
         if normalize(ws.cell(subheader_row, c).value) in ('cant. unitaria ejecucion', 'cant. unitaria ejec'):
             col_unitaria = c
             break
+
     if col_unitaria is None:
         col_unitaria = col_ratio + 1
     col_unitaria_letter = get_column_letter(col_unitaria)
 
-    # Step 3d: find or reuse 'Precio'
+    # Step 3d: find or insert 'Precio'
     col_precio = None
     for c in range(1, ws.max_column + 1):
         if normalize(ws.cell(subheader_row, c).value) in ('precio ejecucion', 'precio ejec'):
             col_precio = c
             break
+
     if col_precio is None:
         col_precio = col_unitaria + 1
     col_precio_letter = get_column_letter(col_precio)
 
-    # Step 3e: find or reuse 'Costo Ejec'
+    # Step 3e: find or insert 'Costo Ejec'
     col_costo = None
     for c in range(1, ws.max_column + 1):
         if normalize(ws.cell(subheader_row, c).value) in ('costo ejec', 'costo ejecucion'):
             col_costo = c
             break
+
     if col_costo is None:
         col_costo = col_precio + 1
     col_costo_letter = get_column_letter(col_costo)
 
-    # Step 3f: find or reuse 'Total Unitaria'
+    # Step 3f: find or insert 'Total Unitaria'
     col_total = None
     for c in range(1, ws.max_column + 1):
         if normalize(ws.cell(subheader_row, c).value) in ('total unitaria', 'total unid'):
             col_total = c
             break
+
     if col_total is None:
         col_total = col_costo + 1
     col_total_letter = get_column_letter(col_total)
 
-    # Step 3g: find or reuse 'Diferencia'
+    # Step 3g: find or insert 'Diferencia'
     col_diff = None
     for c in range(1, ws.max_column + 1):
         if normalize(ws.cell(subheader_row, c).value) in ('diferencia', 'dif'):
             col_diff = c
             break
+
     if col_diff is None:
         col_diff = col_total + 1
     col_diff_letter = get_column_letter(col_diff)
 
-    # Step 3h: find or reuse 'Estado'
+    # Step 3h: find or insert 'Estado'
     col_status = None
     for c in range(1, ws.max_column + 1):
         if normalize(ws.cell(subheader_row, c).value) in ('estado', 'estado diferencia', 'observacion', 'resultado'):
             col_status = c
             break
+
     if col_status is None:
         col_status = col_diff + 1
     col_status_letter = get_column_letter(col_status)
 
-    # Group-level headers
     grp_src = ws.cell(group_header_row, ejecutada_col)
     for col, label in [
         (col_accum,    "Obra faltante"),
@@ -306,7 +327,6 @@ def map_accumulated_wb(wb, accum_dict):
         cell.value = label
         copy_cell_style(grp_src, cell)
 
-    # Subheaders
     sub_src = ws.cell(subheader_row, ejecutada_col)
     for col, label in [
         (col_accum,    "Cant. Ejecutada"),
@@ -423,12 +443,17 @@ def map_accumulated_wb(wb, accum_dict):
     ws.column_dimensions[col_total_letter].width    = 18
     ws.column_dimensions[col_diff_letter].width     = 18
     ws.column_dimensions[col_status_letter].width   = 18
+
+    try:
+        wb.save(input_path)
+    except PermissionError:
+        bak_path = input_path + ".bak"
+        wb.save(bak_path)
     return True
 
 
 # ---------------------------------------------------------------------------
-# Concrete Validation Sheet (Paso 2)
-# Exactly matching analisis_apus_final.py
+# Concrete Validation Sheet (Paso 2 del Script)
 # ---------------------------------------------------------------------------
 def find_mix_design_sheets(wb, exclude_titles):
     fichas = []
@@ -512,7 +537,10 @@ def col_letter(ws_title, col, row):
     return f"'{ws_title}'!{get_column_letter(col)}{row}"
 
 
-def build_validation_sheet_wb(wb):
+def build_validation_sheet(input_path, output_path=None):
+    output_path = output_path or input_path
+    wb = openpyxl.load_workbook(input_path)
+
     apu_sheet_title = None
     ws_apu = None
     for ws in wb.worksheets:
@@ -522,7 +550,7 @@ def build_validation_sheet_wb(wb):
             ws_apu = ws
             break
 
-    if ws_apu is None:
+    if apu_sheet_title is None:
         if len(wb.worksheets) > 1:
             ws_apu = wb.worksheets[1]
             apu_sheet_title = ws_apu.title
@@ -654,6 +682,12 @@ def build_validation_sheet_wb(wb):
         vs.column_dimensions[get_column_letter(j)].width = w
     vs.freeze_panes = "A5"
 
+    try:
+        wb.save(output_path)
+    except PermissionError:
+        bak_path = output_path + ".bak2"
+        wb.save(bak_path)
+
 
 # ---------------------------------------------------------------------------
 # Main processing function for FastAPI Service
@@ -661,249 +695,262 @@ def build_validation_sheet_wb(wb):
 async def process_sao_costs(file_content: bytes, filename: str):
     """
     Procesa el archivo Excel de SAO ejecutando exactamente el mismo flujo
-    que analisis_apus_final.py. Retorna JSON + excel_b64.
+    que analisis_apus_final.py en un archivo temporal. Retorna JSON + excel_b64.
     """
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+        tmp.write(file_content)
+        tmp_path = tmp.name
+
     try:
-        # 1. Leer acumulados con data_only=True de Hoja 0 (idéntico a Paso 1 del script)
-        wb_ro = openpyxl.load_workbook(io.BytesIO(file_content), data_only=True)
+        # 1. Leer acumulados con data_only=True de Hoja 0 (Paso 1 del script)
+        wb_ro = openpyxl.load_workbook(tmp_path, data_only=True)
         accum_dict = read_accumulated_values(wb_ro)
         wb_ro.close()
 
-        # 2. Cargar archivo para edición (idéntico a Paso 1 del script)
-        wb = openpyxl.load_workbook(io.BytesIO(file_content))
-    except Exception as e:
-        raise ValueError(f"No se pudo leer el archivo Excel con openpyxl: {str(e)}")
+        # 2. Ejecutar Paso 1 del script (mapeo e inserción de columnas)
+        map_accumulated_in_place(tmp_path)
 
-    if not wb.sheetnames:
-        raise ValueError("El archivo Excel no contiene hojas de cálculo.")
+        # 3. Ejecutar Paso 2 del script (hoja de validación de concreto)
+        try:
+            build_validation_sheet(tmp_path)
+        except Exception:
+            pass
 
-    # 3. Ejecutar Paso 1: map_accumulated_in_place
-    map_accumulated_wb(wb, accum_dict)
+        # 4. Obtener los bytes exactos guardados por el script para Base64
+        actual_path = tmp_path
+        if not os.path.exists(actual_path) and os.path.exists(tmp_path + ".bak"):
+            actual_path = tmp_path + ".bak"
+        if os.path.exists(tmp_path + ".bak2"):
+            actual_path = tmp_path + ".bak2"
 
-    # 4. Ejecutar Paso 2: build_validation_sheet
-    build_validation_sheet_wb(wb)
+        with open(actual_path, "rb") as f:
+            excel_bytes = f.read()
 
-    # 5. Extraer objetos para la respuesta JSON (APUs, alertas, resumen, etc.)
-    ws_apu = wb.worksheets[1] if len(wb.worksheets) > 1 else wb.worksheets[0]
-    h = detect_sheet1_headers(ws_apu)
+        excel_b64 = base64.b64encode(excel_bytes).decode("utf-8")
 
-    code_col      = h['code_col']
-    insumo_col    = h['insumo_col']
-    name_col      = h['name_col']
-    subheader_row = h['subheader_row']
-    base_group_col = h['base_group_col']
-    ejecutada_col = h['ejecutada_col']
-    unitaria_col  = h['unitaria_col']
-    precio_col    = h['precio_col']
+        # 5. Cargar libro procesado para la respuesta JSON (gráficos, alertas, tablas)
+        wb = openpyxl.load_workbook(actual_path, data_only=True)
+        ws_apu = wb.worksheets[1] if len(wb.worksheets) > 1 else wb.worksheets[0]
+        h = detect_sheet1_headers(ws_apu)
 
-    col_obra_faltante = None
-    for c in range(1, ws_apu.max_column + 1):
-        if normalize(ws_apu.cell(h['group_header_row'], c).value) == 'obra faltante':
-            col_obra_faltante = c
-            break
+        code_col       = h['code_col']
+        insumo_col     = h['insumo_col']
+        name_col       = h['name_col']
+        subheader_row  = h['subheader_row']
+        base_group_col = h['base_group_col']
+        ejecutada_col  = h['ejecutada_col']
+        unitaria_col   = h['unitaria_col']
+        precio_col     = h['precio_col']
 
-    apus = []
-    current_apu = None
+        col_obra_faltante = None
+        for c in range(1, ws_apu.max_column + 1):
+            if normalize(ws_apu.cell(h['group_header_row'], c).value) == 'obra faltante':
+                col_obra_faltante = c
+                break
 
-    for r in range(subheader_row + 1, ws_apu.max_row + 1):
-        code_val = ws_apu.cell(r, code_col).value
-        insumo_val = ws_apu.cell(r, insumo_col).value
-        name_val = ws_apu.cell(r, name_col).value
+        apus = []
+        current_apu = None
 
-        code_str = str(code_val).strip() if code_val is not None else ""
-        if not code_str:
-            continue
+        for r in range(subheader_row + 1, ws_apu.max_row + 1):
+            code_val   = ws_apu.cell(r, code_col).value
+            insumo_val = ws_apu.cell(r, insumo_col).value
+            name_val   = ws_apu.cell(r, name_col).value
 
-        clean_code = code_str.replace(".0", "").replace(".", "").strip()
-        if not re.match(r'^\d+$', clean_code):
-            continue
+            code_str = str(code_val).strip() if code_val is not None else ""
+            if not code_str:
+                continue
 
-        insumo_str = str(insumo_val).strip() if insumo_val is not None else ""
-        nombre = str(name_val).strip() if name_val is not None else ""
-        unit_cell = ws_apu.cell(r, name_col + 1).value
-        unidad = str(unit_cell).strip() if unit_cell is not None else ""
+            clean_code = code_str.replace(".0", "").replace(".", "").strip()
+            if not re.match(r'^\d+$', clean_code):
+                continue
 
-        is_parent = not insumo_str or insumo_str.lower() in ("none", "nan", "")
+            insumo_str = str(insumo_val).strip() if insumo_val is not None else ""
+            nombre = str(name_val).strip() if name_val is not None else ""
+            unit_cell = ws_apu.cell(r, name_col + 1).value
+            unidad = str(unit_cell).strip() if unit_cell is not None else ""
 
-        if is_parent:
-            base_qty = clean_numeric(ws_apu.cell(r, base_group_col).value)
-            ejec_qty = clean_numeric(ws_apu.cell(r, ejecutada_col).value)
+            is_parent = not insumo_str or insumo_str.lower() in ("none", "nan", "")
 
-            if col_obra_faltante is not None:
-                obra_faltante = clean_numeric(ws_apu.cell(r, col_obra_faltante).value)
-            elif clean_code in accum_dict:
-                obra_faltante = accum_dict[clean_code]
-            else:
-                obra_faltante = max(0.0, base_qty - ejec_qty) if base_qty > ejec_qty else ejec_qty
+            if is_parent:
+                base_qty = clean_numeric(ws_apu.cell(r, base_group_col).value)
+                ejec_qty = clean_numeric(ws_apu.cell(r, ejecutada_col).value)
 
-            current_apu = {
-                "code": clean_code,
-                "name": nombre,
-                "unit": unidad,
-                "base_qty": base_qty,
-                "ejec_qty": ejec_qty,
-                "faltante_qty_teorica": obra_faltante,
-                "obra_faltante_qty": obra_faltante,
-                "resources": []
-            }
-            apus.append(current_apu)
-
-        elif insumo_str != "99999" and "subtotal" not in insumo_str.lower() and current_apu:
-            base_qty = clean_numeric(ws_apu.cell(r, base_group_col).value)
-            base_unit_qty = clean_numeric(ws_apu.cell(r, base_group_col + 1).value)
-            base_price = clean_numeric(ws_apu.cell(r, base_group_col + 2).value)
-            base_subtotal = clean_numeric(ws_apu.cell(r, base_group_col + 3).value) or (base_qty * base_price)
-
-            ejec_qty = clean_numeric(ws_apu.cell(r, ejecutada_col).value)
-            ejec_unit_qty = clean_numeric(ws_apu.cell(r, unitaria_col).value)
-            ejec_price = clean_numeric(ws_apu.cell(r, precio_col).value)
-            ejec_subtotal = ejec_qty * ejec_price
-
-            current_apu["resources"].append({
-                "insumo": insumo_str.replace(".0", "").strip(),
-                "name": nombre,
-                "unit": unidad,
-                "base_qty": base_qty,
-                "base_unit_qty": base_unit_qty,
-                "base_price": base_price,
-                "base_subtotal": base_subtotal,
-                "ejec_qty": ejec_qty,
-                "ejec_unit_qty": ejec_unit_qty,
-                "ejec_price": ejec_price,
-                "ejec_subtotal": ejec_subtotal,
-                "excel_faltante_qty": 0.0,
-                "excel_faltante_unit_qty": 0.0,
-                "excel_faltante_price": 0.0,
-                "excel_faltante_subtotal": 0.0
-            })
-
-    # Proyecciones y Reutilización
-    material_balances = {}
-    alerts = []
-    reutilization_tips = []
-
-    for apu in apus:
-        q_rem = apu["obra_faltante_qty"]
-
-        for res in apu["resources"]:
-            ins_code = res["insumo"]
-            ins_name = res["name"]
-            ins_unit = res["unit"]
-
-            proj_theo_rem_qty = q_rem * res["base_unit_qty"]
-            proj_theo_rem_cost = proj_theo_rem_qty * res["base_price"]
-            res["proj_theo"] = {
-                "qty": res["ejec_qty"] + proj_theo_rem_qty,
-                "cost": (res["ejec_qty"] * res["ejec_price"]) + proj_theo_rem_cost,
-                "dev_qty": (res["ejec_qty"] + proj_theo_rem_qty) - res["base_qty"],
-                "dev_cost": ((res["ejec_qty"] * res["ejec_price"]) + proj_theo_rem_cost) - (res["base_qty"] * res["base_price"])
-            }
-
-            u_proj = res["ejec_unit_qty"] if res["ejec_qty"] > 0 else res["base_unit_qty"]
-            p_proj = res["ejec_price"] if res["ejec_qty"] > 0 else res["base_price"]
-
-            proj_hist_rem_qty = q_rem * u_proj
-            proj_hist_rem_cost = proj_hist_rem_qty * p_proj
-            res["proj_hist"] = {
-                "qty": res["ejec_qty"] + proj_hist_rem_qty,
-                "cost": (res["ejec_qty"] * res["ejec_price"]) + proj_hist_rem_cost,
-                "dev_qty": (res["ejec_qty"] + proj_hist_rem_qty) - res["base_qty"],
-                "dev_cost": ((res["ejec_qty"] * res["ejec_price"]) + proj_hist_rem_cost) - (res["base_qty"] * res["base_price"])
-            }
-
-            dev_qty = res["proj_hist"]["dev_qty"]
-            if abs(dev_qty) > 0.01:
-                if ins_code not in material_balances:
-                    material_balances[ins_code] = {
-                        "name": ins_name,
-                        "unit": ins_unit,
-                        "surpluses": [],
-                        "deficits": []
-                    }
-                if dev_qty < 0:
-                    material_balances[ins_code]["surpluses"].append({
-                        "apu_code": apu["code"],
-                        "apu_name": apu["name"],
-                        "qty": abs(dev_qty)
-                    })
+                if col_obra_faltante is not None:
+                    obra_faltante = clean_numeric(ws_apu.cell(r, col_obra_faltante).value)
+                elif clean_code in accum_dict:
+                    obra_faltante = accum_dict[clean_code]
                 else:
-                    material_balances[ins_code]["deficits"].append({
+                    obra_faltante = max(0.0, base_qty - ejec_qty) if base_qty > ejec_qty else ejec_qty
+
+                current_apu = {
+                    "code": clean_code,
+                    "name": nombre,
+                    "unit": unidad,
+                    "base_qty": base_qty,
+                    "ejec_qty": ejec_qty,
+                    "faltante_qty_teorica": obra_faltante,
+                    "obra_faltante_qty": obra_faltante,
+                    "resources": []
+                }
+                apus.append(current_apu)
+
+            elif insumo_str != "99999" and "subtotal" not in insumo_str.lower() and current_apu:
+                base_qty = clean_numeric(ws_apu.cell(r, base_group_col).value)
+                base_unit_qty = clean_numeric(ws_apu.cell(r, base_group_col + 1).value)
+                base_price = clean_numeric(ws_apu.cell(r, base_group_col + 2).value)
+                base_subtotal = clean_numeric(ws_apu.cell(r, base_group_col + 3).value) or (base_qty * base_price)
+
+                ejec_qty = clean_numeric(ws_apu.cell(r, ejecutada_col).value)
+                ejec_unit_qty = clean_numeric(ws_apu.cell(r, unitaria_col).value)
+                ejec_price = clean_numeric(ws_apu.cell(r, precio_col).value)
+                ejec_subtotal = ejec_qty * ejec_price
+
+                current_apu["resources"].append({
+                    "insumo": insumo_str.replace(".0", "").strip(),
+                    "name": nombre,
+                    "unit": unidad,
+                    "base_qty": base_qty,
+                    "base_unit_qty": base_unit_qty,
+                    "base_price": base_price,
+                    "base_subtotal": base_subtotal,
+                    "ejec_qty": ejec_qty,
+                    "ejec_unit_qty": ejec_unit_qty,
+                    "ejec_price": ejec_price,
+                    "ejec_subtotal": ejec_subtotal,
+                    "excel_faltante_qty": 0.0,
+                    "excel_faltante_unit_qty": 0.0,
+                    "excel_faltante_price": 0.0,
+                    "excel_faltante_subtotal": 0.0
+                })
+
+        # Proyecciones y Reutilización
+        material_balances = {}
+        alerts = []
+        reutilization_tips = []
+
+        for apu in apus:
+            q_rem = apu["obra_faltante_qty"]
+
+            for res in apu["resources"]:
+                ins_code = res["insumo"]
+                ins_name = res["name"]
+                ins_unit = res["unit"]
+
+                proj_theo_rem_qty = q_rem * res["base_unit_qty"]
+                proj_theo_rem_cost = proj_theo_rem_qty * res["base_price"]
+                res["proj_theo"] = {
+                    "qty": res["ejec_qty"] + proj_theo_rem_qty,
+                    "cost": (res["ejec_qty"] * res["ejec_price"]) + proj_theo_rem_cost,
+                    "dev_qty": (res["ejec_qty"] + proj_theo_rem_qty) - res["base_qty"],
+                    "dev_cost": ((res["ejec_qty"] * res["ejec_price"]) + proj_theo_rem_cost) - (res["base_qty"] * res["base_price"])
+                }
+
+                u_proj = res["ejec_unit_qty"] if res["ejec_qty"] > 0 else res["base_unit_qty"]
+                p_proj = res["ejec_price"] if res["ejec_qty"] > 0 else res["base_price"]
+
+                proj_hist_rem_qty = q_rem * u_proj
+                proj_hist_rem_cost = proj_hist_rem_qty * p_proj
+                res["proj_hist"] = {
+                    "qty": res["ejec_qty"] + proj_hist_rem_qty,
+                    "cost": (res["ejec_qty"] * res["ejec_price"]) + proj_hist_rem_cost,
+                    "dev_qty": (res["ejec_qty"] + proj_hist_rem_qty) - res["base_qty"],
+                    "dev_cost": ((res["ejec_qty"] * res["ejec_price"]) + proj_hist_rem_cost) - (res["base_qty"] * res["base_price"])
+                }
+
+                dev_qty = res["proj_hist"]["dev_qty"]
+                if abs(dev_qty) > 0.01:
+                    if ins_code not in material_balances:
+                        material_balances[ins_code] = {
+                            "name": ins_name,
+                            "unit": ins_unit,
+                            "surpluses": [],
+                            "deficits": []
+                        }
+                    if dev_qty < 0:
+                        material_balances[ins_code]["surpluses"].append({
+                            "apu_code": apu["code"],
+                            "apu_name": apu["name"],
+                            "qty": abs(dev_qty)
+                        })
+                    else:
+                        material_balances[ins_code]["deficits"].append({
+                            "apu_code": apu["code"],
+                            "apu_name": apu["name"],
+                            "qty": dev_qty
+                        })
+
+                dev_cost = res["proj_hist"]["dev_cost"]
+                base_cost = res["base_qty"] * res["base_price"]
+                if dev_cost > 500000:
+                    pct = (dev_cost / base_cost * 100) if base_cost > 0 else 100
+                    alerts.append({
+                        "type": "danger",
+                        "title": "Sobrecosto Crítico en Insumo",
+                        "message": f"El insumo '{res['name']}' en el APU '{apu['name']}' proyecta un sobrecosto de {pct:.1f}% ({dev_cost:,.0f} COP) sobre el presupuesto base.",
                         "apu_code": apu["code"],
-                        "apu_name": apu["name"],
-                        "qty": dev_qty
+                        "insumo_code": res["insumo"]
                     })
 
-            dev_cost = res["proj_hist"]["dev_cost"]
-            base_cost = res["base_qty"] * res["base_price"]
-            if dev_cost > 500000:
-                pct = (dev_cost / base_cost * 100) if base_cost > 0 else 100
-                alerts.append({
-                    "type": "danger",
-                    "title": "Sobrecosto Crítico en Insumo",
-                    "message": f"El insumo '{res['name']}' en el APU '{apu['name']}' proyecta un sobrecosto de {pct:.1f}% ({dev_cost:,.0f} COP) sobre el presupuesto base.",
-                    "apu_code": apu["code"],
-                    "insumo_code": res["insumo"]
-                })
+                if res["ejec_qty"] > 0 and res["base_unit_qty"] > 0 and res["ejec_unit_qty"] > res["base_unit_qty"] * 1.15:
+                    alerts.append({
+                        "type": "warning",
+                        "title": "Desviación de Rendimiento",
+                        "message": f"El rendimiento ejecutado de '{res['name']}' en '{apu['name']}' es un {((res['ejec_unit_qty']/res['base_unit_qty'] - 1)*100):.1f}% superior al presupuesto base.",
+                        "apu_code": apu["code"],
+                        "insumo_code": res["insumo"]
+                    })
 
-            if res["ejec_qty"] > 0 and res["base_unit_qty"] > 0 and res["ejec_unit_qty"] > res["base_unit_qty"] * 1.15:
-                alerts.append({
-                    "type": "warning",
-                    "title": "Desviación de Rendimiento",
-                    "message": f"El rendimiento ejecutado de '{res['name']}' en '{apu['name']}' es un {((res['ejec_unit_qty']/res['base_unit_qty'] - 1)*100):.1f}% superior al presupuesto base.",
-                    "apu_code": apu["code"],
-                    "insumo_code": res["insumo"]
-                })
+        for ins_code, balance in material_balances.items():
+            surpluses = balance["surpluses"]
+            deficits = balance["deficits"]
+            if surpluses and deficits:
+                for sur in surpluses:
+                    for defic in deficits:
+                        matched_qty = min(sur["qty"], defic["qty"])
+                        if matched_qty > 0.01:
+                            reutilization_tips.append({
+                                "insumo_code": ins_code,
+                                "insumo_name": balance["name"],
+                                "unit": balance["unit"],
+                                "from_apu_code": sur["apu_code"],
+                                "from_apu_name": sur["apu_name"],
+                                "to_apu_code": defic["apu_code"],
+                                "to_apu_name": defic["apu_name"],
+                                "qty": matched_qty,
+                                "message": f"El material '{balance['name']}' presenta un excedente de {sur['qty']:.1f} {balance['unit']} en '{sur['apu_name']}'. Se recomienda reutilizar {matched_qty:.1f} {balance['unit']} para cubrir el faltante en '{defic['apu_name']}'."
+                            })
+                            sur["qty"] -= matched_qty
+                            defic["qty"] -= matched_qty
 
-    for ins_code, balance in material_balances.items():
-        surpluses = balance["surpluses"]
-        deficits = balance["deficits"]
-        if surpluses and deficits:
-            for sur in surpluses:
-                for defic in deficits:
-                    matched_qty = min(sur["qty"], defic["qty"])
-                    if matched_qty > 0.01:
-                        reutilization_tips.append({
-                            "insumo_code": ins_code,
-                            "insumo_name": balance["name"],
-                            "unit": balance["unit"],
-                            "from_apu_code": sur["apu_code"],
-                            "from_apu_name": sur["apu_name"],
-                            "to_apu_code": defic["apu_code"],
-                            "to_apu_name": defic["apu_name"],
-                            "qty": matched_qty,
-                            "message": f"El material '{balance['name']}' presenta un excedente de {sur['qty']:.1f} {balance['unit']} en '{sur['apu_name']}'. Se recomienda reutilizar {matched_qty:.1f} {balance['unit']} para cubrir el faltante en '{defic['apu_name']}'."
-                        })
-                        sur["qty"] -= matched_qty
-                        defic["qty"] -= matched_qty
+        total_base = sum(sum(r["base_qty"] * r["base_price"] for r in a["resources"]) for a in apus)
+        total_ejec = sum(sum(r["ejec_qty"] * r["ejec_price"] for r in a["resources"]) for a in apus)
+        total_proj_theo = sum(sum(r["proj_theo"]["cost"] for r in a["resources"]) for a in apus)
+        total_proj_hist = sum(sum(r["proj_hist"]["cost"] for r in a["resources"]) for a in apus)
 
-    # 6. Codificar archivo en Base64
-    out_buffer = io.BytesIO()
-    wb.save(out_buffer)
-    out_buffer.seek(0)
-    excel_b64 = base64.b64encode(out_buffer.getvalue()).decode('utf-8')
+        summary = {
+            "project_name": filename.replace("Copia de V1 SAO Costos por niveles_", "").split(".")[0].replace("_", " ").strip(),
+            "total_base": total_base,
+            "total_ejec": total_ejec,
+            "total_proj_theo": total_proj_theo,
+            "total_proj_hist": total_proj_hist,
+            "dev_proj_theo": total_proj_theo - total_base,
+            "dev_proj_hist": total_proj_hist - total_base,
+            "total_items": len(apus),
+            "total_alerts": len(alerts),
+            "total_reutilizations": len(reutilization_tips)
+        }
 
-    total_base = sum(sum(r["base_qty"] * r["base_price"] for r in a["resources"]) for a in apus)
-    total_ejec = sum(sum(r["ejec_qty"] * r["ejec_price"] for r in a["resources"]) for a in apus)
-    total_proj_theo = sum(sum(r["proj_theo"]["cost"] for r in a["resources"]) for a in apus)
-    total_proj_hist = sum(sum(r["proj_hist"]["cost"] for r in a["resources"]) for a in apus)
-
-    summary = {
-        "project_name": filename.replace("Copia de V1 SAO Costos por niveles_", "").split(".")[0].replace("_", " ").strip(),
-        "total_base": total_base,
-        "total_ejec": total_ejec,
-        "total_proj_theo": total_proj_theo,
-        "total_proj_hist": total_proj_hist,
-        "dev_proj_theo": total_proj_theo - total_base,
-        "dev_proj_hist": total_proj_hist - total_base,
-        "total_items": len(apus),
-        "total_alerts": len(alerts),
-        "total_reutilizations": len(reutilization_tips)
-    }
-
-    return {
-        "summary": summary,
-        "alerts": alerts,
-        "reutilizaciones": reutilization_tips,
-        "details": apus,
-        "excel_b64": excel_b64
-    }
+        return {
+            "summary": summary,
+            "alerts": alerts,
+            "reutilizaciones": reutilization_tips,
+            "details": apus,
+            "excel_b64": excel_b64
+        }
+    finally:
+        for p in (tmp_path, tmp_path + ".bak", tmp_path + ".bak2"):
+            if os.path.exists(p):
+                try:
+                    os.remove(p)
+                except Exception:
+                    pass
