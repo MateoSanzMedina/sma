@@ -10,6 +10,15 @@
 !.yarn/releases
 !.yarn/versions
 
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+
 # testing
 /coverage
 
@@ -30,8 +39,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files
+.env
+.env.local
 
 # vercel
 .vercel
@@ -42,4 +52,3 @@ next-env.d.ts
 
 # gcp secrets
 backend/*.json
-*.json
