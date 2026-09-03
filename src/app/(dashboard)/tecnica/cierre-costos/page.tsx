@@ -282,7 +282,7 @@ export default function CierreCostosPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
           {result && (
             <button
               onClick={() => {
@@ -292,28 +292,33 @@ export default function CierreCostosPage() {
                   removeLargeItem("sma_cierre_costos_result").catch(console.error);
                 }
               }}
-              className="flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black transition-all cursor-pointer select-none hover:bg-red-500/10 active:scale-95 duration-150"
               style={{
-                backgroundColor: "rgba(239, 68, 68, 0.05)",
-                borderColor: "rgba(239, 68, 68, 0.2)",
+                borderRadius: "9999px",
+                padding: "0.65rem 1.35rem",
+                backgroundColor: "rgba(239, 68, 68, 0.08)",
+                borderColor: "rgba(239, 68, 68, 0.25)",
                 color: "#f87171",
               }}
+              className="flex items-center gap-2 border text-xs font-black transition-all cursor-pointer select-none hover:bg-red-500/15 active:scale-95 duration-150"
             >
               <span className="material-symbols-outlined text-sm">restart_alt</span>
-              Nuevo Cierre
+              <span>Nuevo Cierre</span>
             </button>
           )}
 
           {result?.excel_b64 && (
             <button
               onClick={downloadExcel}
-              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 cursor-pointer"
               style={{
-                background: "linear-gradient(135deg, #10B981, #059669)",
+                borderRadius: "9999px",
+                padding: "0.65rem 1.35rem",
+                background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
+                boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
               }}
+              className="flex items-center justify-center gap-2 text-xs font-bold text-white transition-all shadow-md hover:scale-[1.02] active:scale-95 cursor-pointer border-none"
             >
-              <Download className="w-5 h-5" />
-              Descargar Excel (.xlsx)
+              <Download className="w-4 h-4 text-white" />
+              <span>Descargar Excel (.xlsx)</span>
             </button>
           )}
         </div>
@@ -324,12 +329,14 @@ export default function CierreCostosPage() {
         {/* Upload File Panel */}
         <div className="xl:col-span-2 flex flex-col">
           <div 
-            className="rounded-xl p-6 sm:p-8 flex flex-col justify-between min-h-[400px]"
             style={{
+              padding: "2rem",
+              borderRadius: "24px",
               backgroundColor: "var(--color-surface)",
               border: "1px solid var(--color-border)",
-              boxShadow: "var(--shadow-md)",
+              boxShadow: "var(--shadow-sm)",
             }}
+            className="flex flex-col justify-between min-h-[440px]"
           >
             <div className="space-y-6">
               <div>
@@ -343,7 +350,7 @@ export default function CierreCostosPage() {
 
               {error && (
                 <div 
-                  className="p-4 rounded-lg text-sm border flex items-start gap-2.5" 
+                  className="p-4 rounded-xl text-sm border flex items-start gap-2.5" 
                   style={{ 
                     backgroundColor: "rgba(239, 68, 68, 0.05)", 
                     color: "var(--color-error)",
@@ -358,12 +365,11 @@ export default function CierreCostosPage() {
               {/* Excel Dropzone */}
               <div className="space-y-1.5">
                 <div
-                  className={`relative border border-dashed rounded-xl p-6 text-center transition-all duration-300 flex flex-col justify-center items-center h-40 cursor-pointer ${
-                    file ? "bg-emerald-500/5" : "hover:bg-white/5"
+                  className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all duration-300 flex flex-col justify-center items-center h-44 cursor-pointer select-none ${
+                    file 
+                      ? "border-[#11a542] bg-[#11a542]/5" 
+                      : "border-slate-300 dark:border-slate-700 hover:border-[#11a542] hover:bg-slate-50 dark:hover:bg-slate-900/50"
                   }`}
-                  style={{
-                    borderColor: file ? "var(--color-primary)" : "var(--color-border)",
-                  }}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={handleFileDrop}
                   onClick={() => document.getElementById("file-input")?.click()}
@@ -377,21 +383,21 @@ export default function CierreCostosPage() {
                   />
                   {file ? (
                     <div className="flex flex-col items-center justify-center text-center">
-                      <FileSpreadsheet className="w-10 h-10 mb-3" style={{ color: "var(--color-primary)" }} />
-                      <span className="font-bold text-sm truncate max-w-xs" style={{ color: "var(--color-text-primary)" }}>
+                      <FileSpreadsheet className="w-10 h-10 mb-3 text-[#11a542]" />
+                      <span className="font-bold text-sm truncate max-w-xs text-slate-900 dark:text-white">
                         {file.name}
                       </span>
-                      <span className="text-[10px] mt-1" style={{ color: "var(--color-text-secondary)" }}>
-                        Click para cambiar archivo
+                      <span className="text-[11px] mt-1 text-slate-500 dark:text-slate-400">
+                        Clic para cambiar archivo
                       </span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center">
-                      <UploadCloud className="w-9 h-9 mb-2" style={{ color: "var(--color-text-tertiary)" }} />
-                      <p className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                      <UploadCloud className="w-10 h-10 mb-2 text-slate-400" />
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                         Arrastra o haz clic para subir Excel
                       </p>
-                      <p className="text-[10px] mt-1" style={{ color: "var(--color-text-tertiary)" }}>
+                      <p className="text-[11px] mt-1 text-slate-400">
                         Planilla SAO Costos por Niveles (XLSX, XLS)
                       </p>
                     </div>
@@ -403,20 +409,24 @@ export default function CierreCostosPage() {
             <button
               onClick={handleSubmit}
               disabled={loading || !file}
-              className="w-full mt-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed select-none text-white shadow-sm"
               style={{
-                background: "linear-gradient(135deg, var(--color-primary), var(--color-accent))",
+                borderRadius: "9999px",
+                height: "3.25rem",
+                marginTop: "1.5rem",
+                background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
+                boxShadow: "0 4px 15px rgba(17, 165, 66, 0.25)",
               }}
+              className="w-full font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed select-none text-white border-none text-sm"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Procesando Costos...
+                  <span>Procesando Costos...</span>
                 </>
               ) : (
                 <>
                   <RefreshCw className="w-5 h-5" />
-                  Analizar Costos de Obra
+                  <span>Analizar Costos de Obra</span>
                 </>
               )}
             </button>
@@ -424,13 +434,17 @@ export default function CierreCostosPage() {
             {result?.excel_b64 && (
               <button
                 onClick={downloadExcel}
-                className="w-full mt-3 py-3 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 active:scale-95 text-white shadow-md hover:shadow-lg"
                 style={{
-                  background: "linear-gradient(135deg, #10B981, #059669)",
+                  borderRadius: "9999px",
+                  height: "3.25rem",
+                  marginTop: "1rem",
+                  background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
+                  boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
                 }}
+                className="w-full font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 active:scale-95 text-white border-none text-sm hover:scale-[1.01]"
               >
                 <Download className="w-5 h-5" />
-                Descargar Excel Final Procesado (.xlsx)
+                <span>Descargar Excel Final Procesado (.xlsx)</span>
               </button>
             )}
           </div>
@@ -440,25 +454,27 @@ export default function CierreCostosPage() {
         <div className="xl:col-span-3 flex flex-col">
           {!result ? (
             <div 
-              className="rounded-xl p-8 flex-1 flex flex-col items-center justify-center text-center relative overflow-hidden group min-h-[400px]"
               style={{
+                padding: "2.5rem",
+                borderRadius: "24px",
                 backgroundColor: "var(--color-surface)",
                 border: "1px solid var(--color-border)",
-                boxShadow: "var(--shadow-md)",
+                boxShadow: "var(--shadow-sm)",
               }}
+              className="flex-1 flex flex-col items-center justify-center text-center relative overflow-hidden group min-h-[440px]"
             >
-              <div className="w-16 h-16 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex items-center justify-center mb-6">
-                <FileSpreadsheet className="w-8 h-8" style={{ color: "var(--color-primary)" }} />
+              <div className="w-16 h-16 bg-[#11a542]/10 border border-[#11a542]/20 rounded-2xl flex items-center justify-center mb-6">
+                <FileSpreadsheet className="w-8 h-8 text-[#11a542]" />
               </div>
-              <h3 className="text-lg font-bold mb-2" style={{ color: "var(--color-text-primary)" }}>
+              <h3 className="text-lg font-bold mb-2 text-slate-900 dark:text-white">
                 Validación de Cierre de Costos
               </h3>
-              <p className="text-xs max-w-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+              <p className="text-xs max-w-md leading-relaxed text-slate-500 dark:text-slate-400">
                 Sube el archivo Excel de control de presupuestos para que el motor detecte desviaciones de obra física, proyecciones de costo a fin de obra y sugiera reutilización de materiales sobrantes.
               </p>
-              <div className="mt-6 flex gap-3 text-left max-w-md rounded-xl p-3.5 bg-emerald-500/5 border border-emerald-500/10 text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                <Info className="w-5 h-5 flex-shrink-0 text-[var(--color-primary)]" />
-                <span>Al procesar el archivo, podrás **descargar la versión completada en Excel** con las 7 columnas de fórmulas y la pestaña de mezclas de concreto.</span>
+              <div className="mt-6 flex gap-3 text-left max-w-md rounded-2xl p-4 bg-[#11a542]/5 border border-[#11a542]/20 text-xs text-slate-600 dark:text-slate-300">
+                <Info className="w-5 h-5 shrink-0 text-[#11a542] mt-0.5" />
+                <span>Al procesar el archivo, podrás <strong>descargar la versión completada en Excel</strong> con las 7 columnas de fórmulas y la pestaña de mezclas de concreto.</span>
               </div>
             </div>
           ) : (
@@ -466,43 +482,48 @@ export default function CierreCostosPage() {
             <div className="space-y-6 flex-1 flex flex-col justify-between">
               {/* Dynamic Projection Toggle Card */}
               <div 
-                className="rounded-xl p-5 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
-                style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+                style={{ 
+                  padding: "1.25rem 1.75rem", 
+                  borderRadius: "20px",
+                  backgroundColor: "var(--color-surface)", 
+                  borderColor: "var(--color-border)" 
+                }}
+                className="border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-[var(--color-text-primary)]">Método de Proyección de Cierre</h3>
-                    <div className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/10 text-[var(--color-primary)] border border-emerald-500/20">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white">Método de Proyección de Cierre</h3>
+                    <div className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-[#11a542]/10 text-[#11a542] border border-[#11a542]/20">
                       Configurable
                     </div>
                   </div>
-                  <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {projectionMode === "historical" 
                       ? "Proyección Histórica: Calcula el faltante manteniendo los rendimientos reales de obra ejecutados."
                       : "Proyección Teórica: Calcula el faltante asumiendo rendimientos unitarios ideales del presupuesto base."}
                   </p>
                 </div>
 
-                <div className="flex border rounded-xl overflow-hidden shrink-0" style={{ borderColor: "var(--color-border)" }}>
+                <div className="flex items-center p-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
                   <button
                     onClick={() => setProjectionMode("historical")}
-                    className={`px-4 py-2 text-xs font-black transition-all cursor-pointer select-none ${
-                      projectionMode === "historical" ? "text-white" : "hover:bg-white/5"
+                    style={{ borderRadius: "9999px" }}
+                    className={`px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none ${
+                      projectionMode === "historical" 
+                        ? "bg-[#015c32] text-white shadow-sm" 
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     }`}
-                    style={{
-                      backgroundColor: projectionMode === "historical" ? "var(--color-primary)" : "transparent",
-                    }}
                   >
                     Histórica (Real)
                   </button>
                   <button
                     onClick={() => setProjectionMode("theoretical")}
-                    className={`px-4 py-2 text-xs font-black transition-all cursor-pointer select-none ${
-                      projectionMode === "theoretical" ? "text-white" : "hover:bg-white/5"
+                    style={{ borderRadius: "9999px" }}
+                    className={`px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none ${
+                      projectionMode === "theoretical" 
+                        ? "bg-[#015c32] text-white shadow-sm" 
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     }`}
-                    style={{
-                      backgroundColor: projectionMode === "theoretical" ? "var(--color-primary)" : "transparent",
-                    }}
                   >
                     Teórica (Ideal)
                   </button>
@@ -512,44 +533,59 @@ export default function CierreCostosPage() {
               {/* KPI Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div 
-                  className="rounded-xl p-4 border flex flex-col justify-between"
-                  style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+                  style={{ 
+                    padding: "1.25rem 1.5rem", 
+                    borderRadius: "18px",
+                    backgroundColor: "var(--color-surface)", 
+                    borderColor: "var(--color-border)" 
+                  }}
+                  className="border flex flex-col justify-between shadow-sm"
                 >
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Costo Base Total</p>
-                  <p className="text-xl font-black mt-1" style={{ color: "var(--color-text-primary)" }}>{formatCurrency(result.summary.total_base)}</p>
-                  <p className="text-[9px] mt-1" style={{ color: "var(--color-text-tertiary)" }}>{result.summary.total_items} actividades APU</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Costo Base Total</p>
+                  <p className="text-xl font-black mt-1 text-slate-900 dark:text-white">{formatCurrency(result.summary.total_base)}</p>
+                  <p className="text-[10px] mt-1 text-slate-400">{result.summary.total_items} actividades APU</p>
                 </div>
 
                 <div 
-                  className="rounded-xl p-4 border flex flex-col justify-between"
-                  style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+                  style={{ 
+                    padding: "1.25rem 1.5rem", 
+                    borderRadius: "18px",
+                    backgroundColor: "var(--color-surface)", 
+                    borderColor: "var(--color-border)" 
+                  }}
+                  className="border flex flex-col justify-between shadow-sm"
                 >
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Ejecución Real</p>
-                  <p className="text-xl font-black mt-1" style={{ color: "var(--color-text-primary)" }}>{formatCurrency(result.summary.total_ejec)}</p>
-                  <p className="text-[9px] mt-1" style={{ color: "var(--color-text-tertiary)" }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Ejecución Real</p>
+                  <p className="text-xl font-black mt-1 text-slate-900 dark:text-white">{formatCurrency(result.summary.total_ejec)}</p>
+                  <p className="text-[10px] mt-1 text-slate-400">
                     {((result.summary.total_ejec / (result.summary.total_base || 1)) * 100).toFixed(1)}% avance costo
                   </p>
                 </div>
 
                 <div 
-                  className="rounded-xl p-4 border flex flex-col justify-between"
-                  style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+                  style={{ 
+                    padding: "1.25rem 1.5rem", 
+                    borderRadius: "18px",
+                    backgroundColor: "var(--color-surface)", 
+                    borderColor: "var(--color-border)" 
+                  }}
+                  className="border flex flex-col justify-between shadow-sm"
                 >
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-secondary)" }}>Proyección Final</p>
-                  <p className="text-xl font-black mt-1" style={{ color: "var(--color-text-primary)" }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Proyección Final</p>
+                  <p className="text-xl font-black mt-1 text-slate-900 dark:text-white">
                     {formatCurrency(projectionMode === "historical" ? result.summary.total_proj_hist : result.summary.total_proj_theo)}
                   </p>
-                  <div className="flex items-center gap-1 mt-1">
+                  <div className="flex items-center gap-1.5 mt-1">
                     {(() => {
                       const dev = projectionMode === "historical" ? result.summary.dev_proj_hist : result.summary.dev_proj_theo;
                       return (
                         <>
                           {dev > 0 ? (
-                            <TrendingUp className="w-3.5 h-3.5 text-red-500" />
+                            <TrendingUp className="w-4 h-4 text-red-500" />
                           ) : (
-                            <TrendingDown className="w-3.5 h-3.5 text-emerald-500" />
+                            <TrendingDown className="w-4 h-4 text-[#11a542]" />
                           )}
-                          <span className={`text-[9px] font-bold ${dev > 0 ? "text-red-500" : "text-emerald-500"}`}>
+                          <span className={`text-[10px] font-extrabold ${dev > 0 ? "text-red-500" : "text-[#11a542]"}`}>
                             {dev > 0 ? "+" : ""}{formatCurrency(dev)} ({((dev / (result.summary.total_base || 1)) * 100).toFixed(1)}%)
                           </span>
                         </>
@@ -561,22 +597,24 @@ export default function CierreCostosPage() {
 
               {/* Alert Count Banner */}
               <div 
-                className="rounded-xl p-4 border flex items-center justify-between text-xs"
                 style={{ 
-                  backgroundColor: result.summary.total_alerts > 0 ? "rgba(239, 68, 68, 0.03)" : "rgba(17, 165, 66, 0.03)", 
-                  borderColor: result.summary.total_alerts > 0 ? "rgba(239, 68, 68, 0.15)" : "rgba(17, 165, 66, 0.15)" 
+                  padding: "1rem 1.5rem",
+                  borderRadius: "16px",
+                  backgroundColor: result.summary.total_alerts > 0 ? "rgba(239, 68, 68, 0.05)" : "rgba(17, 165, 66, 0.05)", 
+                  borderColor: result.summary.total_alerts > 0 ? "rgba(239, 68, 68, 0.2)" : "rgba(17, 165, 66, 0.2)" 
                 }}
+                className="border flex items-center justify-between text-xs"
               >
-                <div className="flex items-center gap-2">
-                  <AlertCircle className={`w-4 h-4 ${result.summary.total_alerts > 0 ? "text-red-500" : "text-[var(--color-primary)]"}`} />
-                  <span style={{ color: "var(--color-text-secondary)" }}>
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className={`w-4 h-4 shrink-0 ${result.summary.total_alerts > 0 ? "text-red-500" : "text-[#11a542]"}`} />
+                  <span className="text-slate-700 dark:text-slate-300 font-medium">
                     {result.summary.total_alerts > 0 
                       ? `Se detectaron ${result.summary.total_alerts} alertas críticas por sobrecosto o desviación en mezclas.`
                       : "No se registran sobrecostos críticos en los insumos."}
                   </span>
                 </div>
                 {result.summary.total_reutilizations > 0 && (
-                  <span className="font-bold text-blue-400">
+                  <span className="font-extrabold text-blue-500 dark:text-blue-400">
                     {result.summary.total_reutilizations} materiales reutilizables
                   </span>
                 )}
@@ -592,15 +630,21 @@ export default function CierreCostosPage() {
           {/* Reutilization Recommendations */}
           {result.reutilizaciones.length > 0 && (
             <div 
-              className="rounded-xl border p-6 space-y-4"
-              style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+              style={{ 
+                padding: "1.75rem",
+                borderRadius: "24px",
+                backgroundColor: "var(--color-surface)", 
+                borderColor: "var(--color-border)",
+                boxShadow: "var(--shadow-sm)"
+              }}
+              className="border space-y-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--color-text-primary)" }}>
-                  <span className="material-symbols-outlined text-blue-400" style={{ fontVariationSettings: "'FILL' 1" }}>recycling</span>
-                  Recomendaciones de Reutilización
+                <h3 className="text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                  <span className="material-symbols-outlined text-blue-500" style={{ fontVariationSettings: "'FILL' 1" }}>recycling</span>
+                  <span>Recomendaciones de Reutilización</span>
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20">
                   Eficiencia de Materiales
                 </span>
               </div>
@@ -608,13 +652,13 @@ export default function CierreCostosPage() {
                 {result.reutilizaciones.map((tip, idx) => (
                   <div 
                     key={idx}
-                    className="p-4 rounded-xl border flex items-start gap-3 text-xs leading-relaxed"
-                    style={{ backgroundColor: "rgba(59, 130, 246, 0.03)", borderColor: "rgba(59, 130, 246, 0.15)" }}
+                    style={{ borderRadius: "16px", backgroundColor: "rgba(59, 130, 246, 0.05)", borderColor: "rgba(59, 130, 246, 0.18)" }}
+                    className="p-4 border flex items-start gap-3 text-xs leading-relaxed"
                   >
-                    <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold text-[var(--color-text-primary)] uppercase">Transferencia de {tip.insumo_name}</p>
-                      <p style={{ color: "var(--color-text-secondary)" }} className="mt-1">{tip.message}</p>
+                      <p className="font-bold text-slate-900 dark:text-white uppercase">Transferencia de {tip.insumo_name}</p>
+                      <p className="mt-1 text-slate-600 dark:text-slate-400">{tip.message}</p>
                     </div>
                   </div>
                 ))}
@@ -625,15 +669,21 @@ export default function CierreCostosPage() {
           {/* Deviation Alerts */}
           {result.alerts.length > 0 && (
             <div 
-              className="rounded-xl border p-6 space-y-4"
-              style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+              style={{ 
+                padding: "1.75rem",
+                borderRadius: "24px",
+                backgroundColor: "var(--color-surface)", 
+                borderColor: "var(--color-border)",
+                boxShadow: "var(--shadow-sm)"
+              }}
+              className="border space-y-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--color-text-primary)" }}>
+                <h3 className="text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
                   <AlertTriangle className="w-5 h-5 text-red-500" />
-                  Alertas Críticas de Desviación
+                  <span>Alertas Críticas de Desviación</span>
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-red-500/10 text-red-400 border border-red-500/20">
+                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-red-500/10 text-red-500 border border-red-500/20">
                   Sobrecostos
                 </span>
               </div>
@@ -641,16 +691,17 @@ export default function CierreCostosPage() {
                 {result.alerts.map((al, idx) => (
                   <div 
                     key={idx}
-                    className="p-4 rounded-xl border flex items-start gap-3 text-xs leading-relaxed animate-fade-in"
                     style={{ 
-                      backgroundColor: al.type === "danger" ? "rgba(239, 68, 68, 0.03)" : "rgba(251, 191, 36, 0.03)", 
-                      borderColor: al.type === "danger" ? "rgba(239, 68, 68, 0.15)" : "rgba(251, 191, 36, 0.15)" 
+                      borderRadius: "16px",
+                      backgroundColor: al.type === "danger" ? "rgba(239, 68, 68, 0.05)" : "rgba(251, 191, 36, 0.05)", 
+                      borderColor: al.type === "danger" ? "rgba(239, 68, 68, 0.2)" : "rgba(251, 191, 36, 0.2)" 
                     }}
+                    className="p-4 border flex items-start gap-3 text-xs leading-relaxed animate-fade-in"
                   >
-                    <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${al.type === "danger" ? "text-red-500" : "text-yellow-500"}`} />
+                    <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${al.type === "danger" ? "text-red-500" : "text-yellow-500"}`} />
                     <div>
-                      <p className="font-bold text-[var(--color-text-primary)] uppercase">{al.title}</p>
-                      <p style={{ color: "var(--color-text-secondary)" }} className="mt-1">{al.message}</p>
+                      <p className="font-bold text-slate-900 dark:text-white uppercase">{al.title}</p>
+                      <p className="mt-1 text-slate-600 dark:text-slate-400">{al.message}</p>
                     </div>
                   </div>
                 ))}
@@ -663,26 +714,32 @@ export default function CierreCostosPage() {
       {/* Concrete Mix Validation Section */}
       {result && result.concrete_validation && result.concrete_validation.length > 0 && (
         <div 
-          className="rounded-xl border p-6 space-y-6"
-          style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)", boxShadow: "var(--shadow-md)" }}
+          style={{ 
+            padding: "2rem",
+            borderRadius: "24px",
+            backgroundColor: "var(--color-surface)", 
+            borderColor: "var(--color-border)", 
+            boxShadow: "var(--shadow-sm)" 
+          }}
+          className="border space-y-6"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: "var(--color-text-primary)" }}>
+              <h3 className="text-lg font-bold flex items-center gap-2 text-slate-900 dark:text-white">
                 <span className="material-symbols-outlined text-amber-500">water_drop</span>
-                Validación de Mezclas de Concreto (Cemento vs. Arena y Triturado)
+                <span>Validación de Mezclas de Concreto (Cemento vs. Arena y Triturado)</span>
               </h3>
-              <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
+              <p className="text-xs mt-1 text-slate-500 dark:text-slate-400">
                 Compara el Cemento registrado en el APU contra el Cemento teórico esperable según las dosificaciones de Arena y Triturado. (Tolerancia: ±15%).
               </p>
             </div>
 
-            <span className="px-3 py-1 rounded-full text-xs font-black uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20">
+            <span className="px-3.5 py-1.5 rounded-full text-xs font-black uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
               {result.concrete_validation.length} APUs Auditados
             </span>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--color-border)" }}>
+          <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: "var(--color-border)" }}>
             <table className="w-full text-left border-collapse text-xs">
               <thead className="bg-[var(--color-surface-hover)] border-b" style={{ borderColor: "var(--color-border)" }}>
                 <tr>

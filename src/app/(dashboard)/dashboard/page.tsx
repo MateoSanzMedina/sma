@@ -154,111 +154,146 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* KPI 1: Presupuesto Costo Directo */}
           <div 
-            className="rounded-2xl p-5 border transition-all duration-300 relative overflow-hidden group shadow-sm hover:shadow-md"
-            style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+            style={{ 
+              padding: "1.5rem",
+              borderRadius: "22px",
+              backgroundColor: "var(--color-surface)", 
+              borderColor: "var(--color-border)",
+              boxShadow: "var(--shadow-sm)"
+            }}
+            className="border transition-all duration-300 relative overflow-hidden group hover:shadow-md"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-black uppercase tracking-wider text-[var(--color-text-tertiary)]">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Presupuesto Costo Directo
               </span>
               <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                 <DollarSign className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-2xl font-black tracking-tight font-mono text-[var(--color-primary)]">
+            <p className="text-2xl font-black tracking-tight font-mono text-[#11a542]">
               {formatShortCurrency(metrics.directBudget)}
             </p>
-            <p className="text-[11px] mt-1.5 text-[var(--color-text-secondary)] flex items-center gap-1 font-medium">
-              <Activity className="w-3 h-3 text-[var(--color-accent)]" />
-              Promedio diario: <strong>{formatCurrency(metrics.avgDailyCost)}/día</strong>
+            <p className="text-[11px] mt-2 text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-medium">
+              <Activity className="w-3.5 h-3.5 text-[#11a542]" />
+              <span>Promedio diario: <strong>{formatCurrency(metrics.avgDailyCost)}/día</strong></span>
             </p>
           </div>
 
           {/* KPI 2: Presupuesto General (con AIU) */}
           <div 
-            className="rounded-2xl p-5 border transition-all duration-300 relative overflow-hidden group shadow-sm hover:shadow-md"
-            style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+            style={{ 
+              padding: "1.5rem",
+              borderRadius: "22px",
+              backgroundColor: "var(--color-surface)", 
+              borderColor: "var(--color-border)",
+              boxShadow: "var(--shadow-sm)"
+            }}
+            className="border transition-all duration-300 relative overflow-hidden group hover:shadow-md"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-black uppercase tracking-wider text-[var(--color-text-tertiary)]">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Presupuesto General (+ AIU)
               </span>
               <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
                 <TrendingUp className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-2xl font-black tracking-tight font-mono text-[var(--color-text-primary)]">
+            <p className="text-2xl font-black tracking-tight font-mono text-slate-900 dark:text-white">
               {formatShortCurrency(metrics.totalBudget)}
             </p>
-            <p className="text-[11px] mt-1.5 text-[var(--color-text-secondary)] font-medium">
+            <p className="text-[11px] mt-2 text-slate-500 dark:text-slate-400 font-medium">
               Incluye <strong>9.5% AI</strong> + <strong>3% IVA s/ Utilidad</strong>
             </p>
           </div>
 
           {/* KPI 3: Tareas de Cronograma Correlacionadas */}
           <div 
-            className="rounded-2xl p-5 border transition-all duration-300 relative overflow-hidden group shadow-sm hover:shadow-md"
-            style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+            style={{ 
+              padding: "1.5rem",
+              borderRadius: "22px",
+              backgroundColor: "var(--color-surface)", 
+              borderColor: "var(--color-border)",
+              boxShadow: "var(--shadow-sm)"
+            }}
+            className="border transition-all duration-300 relative overflow-hidden group hover:shadow-md"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-black uppercase tracking-wider text-[var(--color-text-tertiary)]">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Actividades MS Project
               </span>
               <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
                 <Layers className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-2xl font-black tracking-tight font-mono text-[var(--color-text-primary)]">
-              {metrics.tasksCount} <span className="text-sm font-bold text-[var(--color-text-secondary)]">tareas</span>
+            <p className="text-2xl font-black tracking-tight font-mono text-slate-900 dark:text-white">
+              {metrics.tasksCount} <span className="text-sm font-bold text-slate-400">tareas</span>
             </p>
-            <p className="text-[11px] mt-1.5 text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" />
-              100% de correlación sin pérdidas
+            <p className="text-[11px] mt-2 text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>100% de correlación sin pérdidas</span>
             </p>
           </div>
 
           {/* KPI 4: Horizonte de Ejecución */}
           <div 
-            className="rounded-2xl p-5 border transition-all duration-300 relative overflow-hidden group shadow-sm hover:shadow-md"
-            style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+            style={{ 
+              padding: "1.5rem",
+              borderRadius: "22px",
+              backgroundColor: "var(--color-surface)", 
+              borderColor: "var(--color-border)",
+              boxShadow: "var(--shadow-sm)"
+            }}
+            className="border transition-all duration-300 relative overflow-hidden group hover:shadow-md"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-black uppercase tracking-wider text-[var(--color-text-tertiary)]">
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Horizonte Temporal
               </span>
-              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-[#11a542]">
                 <Calendar className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-2xl font-black tracking-tight font-mono text-[var(--color-text-primary)]">
-              {metrics.totalDays} <span className="text-sm font-bold text-[var(--color-text-secondary)]">días</span>
+            <p className="text-2xl font-black tracking-tight font-mono text-slate-900 dark:text-white">
+              {metrics.totalDays} <span className="text-sm font-bold text-slate-400">días</span>
             </p>
-            <p className="text-[11px] mt-1.5 text-[var(--color-text-secondary)] font-medium truncate" title={`${metrics.startDate} al ${metrics.endDate}`}>
-              {metrics.startDate} → {metrics.endDate}
+            <p className="text-[11px] mt-2 text-slate-500 dark:text-slate-400 font-medium truncate" title={`${metrics.startDate} al ${metrics.endDate}`}>
+              {metrics.startDate} &rarr; {metrics.endDate}
             </p>
           </div>
         </div>
       ) : (
         /* Estado sin proyecto cargado */
         <div 
-          className="rounded-2xl p-8 border text-center space-y-4"
-          style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+          style={{ 
+            padding: "3rem 2rem",
+            borderRadius: "24px",
+            backgroundColor: "var(--color-surface)", 
+            borderColor: "var(--color-border)",
+            boxShadow: "var(--shadow-sm)"
+          }}
+          className="border text-center space-y-4"
         >
-          <div className="w-16 h-16 rounded-2xl bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-[#11a542] flex items-center justify-center mx-auto">
             <Building2 className="w-8 h-8" />
           </div>
           <div className="max-w-md mx-auto">
-            <h3 className="text-lg font-black text-[var(--color-text-primary)]">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">
               No hay una ejecución de obra activa en memoria
             </h3>
-            <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
               Carga tu presupuesto en Excel y cronograma de MS Project para visualizar KPIs reales, curva de flujo de caja y auditoría de costos.
             </p>
           </div>
           <Link
             href="/tecnica/analisis"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black text-white shadow-md transition-transform hover:scale-105 active:scale-95"
-            style={{ backgroundColor: "var(--color-primary)" }}
+            style={{
+              borderRadius: "9999px",
+              padding: "0.75rem 1.75rem",
+              background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
+              boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
+            }}
+            className="inline-flex items-center gap-2 text-xs font-bold text-white transition-transform hover:scale-105 active:scale-95"
           >
             <Sparkles className="w-4 h-4" />
             <span>Ir a Flujo Gerencia y Procesar Obra</span>
@@ -270,22 +305,29 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Columna Izquierda (2 Cols): Desglose de Capítulos Constructivos Reales */}
         <div 
-          className="lg:col-span-2 rounded-2xl p-6 border shadow-sm flex flex-col justify-between"
-          style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+          style={{ 
+            padding: "2rem",
+            borderRadius: "24px",
+            backgroundColor: "var(--color-surface)", 
+            borderColor: "var(--color-border)",
+            boxShadow: "var(--shadow-sm)"
+          }}
+          className="lg:col-span-2 border flex flex-col justify-between"
         >
           <div>
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
-                <PieChart className="w-5 h-5 text-[var(--color-primary)]" />
-                <h3 className="text-base font-black text-[var(--color-text-primary)]">
+                <PieChart className="w-5 h-5 text-[#11a542]" />
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
                   Distribución Financiera por Capítulos de Obra
                 </h3>
               </div>
               <Link 
                 href="/tecnica/analisis" 
-                className="text-xs font-bold text-[var(--color-primary)] hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-[#11a542] hover:underline flex items-center gap-1"
               >
-                Ver Matriz Completa <ArrowRight className="w-3.5 h-3.5" />
+                <span>Ver Matriz Completa</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
@@ -294,25 +336,25 @@ export default function DashboardPage() {
                 {metrics.chapters.slice(0, 6).map((chap, idx) => (
                   <div key={idx} className="space-y-1.5">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-[var(--color-text-primary)] truncate max-w-[60%]">
+                      <span className="font-bold text-slate-900 dark:text-white truncate max-w-[60%]">
                         {chap.name}
                       </span>
                       <div className="flex items-center gap-3">
-                        <span className="font-mono font-bold text-[var(--color-text-secondary)]">
+                        <span className="font-mono font-bold text-slate-500 dark:text-slate-400">
                           {formatCurrency(chap.amount)}
                         </span>
-                        <span className="font-mono font-black text-[var(--color-primary)] w-12 text-right">
+                        <span className="font-mono font-black text-[#11a542] w-12 text-right">
                           {chap.percentage.toFixed(1)}%
                         </span>
                       </div>
                     </div>
                     {/* Barra de Progreso Visual */}
-                    <div className="w-full h-2 rounded-full bg-[var(--color-surface-hover)] overflow-hidden">
+                    <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       <div 
                         className="h-full rounded-full transition-all duration-500"
                         style={{ 
                           width: `${Math.max(4, chap.percentage)}%`,
-                          backgroundColor: idx === 0 ? "var(--color-primary)" : idx === 1 ? "var(--color-accent)" : "#10b981"
+                          background: idx === 0 ? "linear-gradient(90deg, #015c32, #11a542)" : idx === 1 ? "#11a542" : "#34d399"
                         }}
                       />
                     </div>
@@ -320,29 +362,35 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center text-[var(--color-text-tertiary)] text-xs">
+              <div className="py-12 text-center text-slate-400 text-xs">
                 Información de capítulos disponible al procesar el archivo del proyecto.
               </div>
             )}
           </div>
 
           {metrics && (
-            <div className="mt-6 pt-4 border-t border-[var(--color-border)] flex items-center justify-between text-xs text-[var(--color-text-secondary)]">
+            <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>Total Capítulos Evaluados: <strong>{metrics.chapters.length}</strong></span>
-              <span>Costo Directo Consolidado: <strong className="text-[var(--color-primary)]">{formatCurrency(metrics.directBudget)}</strong></span>
+              <span>Costo Directo Consolidado: <strong className="text-[#11a542]">{formatCurrency(metrics.directBudget)}</strong></span>
             </div>
           )}
         </div>
 
         {/* Columna Derecha (1 Col): Acceso a Módulos Especializados */}
         <div 
-          className="rounded-2xl p-6 border shadow-sm flex flex-col justify-between"
-          style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)" }}
+          style={{ 
+            padding: "2rem",
+            borderRadius: "24px",
+            backgroundColor: "var(--color-surface)", 
+            borderColor: "var(--color-border)",
+            boxShadow: "var(--shadow-sm)"
+          }}
+          className="border flex flex-col justify-between"
         >
           <div>
-            <div className="flex items-center gap-2.5 mb-5">
-              <HardHat className="w-5 h-5 text-[var(--color-primary)]" />
-              <h3 className="text-base font-black text-[var(--color-text-primary)]">
+            <div className="flex items-center gap-2.5 mb-6">
+              <HardHat className="w-5 h-5 text-[#11a542]" />
+              <h3 className="text-base font-black text-slate-900 dark:text-white">
                 Módulos de Gestión Serving
               </h3>
             </div>
@@ -351,71 +399,77 @@ export default function DashboardPage() {
               {/* Módulo 1: Flujo Gerencia */}
               <Link
                 href="/tecnica/analisis"
-                className="p-3.5 rounded-xl border border-[var(--color-border)] flex items-center justify-between hover:bg-[var(--color-surface-hover)] transition-all group cursor-pointer block"
+                style={{ borderRadius: "18px", padding: "1rem 1.25rem" }}
+                className="border border-slate-200 dark:border-slate-800 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all group cursor-pointer block"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                     <Activity className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors">
-                      Flujo Gerencia & Curva S
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-[#11a542] transition-colors">
+                      Flujo Gerencia &amp; Curva S
                     </h4>
-                    <p className="text-[11px] text-[var(--color-text-secondary)]">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       {metrics ? "Mapeo activo y curva de caja" : "Cargar nuevo cronograma"}
                     </p>
                   </div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-primary)] group-hover:translate-x-0.5 transition-all" />
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#11a542] group-hover:translate-x-0.5 transition-all" />
               </Link>
 
               {/* Módulo 2: Cierre de Costos */}
               <Link
                 href="/tecnica/cierre-costos"
-                className="p-3.5 rounded-xl border border-[var(--color-border)] flex items-center justify-between hover:bg-[var(--color-surface-hover)] transition-all group cursor-pointer block"
+                style={{ borderRadius: "18px", padding: "1rem 1.25rem" }}
+                className="border border-slate-200 dark:border-slate-800 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all group cursor-pointer block"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
                     <FileSpreadsheet className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors">
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-[#11a542] transition-colors">
                       Cierre de Costos SAO
                     </h4>
-                    <p className="text-[11px] text-[var(--color-text-secondary)]">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       {cierreCostosData ? "Auditoría de insumos cargada" : "Auditar APUs teóricos vs real"}
                     </p>
                   </div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-primary)] group-hover:translate-x-0.5 transition-all" />
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#11a542] group-hover:translate-x-0.5 transition-all" />
               </Link>
 
               {/* Módulo 3: Seguridad Social */}
               <Link
                 href="/gestion-humana/seguridad-social"
-                className="p-3.5 rounded-xl border border-[var(--color-border)] flex items-center justify-between hover:bg-[var(--color-surface-hover)] transition-all group cursor-pointer block"
+                style={{ borderRadius: "18px", padding: "1rem 1.25rem" }}
+                className="border border-slate-200 dark:border-slate-800 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all group cursor-pointer block"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
                     <Users className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors">
-                      Gestión Humana & Planillas
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-[#11a542] transition-colors">
+                      Gestión Humana &amp; Planillas
                     </h4>
-                    <p className="text-[11px] text-[var(--color-text-secondary)]">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       Novedades de personal y seguridad
                     </p>
                   </div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-primary)] group-hover:translate-x-0.5 transition-all" />
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#11a542] group-hover:translate-x-0.5 transition-all" />
               </Link>
             </div>
           </div>
 
-          <div className="mt-5 p-3 rounded-xl bg-[var(--color-primary-light)]/50 border border-[var(--color-primary)]/20 flex items-center gap-2.5">
-            <Sparkles className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
-            <p className="text-[11px] text-[var(--color-text-secondary)] leading-tight">
+          <div 
+            style={{ borderRadius: "18px" }}
+            className="mt-6 p-4 bg-emerald-500/5 border border-emerald-500/15 flex items-center gap-3"
+          >
+            <Sparkles className="w-4 h-4 text-[#11a542] shrink-0" />
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">
               Motor potenciado por <strong>Gemini 3.7 Flash</strong> y <strong>Gemini 3.1 Pro</strong>.
             </p>
           </div>
