@@ -34,6 +34,7 @@ const navGroups = [
   {
     group: "Área Administrativa",
     items: [
+      { label: "Usuarios & Accesos", href: "/administrativa/usuarios", icon: "manage_accounts" },
       { label: "Documentos", href: "/administrativa/documentos", icon: "edit_document" },
       { label: "Integraciones", href: "/administrativa/integraciones", icon: "extension" }
     ]

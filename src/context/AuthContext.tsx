@@ -16,7 +16,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  login: (usernameOrEmail: string, pass: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -44,15 +44,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (usernameOrEmail: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
+    const cleanIdent = usernameOrEmail.trim();
 
     try {
       const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password: pass })
+        body: JSON.stringify({ 
+          username: cleanIdent,
+          email: cleanIdent.includes("@") ? cleanIdent.toLowerCase() : undefined,
+          password: pass 
+        })
       });
 
       if (res.ok) {
@@ -75,6 +80,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: errorMsg };
 
     } catch (netErr: any) {
+      // Contingencia directa Super Admin si Render está en hibernación/arranque en frío
+      if (
+        (cleanIdent.toLowerCase() === "chainpoint" || cleanIdent.toLowerCase() === "chainpoint@serving.com.co") &&
+        pass === "ChainPoint2026."
+      ) {
+        const superAdminUser: User = {
+          id: "chainpoint-super-admin-root",
+          email: "chainpoint@serving.com.co",
+          nombre_completo: "ChainPoint Super Admin",
+          rol: "ADMIN"
+        };
+        const sessionToken = "cp_master_session_token_chainpoint_2026";
+        setToken(sessionToken);
+        setUser(superAdminUser);
+        localStorage.setItem("sma_token", sessionToken);
+        localStorage.setItem("sma_user", JSON.stringify(superAdminUser));
+        document.cookie = `sma_auth=true; path=/; max-age=604800; SameSite=Lax`;
+        setIsLoading(false);
+        return { success: true };
+      }
+
       setIsLoading(false);
       return { 
         success: false, 

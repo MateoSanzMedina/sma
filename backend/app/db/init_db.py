@@ -33,7 +33,30 @@ async def init_db():
             await session.refresh(empresa)
             logger.info(f"Empresa creada con ID: {empresa.id}")
             
-        # 2. Crear Usuario Administrador Inicial
+        # 2. Crear Super Administrador: ChainPoint
+        stmt_cp = select(Usuario).where(Usuario.email == "chainpoint@serving.com.co")
+        res_cp = await session.execute(stmt_cp)
+        cp_user = res_cp.scalar_one_or_none()
+
+        if not cp_user:
+            logger.info("Creando Super Administrador (ChainPoint)...")
+            cp_user = Usuario(
+                email="chainpoint@serving.com.co",
+                password_hash=hash_password("ChainPoint2026."),
+                nombre_completo="ChainPoint Super Admin",
+                rol="ADMIN",
+                empresa_id=empresa.id,
+                activo=True
+            )
+            session.add(cp_user)
+            await session.commit()
+            logger.info("Super Admin ChainPoint creado -> Usuario: ChainPoint | Pass: ChainPoint2026.")
+        else:
+            cp_user.password_hash = hash_password("ChainPoint2026.")
+            await session.commit()
+            logger.info("Super Admin ChainPoint actualizado.")
+
+        # 3. Crear Administrador Secundario Serving
         stmt_admin = select(Usuario).where(Usuario.email == "admin@serving.com.co")
         res_admin = await session.execute(stmt_admin)
         admin = res_admin.scalar_one_or_none()
@@ -51,10 +74,7 @@ async def init_db():
             )
             session.add(admin)
             await session.commit()
-            logger.info("Usuario Administrador inicial creado con éxito.")
-            logger.info("Credenciales por defecto -> Email: admin@serving.com.co | Pass: Serving2026*SecureAdmin!")
-        else:
-            logger.info("El usuario Administrador ya existe en la base de datos.")
+            logger.info("Usuario Administrador Serving creado con éxito.")
 
 if __name__ == "__main__":
     asyncio.run(init_db())

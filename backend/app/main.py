@@ -12,6 +12,7 @@ from app.api.payroll import router as payroll_router
 from app.api.costs import router as costs_router
 from app.api.auth import router as auth_router
 from app.api.audit import router as audit_router
+from app.api.users import router as users_router
 from app.db.session import engine, Base
 import uvicorn
 import logging
@@ -58,7 +59,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
 )
 
@@ -75,6 +76,7 @@ async def startup_event():
 
 # Registrar routers de API v1
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
+app.include_router(users_router, prefix=f"{settings.API_V1_STR}/users", tags=["Users Management"])
 app.include_router(audit_router, prefix=f"{settings.API_V1_STR}/audit", tags=["Agent Audit Logs (HITL)"])
 app.include_router(analysis_router, prefix=settings.API_V1_STR, tags=["Analysis"])
 app.include_router(payroll_router, prefix=f"{settings.API_V1_STR}/payroll", tags=["Payroll"])

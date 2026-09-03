@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { ShieldCheck, Lock, Mail, Eye, EyeOff, ArrowRight, Building2, AlertCircle } from "lucide-react";
+import { ShieldCheck, Lock, User as UserIcon, Eye, EyeOff, ArrowRight, Building2, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,13 +25,13 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
 
-    if (!email.trim() || !password) {
+    if (!username.trim() || !password) {
       setError("Por favor complete todos los campos.");
       return;
     }
 
     setIsSubmitting(true);
-    const res = await login(email, password);
+    const res = await login(username, password);
     setIsSubmitting(false);
 
     if (res.success) {
@@ -73,21 +73,21 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Email Field */}
+            {/* Username/Email Field */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold tracking-wider text-slate-300 uppercase">
-                Correo Corporativo
+                Usuario o Correo
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
-                  <Mail className="h-4 w-4" />
+                  <UserIcon className="h-4 w-4" />
                 </div>
                 <input
-                  type="email"
+                  type="text"
                   required
-                  placeholder="usuario@serving.com.co"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="ChainPoint o usuario@serving.com.co"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="w-full rounded-xl border border-slate-700/80 bg-slate-950/60 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:border-amber-500/60 focus:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                 />
               </div>
