@@ -1,7 +1,9 @@
 "use client";
 
+import { useAuth } from "@/context/AuthContext";
+
 export default function Header() {
-  // pathname and derived title/icon are currently omitted to avoid visual layout duplication with main pages
+  const { user, logout } = useAuth();
 
   return (
     <header 
@@ -15,20 +17,19 @@ export default function Header() {
       </div>
       
       <div className="flex flex-1 justify-end gap-4">
-        <div className="flex items-center gap-2 mr-4 border-r border-white/5 pr-4">
-          <p className="text-sm font-medium hidden sm:block" style={{ color: "var(--color-text-secondary)" }}>
-            Hola, <span className="font-bold text-white">Admin</span>
-          </p>
+        <div className="flex items-center gap-3 mr-4 border-r border-white/5 pr-4">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-semibold text-white">
+              {user?.nombre_completo || "Administrador"}
+            </p>
+            <p className="text-[11px] font-mono text-slate-400">
+              {user?.rol || "ADMIN"} &bull; {user?.email || "admin@serving.com.co"}
+            </p>
+          </div>
           <button
-            className="flex items-center justify-center rounded-lg h-10 w-10 transition-colors cursor-pointer hover:bg-white/5"
+            onClick={logout}
+            className="flex items-center justify-center rounded-lg h-10 w-10 transition-colors cursor-pointer hover:bg-rose-500/10 text-slate-400 hover:text-rose-400"
             title="Cerrar Sesión"
-            style={{ color: "var(--color-text-secondary)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--color-error)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--color-text-secondary)";
-            }}
           >
             <span className="material-symbols-outlined">logout</span>
           </button>
