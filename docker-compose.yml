@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # Base de Datos PostgreSQL con soporte de pgvector para RAG
+  postgres:
+    image: ankane/pgvector:v0.5.1
+    container_name: sma_postgres_db
+    restart: always
+    environment:
+      POSTGRES_DB: sma_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secure_postgres_password_2026!
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/app/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sma_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Servidor Backend FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sma_fastapi_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql+asyncpg://postgres:secure_postgres_password_2026!@postgres:5432/sma_db
+      - JWT_SECRET=CHANGE_THIS_TO_A_32_CHARACTER_SECRET_KEY_FOR_PRODUCTION
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

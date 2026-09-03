@@ -143,7 +143,9 @@ REGLAS CRÍTICAS DE RESPUESTA:
 5. Emplea formato Markdown limpio (negritas para montos en COP, listas ordenadas, tablas pequeñas de 2 o 3 columnas si es útil) para facilitar la lectura en pantalla.`;
 
     const userPrompt = messages[messages.length - 1].content;
-    const selectedModel = model === "gemini-2.5-flash" ? "gemini-2.5-flash" : "gemini-2.5-pro";
+    let selectedModel = (model === "gemini-3.7-flash" || model === "gemini-2.5-flash") 
+      ? "gemini-3.7-flash" 
+      : "gemini-3.1-pro-preview";
 
     let botReply = "";
 
@@ -151,19 +153,40 @@ REGLAS CRÍTICAS DE RESPUESTA:
       if (!client) {
         throw new Error("Cliente de IA no configurado");
       }
-      // Llamar a Gemini mediante Vertex AI
-      const response = await client.models.generateContent({
-        model: selectedModel,
-        contents: userPrompt,
-        config: {
-          systemInstruction: systemInstruction,
-          temperature: 0.25,
-          maxOutputTokens: 2048
+      
+      try {
+        const response = await client.models.generateContent({
+          model: selectedModel,
+          contents: userPrompt,
+          config: {
+            systemInstruction: systemInstruction,
+            temperature: 0.25,
+            maxOutputTokens: 2048
+          }
+        });
+        botReply = response.text || "";
+      } catch (initialErr: any) {
+        const errMsg = String(initialErr?.message || "").toUpperCase();
+        if (errMsg.includes("NOT FOUND") || errMsg.includes("NOT_FOUND") || errMsg.includes("UNSUPPORTED")) {
+          const fallbackModel = selectedModel.includes("pro") ? "gemini-2.5-pro" : "gemini-2.5-flash";
+          console.warn(`⚠️ Modelo ${selectedModel} no disponible en la región. Usando fallback ${fallbackModel}...`);
+          selectedModel = fallbackModel;
+          const fallbackResponse = await client.models.generateContent({
+            model: selectedModel,
+            contents: userPrompt,
+            config: {
+              systemInstruction: systemInstruction,
+              temperature: 0.25,
+              maxOutputTokens: 2048
+            }
+          });
+          botReply = fallbackResponse.text || "";
+        } else {
+          throw initialErr;
         }
-      });
-      botReply = response.text || "";
+      }
     } catch (apiErr) {
-      console.warn("⚠️ Vertex AI en estado de suspensión o cuota excedida. Usando motor local de respaldo CFO:", apiErr);
+      console.warn("⚠️ Error en generación con IA. Usando motor local de respaldo CFO:", apiErr);
       botReply = generateLocalCfoReply(
         userPrompt,
         directBudget,

@@ -33,7 +33,7 @@ const PRESETS = [
 
 export default function AnalysisChat({ dataPoints, analysis, directBudget, totalBudget }: AnalysisChatProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<"gemini-2.5-pro" | "gemini-2.5-flash">("gemini-2.5-pro");
+  const [selectedModel, setSelectedModel] = useState<"gemini-3.1-pro-preview" | "gemini-3.7-flash">("gemini-3.1-pro-preview");
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -240,30 +240,30 @@ export default function AnalysisChat({ dataPoints, analysis, directBudget, total
             NIVEL DE RAZONAMIENTO:
           </span>
           <span className="text-[9px] font-bold text-[var(--color-primary)] bg-[var(--color-primary-light)] px-2.5 py-0.5 rounded-full uppercase tracking-wide">
-            {selectedModel === "gemini-2.5-pro" ? "Complejidad Alta (Gemini 2.5 Pro)" : "Instantáneo (Gemini 2.5 Flash)"}
+            {selectedModel === "gemini-3.1-pro-preview" ? "Máxima Precisión (Gemini 3.1 Pro)" : "Instantáneo SOTA (Gemini 3.7 Flash)"}
           </span>
         </div>
         <div className="grid grid-cols-2 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-1 w-full shadow-sm">
           <button
-            onClick={() => setSelectedModel("gemini-2.5-pro")}
+            onClick={() => setSelectedModel("gemini-3.1-pro-preview")}
             className={`py-2 rounded-lg transition-all duration-200 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 ${
-              selectedModel === "gemini-2.5-pro"
+              selectedModel === "gemini-3.1-pro-preview"
                 ? "bg-[var(--color-primary)] text-white shadow-sm"
                 : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
             }`}
           >
             <Sparkles className="w-3.5 h-3.5 shrink-0" />
-            Razonamiento (2.5 Pro)
+            Razonamiento (3.1 Pro)
           </button>
           <button
-            onClick={() => setSelectedModel("gemini-2.5-flash")}
+            onClick={() => setSelectedModel("gemini-3.7-flash")}
             className={`py-2 rounded-lg transition-all duration-200 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 ${
-              selectedModel === "gemini-2.5-flash"
+              selectedModel === "gemini-3.7-flash"
                 ? "bg-[var(--color-primary)] text-white shadow-sm"
                 : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
             }`}
           >
-            Veloz (2.5 Flash)
+            Veloz SOTA (3.7 Flash)
           </button>
         </div>
       </div>

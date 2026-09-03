@@ -6,9 +6,11 @@ import React, { useState, useEffect, useMemo } from "react";
 import AnalysisUpload, { AnalysisResult } from "@/components/dashboard/AnalysisUpload";
 import BudgetTimelineChart from "@/components/dashboard/BudgetTimelineChart";
 import AnalysisTable from "@/components/dashboard/AnalysisTable";
+import ItemBudgetCorrelationPanel from "@/components/dashboard/ItemBudgetCorrelationPanel";
 import AnalysisChat from "@/components/dashboard/AnalysisChat";
 import AnticipoManagerPanel from "@/components/dashboard/AnticipoManagerPanel";
 import { AnticipoRule, DataPoint, recalculateDistributedPoints } from "@/lib/anticipoUtils";
+import { saveLargeItem, getLargeItem, removeLargeItem } from "@/lib/indexedDbStorage";
 import { Sparkles } from "lucide-react";
 
 // Helper to parse double asterisks into strong tags
@@ -68,47 +70,27 @@ const renderMarkdown = (text: string) => {
           }
         });
 
-        if (headerCells || bodyRows.length > 0) {
+        if (headerCells.length > 0) {
           elements.push(
-            <div key={`table-${i}`} className="my-5 overflow-x-auto rounded-xl border border-[var(--color-border)] select-text shadow-sm">
-              <table className="w-full text-left border-collapse text-xs sm:text-sm">
-                {headerCells.length > 0 && (
-                  <thead className="bg-[var(--color-surface-hover)] border-b border-[var(--color-border)]">
-                    <tr>
-                      {headerCells.map((cell, cIdx) => {
-                        const isNumericOrCurrency = cIdx === 1 || cell.includes("$") || cell.match(/^\d+/);
-                        return (
-                          <th 
-                            key={cIdx} 
-                            className={`px-5 py-3.5 font-extrabold text-xs uppercase tracking-wider text-[var(--color-text-primary)] ${
-                              isNumericOrCurrency ? "text-right" : "text-left"
-                            }`}
-                          >
-                            {parseBold(cell)}
-                          </th>
-                        );
-                      })}
-                    </tr>
-                  </thead>
-                )}
-                <tbody className="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
-                  {bodyRows.map((cells, rIdx) => (
-                    <tr key={rIdx} className="hover:bg-[var(--color-surface-hover)]/40 transition-colors duration-150">
-                      {cells.map((cell, cIdx) => {
-                        const isNumericOrCurrency = cIdx === 1 || cell.includes("$") || cell.match(/^\d+/);
-                        return (
-                          <td 
-                            key={cIdx} 
-                            className={`px-5 py-3.5 ${
-                              isNumericOrCurrency 
-                                ? "font-mono font-bold text-[var(--color-primary)] text-right" 
-                                : "font-medium text-[var(--color-text-primary)]"
-                            }`}
-                          >
-                            {parseBold(cell)}
-                          </td>
-                        );
-                      })}
+            <div key={`table-${i}`} className="my-5 overflow-x-auto rounded-xl border border-[var(--color-border)] shadow-sm bg-[var(--color-surface)]">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead className="bg-[var(--color-surface-hover)] border-b border-[var(--color-border)]">
+                  <tr>
+                    {headerCells.map((h, idx) => (
+                      <th key={idx} className="p-3 font-extrabold uppercase tracking-wider text-[var(--color-text-primary)]">
+                        {parseBold(h)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-border)]">
+                  {bodyRows.map((row, rIdx) => (
+                    <tr key={rIdx} className="hover:bg-[var(--color-surface-hover)]/40 transition-colors">
+                      {row.map((cell, cIdx) => (
+                        <td key={cIdx} className="p-3 text-[var(--color-text-secondary)] font-medium">
+                          {parseBold(cell)}
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
@@ -208,46 +190,39 @@ export default function AnalysisPage() {
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
   const [anticipoRules, setAnticipoRules] = useState<{ [key: string]: AnticipoRule }>({});
 
-  // Cargar datos persistidos al montar (Evita errores de hidratación de Next.js)
+  // Cargar datos persistidos al montar (IndexedDB + fallback seguro)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("sma_analysis_data");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed === "object" && parsed.dataPoints) {
-          setAnalysisData(parsed);
+    async function loadData() {
+      try {
+        const saved = await getLargeItem<AnalysisResult>("sma_analysis_data");
+        if (saved && typeof saved === "object" && saved.dataPoints) {
+          setAnalysisData(saved);
         }
-      }
-      const savedRules = localStorage.getItem("sma_anticipo_rules");
-      if (savedRules) {
-        const parsedRules = JSON.parse(savedRules);
-        if (parsedRules && typeof parsedRules === "object") {
-          setAnticipoRules(parsedRules);
+        const savedRules = await getLargeItem<{ [key: string]: AnticipoRule }>("sma_anticipo_rules");
+        if (savedRules && typeof savedRules === "object") {
+          setAnticipoRules(savedRules);
         }
+      } catch (e) {
+        console.error("Error al cargar datos locales:", e);
       }
-    } catch (e) {
-      console.error("Error al cargar datos del localStorage:", e);
     }
+    loadData();
   }, []);
 
-  // Guardar datos en localStorage cuando cambian
+  // Guardar datos en IndexedDB seguro (sin límite de 5MB)
   useEffect(() => {
     if (analysisData) {
-      try {
-        localStorage.setItem("sma_analysis_data", JSON.stringify(analysisData));
-      } catch (e) {
-        console.error("Error al guardar datos en el localStorage:", e);
-      }
+      saveLargeItem("sma_analysis_data", analysisData).catch((e) => {
+        console.error("Error al guardar datos de análisis:", e);
+      });
     }
   }, [analysisData]);
 
   useEffect(() => {
     if (anticipoRules) {
-      try {
-        localStorage.setItem("sma_anticipo_rules", JSON.stringify(anticipoRules));
-      } catch (e) {
-        console.error("Error al guardar reglas de anticipo en localStorage:", e);
-      }
+      saveLargeItem("sma_anticipo_rules", anticipoRules).catch((e) => {
+        console.error("Error al guardar reglas de anticipo:", e);
+      });
     }
   }, [anticipoRules]);
 
@@ -286,27 +261,31 @@ export default function AnalysisPage() {
         </div>
 
         {analysisData && (
-          <button
-            onClick={() => {
-              if (confirm("¿Estás seguro de que deseas borrar los datos actuales del navegador? Esto restablecerá la pantalla.")) {
-                setAnalysisData(null);
-                try {
-                  localStorage.removeItem("sma_analysis_data");
-                } catch (e) {
-                  console.error(e);
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 select-none">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Datos de ejecución activa
+            </span>
+            <button
+              onClick={() => {
+                if (confirm("¿Estás seguro de que deseas borrar los datos actuales del navegador? Esto restablecerá la pantalla.")) {
+                  setAnalysisData(null);
+                  setAnticipoRules({});
+                  removeLargeItem("sma_analysis_data").catch(console.error);
+                  removeLargeItem("sma_anticipo_rules").catch(console.error);
                 }
-              }
-            }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-black transition-all cursor-pointer select-none hover:bg-red-500/10 active:scale-95 duration-150"
-            style={{
-              backgroundColor: "rgba(239, 68, 68, 0.05)",
-              borderColor: "rgba(239, 68, 68, 0.2)",
-              color: "#f87171",
-            }}
-          >
-            <span className="material-symbols-outlined text-sm">restart_alt</span>
-            Limpiar Análisis
-          </button>
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-black transition-all cursor-pointer select-none hover:bg-red-500/10 active:scale-95 duration-150"
+              style={{
+                backgroundColor: "rgba(239, 68, 68, 0.05)",
+                borderColor: "rgba(239, 68, 68, 0.2)",
+                color: "#f87171",
+              }}
+            >
+              <span className="material-symbols-outlined text-sm">restart_alt</span>
+              Limpiar Análisis
+            </button>
+          </div>
         )}
       </div>
 
@@ -423,6 +402,17 @@ export default function AnalysisPage() {
               data={activeDistributedPoints} 
               tasks={analysisData.dataPoints || []}
               totalBudget={analysisData.totalBudget} 
+            />
+          </div>
+
+          {/* Matriz de Correlación Ítem a Ítem (Cronograma ↔ Presupuesto) */}
+          <div className="w-full animate-fade-in">
+            <ItemBudgetCorrelationPanel 
+              dataPoints={analysisData.dataPoints || []}
+              distributedDataPoints={activeDistributedPoints}
+              analysis={analysisData.analysis}
+              totalBudget={analysisData.totalBudget}
+              directBudget={analysisData.directBudget}
             />
           </div>
 

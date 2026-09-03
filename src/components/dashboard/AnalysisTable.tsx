@@ -14,6 +14,8 @@ interface DataPoint {
   task_name: string;
   chapter?: string;
   process_name?: string;
+  budget_item_code?: string;
+  budget_item_desc?: string;
 }
 
 interface NormalizedDataPoint {
@@ -25,6 +27,8 @@ interface NormalizedDataPoint {
   daily_budget: number;
   task_name: string;
   chapter: string;
+  budget_item_code?: string;
+  budget_item_desc?: string;
 }
 
 interface AnalysisTableProps {
@@ -60,6 +64,8 @@ export default function AnalysisTable({ dataPoints, distributedDataPoints, analy
         daily_budget: daily,
         task_name: dp.task_name,
         chapter: dp.chapter || dp.process_name || "Otros",
+        budget_item_code: dp.budget_item_code || "",
+        budget_item_desc: dp.budget_item_desc || dp.task_name || "",
       };
     });
   }, [dataPoints]);

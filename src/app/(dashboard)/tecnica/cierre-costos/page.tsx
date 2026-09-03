@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { 
   UploadCloud, 
   FileSpreadsheet, 
@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   XCircle
 } from "lucide-react";
+import { saveLargeItem, getLargeItem, removeLargeItem } from "@/lib/indexedDbStorage";
 
 interface Resource {
   insumo: string;
@@ -120,6 +121,35 @@ export default function CierreCostosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [onlyAlerts, setOnlyAlerts] = useState(false);
   const [expandedApus, setExpandedApus] = useState<Record<string, boolean>>({});
+
+  // Cargar resultado de ejecución anterior guardado en IndexedDB seguro
+  useEffect(() => {
+    async function loadSavedCierre() {
+      try {
+        const saved = await getLargeItem<CostsResult>("sma_cierre_costos_result");
+        if (saved && typeof saved === "object" && saved.summary && saved.details) {
+          setResult(saved);
+          const initialExpanded: Record<string, boolean> = {};
+          saved.details.forEach((apu: APUItem) => {
+            initialExpanded[apu.code] = false;
+          });
+          setExpandedApus(initialExpanded);
+        }
+      } catch (e) {
+        console.error("Error al cargar datos previos de Cierre de Costos:", e);
+      }
+    }
+    loadSavedCierre();
+  }, []);
+
+  // Guardar resultado en IndexedDB seguro al procesar (sin límite de 5MB)
+  useEffect(() => {
+    if (result) {
+      saveLargeItem("sma_cierre_costos_result", result).catch((e) => {
+        console.error("Error al guardar datos de Cierre de Costos:", e);
+      });
+    }
+  }, [result]);
 
   const handleFileDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -252,18 +282,41 @@ export default function CierreCostosPage() {
           </p>
         </div>
 
-        {result?.excel_b64 && (
-          <button
-            onClick={downloadExcel}
-            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 cursor-pointer shrink-0"
-            style={{
-              background: "linear-gradient(135deg, #10B981, #059669)",
-            }}
-          >
-            <Download className="w-5 h-5" />
-            Descargar Excel Procesado (.xlsx)
-          </button>
-        )}
+        <div className="flex items-center gap-3 shrink-0">
+          {result && (
+            <button
+              onClick={() => {
+                if (confirm("¿Deseas restablecer el cierre de costos actual de la memoria?")) {
+                  setResult(null);
+                  setFile(null);
+                  removeLargeItem("sma_cierre_costos_result").catch(console.error);
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl border text-xs font-black transition-all cursor-pointer select-none hover:bg-red-500/10 active:scale-95 duration-150"
+              style={{
+                backgroundColor: "rgba(239, 68, 68, 0.05)",
+                borderColor: "rgba(239, 68, 68, 0.2)",
+                color: "#f87171",
+              }}
+            >
+              <span className="material-symbols-outlined text-sm">restart_alt</span>
+              Nuevo Cierre
+            </button>
+          )}
+
+          {result?.excel_b64 && (
+            <button
+              onClick={downloadExcel}
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 cursor-pointer"
+              style={{
+                background: "linear-gradient(135deg, #10B981, #059669)",
+              }}
+            >
+              <Download className="w-5 h-5" />
+              Descargar Excel (.xlsx)
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main Upload and Info Section */}
