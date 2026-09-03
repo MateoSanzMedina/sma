@@ -189,11 +189,11 @@ export default function SeguridadSocialPage() {
         {/* Botón de Configuración de Plantillas */}
         <button
           onClick={() => setShowConfig(!showConfig)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-bold transition-all duration-200 select-none cursor-pointer hover:border-[var(--color-primary)] text-[var(--color-text-primary)]"
-          style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-surface)" }}
+          style={{ borderRadius: "9999px", padding: "0.65rem 1.35rem" }}
+          className="flex items-center gap-2 border text-xs font-bold transition-all duration-200 select-none cursor-pointer border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-[#11a542] text-slate-800 dark:text-white shadow-sm"
         >
-          <Settings className="w-4 h-4" />
-          Plantillas en Memoria
+          <Settings className="w-4 h-4 text-[#11a542]" />
+          <span>Plantillas en Memoria</span>
           {showConfig ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
       </div>
@@ -201,12 +201,14 @@ export default function SeguridadSocialPage() {
       {/* SECCIÓN CONFIGURACIÓN PLANTILLAS (MEMORIA) */}
       {showConfig && (
         <div 
-          className="p-6 rounded-xl border space-y-6 animate-in slide-in-from-top-4 duration-300"
           style={{
+            padding: "2rem",
+            borderRadius: "24px",
             backgroundColor: "var(--color-surface)",
             borderColor: "var(--color-border)",
-            boxShadow: "var(--shadow-md)"
+            boxShadow: "var(--shadow-sm)"
           }}
+          className="border space-y-6 animate-in slide-in-from-top-4 duration-300"
         >
           <div>
             <h3 className="text-sm font-black text-[var(--color-text-primary)]">⚙️ Plantillas de Estructura ARUS Guardadas</h3>
@@ -307,8 +309,10 @@ export default function SeguridadSocialPage() {
         
         {/* COL 1-3: SIIMED DYNAMIC UPLOADER */}
         <div 
-          className="lg:col-span-3 rounded-xl p-6 sm:p-8 space-y-6 flex flex-col justify-between"
+          className="lg:col-span-3 space-y-6 flex flex-col justify-between"
           style={{
+            padding: "2rem",
+            borderRadius: "24px",
             backgroundColor: "var(--color-surface)",
             border: "1px solid var(--color-border)",
             boxShadow: "var(--shadow-md)",
@@ -391,8 +395,10 @@ export default function SeguridadSocialPage() {
 
         {/* COL 4-5: GENERATE ACTIONS PANEL */}
         <div 
-          className="lg:col-span-2 rounded-xl p-6 sm:p-8 flex flex-col justify-between min-h-[320px]"
+          className="lg:col-span-2 flex flex-col justify-between min-h-[320px]"
           style={{
+            padding: "2rem",
+            borderRadius: "24px",
             backgroundColor: "var(--color-surface)",
             border: "1px solid var(--color-border)",
             boxShadow: "var(--shadow-md)",

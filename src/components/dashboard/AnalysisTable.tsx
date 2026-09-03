@@ -212,59 +212,64 @@ export default function AnalysisTable({ dataPoints, distributedDataPoints, analy
 
   return (
     <div
-      className="rounded-xl p-6 sm:p-8 animate-fade-in w-full transition-all duration-300"
       style={{
+        padding: "2rem",
+        borderRadius: "24px",
         backgroundColor: "var(--color-surface)",
         border: "1px solid var(--color-border)",
-        boxShadow: "var(--shadow-md)",
+        boxShadow: "var(--shadow-sm)",
       }}
+      className="animate-fade-in w-full transition-all duration-300"
     >
       {/* Header del panel */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: "var(--color-text-primary)" }}>
-            <span className="material-symbols-outlined text-[var(--color-primary)]">table_chart</span>
+          <h3 className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+            <span className="material-symbols-outlined text-[#11a542]">table_chart</span>
             Detalle Mapeado de Ítems ({filteredAndSortedData.length} registros)
           </h3>
-          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Revisa el desglose granular del presupuesto mapeado contra el cronograma.
           </p>
         </div>
 
-        <div className="flex gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <button
             onClick={exportToCSV}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border select-none shrink-0"
-            style={{
-              backgroundColor: "var(--color-surface-hover)",
-              borderColor: "var(--color-border)",
-              color: "var(--color-text-primary)",
-            }}
+            style={{ borderRadius: "9999px", padding: "0.6rem 1.25rem" }}
+            className="flex items-center gap-2 text-xs font-bold shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 select-none shrink-0"
           >
-            <Download className="w-4 h-4 text-[var(--color-primary)]" />
-            CSV
+            <Download className="w-4 h-4 text-[#11a542]" />
+            <span>CSV</span>
           </button>
 
           <button
             onClick={exportToExcel}
             disabled={isExporting}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border select-none shrink-0 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              backgroundColor: "var(--color-primary)",
-              borderColor: "var(--color-primary)",
+              borderRadius: "9999px",
+              padding: "0.6rem 1.35rem",
+              background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
+              boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
             }}
+            className="flex items-center gap-2 text-xs font-bold text-white hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border-none select-none shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4 text-white" />
-            {isExporting ? "Generando..." : "Descargar Excel (.xlsx)"}
+            <span>{isExporting ? "Generando..." : "Descargar Excel (.xlsx)"}</span>
           </button>
         </div>
       </div>
 
       {/* Controles de Filtros */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Barra de Búsqueda */}
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
+        {/* Barra de Búsqueda con Espaciado Perfecto de Lupa */}
+        <div className="relative flex items-center">
+          <div 
+            style={{ position: "absolute", left: "1rem", pointerEvents: "none", display: "flex", alignItems: "center" }}
+            className="text-slate-400"
+          >
+            <Search className="w-4 h-4" />
+          </div>
           <input
             type="text"
             placeholder="Buscar ítem o capítulo..."
@@ -273,13 +278,13 @@ export default function AnalysisTable({ dataPoints, distributedDataPoints, analy
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg text-sm transition-colors border outline-none bg-[var(--color-bg)]"
             style={{
-              borderColor: "var(--color-border)",
-              color: "var(--color-text-primary)",
+              paddingLeft: "3rem",
+              paddingRight: "1rem",
+              height: "2.85rem",
+              borderRadius: "14px",
             }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+            className="w-full text-xs font-medium border bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#11a542] focus:ring-2 focus:ring-[#11a542]/20 transition-all"
           />
         </div>
 
@@ -291,13 +296,13 @@ export default function AnalysisTable({ dataPoints, distributedDataPoints, analy
               setSelectedChapter(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full px-4 py-2.5 rounded-lg text-sm transition-colors border outline-none appearance-none bg-[var(--color-bg)] cursor-pointer"
             style={{
-              borderColor: "var(--color-border)",
-              color: "var(--color-text-primary)",
+              height: "2.85rem",
+              borderRadius: "14px",
+              paddingLeft: "1rem",
+              paddingRight: "2.25rem",
             }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+            className="w-full text-xs font-semibold border bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
           >
             <option value="all">Filtrar por Capítulo: Todos</option>
             {chapters.map((ch) => (
@@ -306,7 +311,7 @@ export default function AnalysisTable({ dataPoints, distributedDataPoints, analy
               </option>
             ))}
           </select>
-          <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none text-[var(--color-text-tertiary)]">
+          <span className="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-sm pointer-events-none text-slate-400">
             unfold_more
           </span>
         </div>
@@ -319,13 +324,13 @@ export default function AnalysisTable({ dataPoints, distributedDataPoints, analy
               setItemsPerPage(Number(e.target.value));
               setCurrentPage(1);
             }}
-            className="w-full px-4 py-2.5 rounded-lg text-sm transition-colors border outline-none appearance-none bg-[var(--color-bg)] cursor-pointer"
             style={{
-              borderColor: "var(--color-border)",
-              color: "var(--color-text-primary)",
+              height: "2.85rem",
+              borderRadius: "14px",
+              paddingLeft: "1rem",
+              paddingRight: "2.25rem",
             }}
-            onFocus={(e) => (e.target.style.borderColor = "var(--color-primary)")}
-            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+            className="w-full text-xs font-semibold border bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
           >
             <option value={10}>Mostrar 10 registros</option>
             <option value={25}>Mostrar 25 registros</option>

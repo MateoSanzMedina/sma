@@ -238,28 +238,30 @@ export default function ItemBudgetCorrelationPanel({
 
   return (
     <div 
-      className="rounded-xl p-6 sm:p-8 animate-fade-in w-full transition-all duration-300"
       style={{
+        padding: "2rem",
+        borderRadius: "24px",
         backgroundColor: "var(--color-surface)",
         border: "1px solid var(--color-border)",
-        boxShadow: "var(--shadow-md)",
+        boxShadow: "var(--shadow-sm)",
       }}
+      className="animate-fade-in w-full transition-all duration-300"
     >
       {/* 1. Header y Título */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-[var(--color-border)]">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-6 border-b border-[var(--color-border)]">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3.5">
             <div 
-              className="p-2.5 rounded-xl flex items-center justify-center text-white"
-              style={{ background: "linear-gradient(135deg, var(--color-primary), #11a542)" }}
+              className="p-3 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-md"
+              style={{ background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)" }}
             >
               <Layers className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight" style={{ color: "var(--color-text-primary)" }}>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                 Matriz de Correlación Ítem a Ítem
               </h2>
-              <p className="text-xs sm:text-sm mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+              <p className="text-xs sm:text-sm mt-1 text-slate-500 dark:text-slate-400">
                 Inspecciona cómo cada actividad del cronograma de obra se asocia a los códigos y partidas del presupuesto.
               </p>
             </div>
@@ -268,36 +270,43 @@ export default function ItemBudgetCorrelationPanel({
 
         {/* Switch de Modo de Vista y Exportación */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center p-1 rounded-xl bg-[var(--color-surface-hover)] border border-[var(--color-border)]">
+          <div className="flex items-center p-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             <button
               onClick={() => setViewMode("grouped")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              style={{ borderRadius: "9999px" }}
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                 viewMode === "grouped"
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  ? "bg-[#015c32] text-white shadow-sm"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              Por Ítems / Jerárquico
+              <span>Por Ítems / Jerárquico</span>
             </button>
             <button
               onClick={() => setViewMode("flat")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              style={{ borderRadius: "9999px" }}
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
                 viewMode === "flat"
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  ? "bg-[#015c32] text-white shadow-sm"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              Matriz Plana (1 a 1)
+              <span>Matriz Plana (1 a 1)</span>
             </button>
           </div>
 
           <button
             onClick={exportToExcel}
             disabled={isExporting}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm text-white disabled:opacity-50"
-            style={{ backgroundColor: "var(--color-primary)" }}
+            style={{
+              borderRadius: "9999px",
+              padding: "0.65rem 1.35rem",
+              background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
+              boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
+            }}
+            className="flex items-center gap-2 text-xs font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-none disabled:opacity-50"
             title="Descargar Libro Completo en Excel (.xlsx)"
           >
             <Download className={`w-3.5 h-3.5 ${isExporting ? "animate-bounce" : ""}`} />
@@ -308,38 +317,38 @@ export default function ItemBudgetCorrelationPanel({
 
       {/* 2. Tarjeta Resumen del Capítulo Seleccionado */}
       <div 
-        className="my-6 p-4 sm:p-5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
         style={{
-          backgroundColor: "var(--color-surface-hover)",
-          borderColor: "var(--color-border)",
+          padding: "1.25rem 1.75rem",
+          borderRadius: "18px",
         }}
+        className="my-6 border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-sm"
       >
         <div className="space-y-1">
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--color-accent)] flex items-center gap-1.5">
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#11a542] flex items-center gap-1.5">
             <Tag className="w-3.5 h-3.5" />
             Capítulo en Vista
           </span>
-          <h3 className="text-base sm:text-lg font-black text-[var(--color-text-primary)]">
+          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
             {activeChapterMetrics.name}
           </h3>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 sm:gap-8">
+        <div className="flex flex-wrap items-center gap-6 sm:gap-10">
           <div>
-            <p className="text-[10px] uppercase font-bold text-[var(--color-text-tertiary)]">Presupuesto Asignado</p>
-            <p className="text-base sm:text-lg font-black text-[var(--color-primary)] font-mono">
+            <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Presupuesto Asignado</p>
+            <p className="text-base sm:text-lg font-black text-[#11a542] font-mono mt-0.5">
               {formatCurrency(activeChapterMetrics.total)}
             </p>
           </div>
-          <div className="border-l border-[var(--color-border)] pl-4">
-            <p className="text-[10px] uppercase font-bold text-[var(--color-text-tertiary)]">Ítems de Presupuesto</p>
-            <p className="text-base sm:text-lg font-black text-[var(--color-text-primary)]">
+          <div className="border-l border-slate-200 dark:border-slate-800 pl-6">
+            <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Ítems de Presupuesto</p>
+            <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-0.5">
               {activeChapterMetrics.itemCount}
             </p>
           </div>
-          <div className="border-l border-[var(--color-border)] pl-4">
-            <p className="text-[10px] uppercase font-bold text-[var(--color-text-tertiary)]">Tareas de Obra</p>
-            <p className="text-base sm:text-lg font-black text-[var(--color-text-primary)]">
+          <div className="border-l border-slate-200 dark:border-slate-800 pl-6">
+            <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Tareas de Obra</p>
+            <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-0.5">
               {activeChapterMetrics.taskCount}
             </p>
           </div>
@@ -349,22 +358,22 @@ export default function ItemBudgetCorrelationPanel({
       {/* 3. Barra de Filtros por Capítulo (Chips Scrolleables) */}
       <div className="space-y-3 mb-6">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-black uppercase tracking-wider text-[var(--color-text-secondary)] flex items-center gap-1.5">
-            <ListFilter className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+          <span className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+            <ListFilter className="w-3.5 h-3.5 text-[#11a542]" />
             Filtrar por Capítulo de Obra:
           </span>
           {viewMode === "grouped" && (
             <div className="flex items-center gap-2">
               <button
                 onClick={expandAll}
-                className="text-[11px] font-bold text-[var(--color-accent)] hover:underline cursor-pointer"
+                className="text-[11px] font-bold text-[#11a542] hover:underline cursor-pointer"
               >
                 Expandir Todos
               </button>
-              <span className="text-[var(--color-text-tertiary)]">•</span>
+              <span className="text-slate-400">&bull;</span>
               <button
                 onClick={collapseAll}
-                className="text-[11px] font-bold text-[var(--color-text-secondary)] hover:underline cursor-pointer"
+                className="text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:underline cursor-pointer"
               >
                 Colapsar Todos
               </button>
@@ -372,13 +381,14 @@ export default function ItemBudgetCorrelationPanel({
           )}
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
           <button
             onClick={() => setSelectedChapter("all")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+            style={{ borderRadius: "9999px" }}
+            className={`px-4 py-2 text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
               selectedChapter === "all"
-                ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-sm"
-                : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                ? "bg-[#015c32] text-white border-[#015c32] shadow-sm"
+                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300"
             }`}
           >
             Todos ({dataPoints.length})
@@ -387,18 +397,19 @@ export default function ItemBudgetCorrelationPanel({
             <button
               key={ch.name}
               onClick={() => setSelectedChapter(ch.name)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border flex items-center gap-2 ${
+              style={{ borderRadius: "9999px" }}
+              className={`px-4 py-2 text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border flex items-center gap-2 ${
                 selectedChapter === ch.name
-                  ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-sm"
-                  : "bg-[var(--color-surface)] text-[var(--color-text-secondary)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+                  ? "bg-[#015c32] text-white border-[#015c32] shadow-sm"
+                  : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300"
               }`}
             >
               <span>{ch.name}</span>
               <span 
-                className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
                   selectedChapter === ch.name
                     ? "bg-white/20 text-white"
-                    : "bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)]"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
                 {ch.count}
@@ -408,25 +419,37 @@ export default function ItemBudgetCorrelationPanel({
         </div>
       </div>
 
-      {/* 4. Buscador y Ordenamiento */}
+      {/* 4. Buscador y Ordenamiento con Espaciado Perfecto para la Lupa */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
+        <div className="relative w-full sm:w-88 flex items-center">
+          <div 
+            style={{ position: "absolute", left: "1rem", pointerEvents: "none", display: "flex", alignItems: "center" }}
+            className="text-slate-400"
+          >
+            <Search className="w-4 h-4" />
+          </div>
           <input
             type="text"
             placeholder="Buscar por código, tarea o insumo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs font-medium border bg-[var(--color-surface)] border-[var(--color-border)] focus:outline-none focus:border-[var(--color-primary)] text-[var(--color-text-primary)]"
+            style={{
+              paddingLeft: "3rem",
+              paddingRight: "1rem",
+              height: "2.85rem",
+              borderRadius: "14px",
+            }}
+            className="w-full text-xs font-medium border bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#11a542] focus:ring-2 focus:ring-[#11a542]/20"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <span className="text-xs text-[var(--color-text-secondary)] font-medium">Ordenar por:</span>
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Ordenar por:</span>
           <select
             value={sortField}
             onChange={(e) => setSortField(e.target.value as any)}
-            className="px-3 py-2 rounded-xl text-xs font-bold border bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-primary)] cursor-pointer focus:outline-none"
+            style={{ height: "2.85rem", borderRadius: "14px", padding: "0 1rem" }}
+            className="text-xs font-bold border bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
           >
             <option value="budget">Mayor Presupuesto</option>
             <option value="code">Código de Ítem</option>
@@ -434,7 +457,8 @@ export default function ItemBudgetCorrelationPanel({
           </select>
           <button
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="p-2 rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-surface-hover)] text-[var(--color-text-primary)] cursor-pointer"
+            style={{ height: "2.85rem", width: "2.85rem", borderRadius: "14px" }}
+            className="flex items-center justify-center border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer transition-colors"
             title={`Orden ${sortOrder === "asc" ? "Ascendente" : "Descendente"}`}
           >
             <ArrowUpDown className="w-4 h-4" />

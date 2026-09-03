@@ -738,8 +738,14 @@ export default function CierreCostosPage() {
       {/* APU Cost Analysis Table */}
       {result && (
         <div 
-          className="rounded-xl border p-6 space-y-6"
-          style={{ backgroundColor: "var(--color-surface)", borderColor: "var(--color-border)", boxShadow: "var(--shadow-md)" }}
+          style={{ 
+            padding: "2rem",
+            borderRadius: "24px",
+            backgroundColor: "var(--color-surface)", 
+            borderColor: "var(--color-border)", 
+            boxShadow: "var(--shadow-sm)" 
+          }}
+          className="border space-y-6"
         >
           {/* Table Filters */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -750,16 +756,21 @@ export default function CierreCostosPage() {
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto items-stretch sm:items-center">
               {/* Search */}
               <div 
-                className="relative flex items-center border rounded-xl px-3 py-2 text-sm bg-transparent w-full sm:w-64"
-                style={{ borderColor: "var(--color-border)" }}
+                style={{ 
+                  height: "2.85rem",
+                  borderRadius: "14px",
+                  padding: "0 1rem",
+                  borderColor: "var(--color-border)" 
+                }}
+                className="relative flex items-center border bg-white dark:bg-slate-950 w-full sm:w-72 shadow-xs"
               >
-                <Search className="w-4 h-4 mr-2" style={{ color: "var(--color-text-tertiary)" }} />
+                <Search className="w-4 h-4 mr-3 shrink-0 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Buscar APU o Insumo..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-transparent focus:outline-none w-full text-xs"
+                  className="bg-transparent focus:outline-none w-full text-xs text-slate-900 dark:text-white placeholder:text-slate-400"
                 />
               </div>
 

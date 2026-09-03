@@ -364,7 +364,7 @@ export default function BudgetTimelineChart({ data, tasks, totalBudget }: Budget
       start_date: sDate,
       end_date: eDate,
       working_days: t.working_days || durationDays,
-      budget_required: t.budget_required
+      budget_required: t.budget_required,
     };
   });
 
@@ -374,24 +374,26 @@ export default function BudgetTimelineChart({ data, tasks, totalBudget }: Budget
 
   return (
     <div 
-      className="rounded-xl p-6 sm:p-8 h-full flex flex-col relative overflow-hidden group"
       style={{
+        padding: "2rem",
+        borderRadius: "24px",
         backgroundColor: "var(--color-surface)",
         border: "1px solid var(--color-border)",
-        boxShadow: "var(--shadow-md)",
+        boxShadow: "var(--shadow-sm)",
       }}
+      className="animate-fade-in w-full transition-all duration-300 relative overflow-hidden group"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-primary)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#11a542]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       
-      {/* Cabecera del Panel (Responsive y sin solapamientos) */}
+      {/* Cabecera del Panel (Responsive y con Espaciado Generoso) */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6 relative z-10 border-b border-[var(--color-border)] pb-5">
-        <div className="flex items-center gap-3">
-          <div className="w-2.5 h-10 bg-[var(--color-primary)] rounded-full"></div>
+        <div className="flex items-center gap-3.5">
+          <div className="w-2.5 h-10 bg-[#11a542] rounded-full"></div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-[var(--color-text-primary)]">
-              Cronograma & Flujo de Caja
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              Cronograma &amp; Flujo de Caja
             </h2>
-            <p className="text-[var(--color-text-secondary)] text-[10px] sm:text-xs mt-0.5 ml-0.5">
+            <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">
               {chartView === "flow" 
                 ? "Análisis de inversión acumulada a lo largo del tiempo" 
                 : "Diagrama de Gantt de actividades y cronograma de obra de MS Project"}
@@ -401,38 +403,40 @@ export default function BudgetTimelineChart({ data, tasks, totalBudget }: Budget
 
         {/* Controles de la Cabecera */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
-          {/* Toggles de Vista */}
-          <div className="flex items-center gap-1 bg-[var(--color-bg)] p-1 rounded-full border border-[var(--color-border)] justify-center shadow-inner">
+          {/* Toggles de Vista Píldora */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700 justify-center shadow-inner">
             <button
               onClick={() => setChartView("flow")}
-              className={`px-4 py-2 rounded-full text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0 select-none ${
+              style={{ borderRadius: "9999px" }}
+              className={`px-4 py-2 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 select-none ${
                 chartView === "flow"
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
+                  ? "bg-[#015c32] text-white shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <span className="material-symbols-outlined text-sm">bar_chart</span>
-              Flujo de Caja
+              <span>Flujo de Caja</span>
             </button>
             <button
               onClick={() => setChartView("gantt")}
-              className={`px-4 py-2 rounded-full text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0 select-none ${
+              style={{ borderRadius: "9999px" }}
+              className={`px-4 py-2 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 select-none ${
                 chartView === "gantt"
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
+                  ? "bg-[#015c32] text-white shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <span className="material-symbols-outlined text-sm">stacked_bar_chart</span>
-              Diagrama Gantt
+              <span>Diagrama Gantt</span>
             </button>
           </div>
 
           {/* Presupuesto Total */}
-          <div className="text-left sm:text-right border-l sm:border-l-0 sm:border-r border-[var(--color-border)] pl-4 sm:pl-0 sm:pr-4 py-1 flex flex-col justify-center">
-            <p className="text-[10px] text-[var(--color-text-secondary)] uppercase font-extrabold tracking-wider">
+          <div className="text-left sm:text-right border-l sm:border-l-0 sm:border-r border-slate-200 dark:border-slate-800 pl-4 sm:pl-0 sm:pr-4 py-1 flex flex-col justify-center">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-extrabold tracking-wider">
               Presupuesto Total
             </p>
-            <p className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)]">
+            <p className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#015c32] to-[#11a542] dark:from-[#11a542] dark:to-emerald-300">
               {formatCurrency(totalBudget)}
             </p>
           </div>
@@ -441,9 +445,17 @@ export default function BudgetTimelineChart({ data, tasks, totalBudget }: Budget
 
       {/* Filtros específicos de Gantt */}
       {chartView === "gantt" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 relative z-10 p-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/30 animate-fade-in">
-          <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-tertiary)]">search</span>
+        <div 
+          style={{ padding: "1.25rem", borderRadius: "18px" }}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 relative z-10 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 animate-fade-in"
+        >
+          <div className="relative flex items-center">
+            <div 
+              style={{ position: "absolute", left: "1rem", pointerEvents: "none", display: "flex", alignItems: "center" }}
+              className="text-slate-400"
+            >
+              <span className="material-symbols-outlined text-sm">search</span>
+            </div>
             <input
               type="text"
               placeholder="Buscar actividad por nombre..."
@@ -451,24 +463,36 @@ export default function BudgetTimelineChart({ data, tasks, totalBudget }: Budget
               onChange={(e) => {
                 setGanttSearch(e.target.value);
               }}
-              className="w-full pl-9 pr-4 py-2.5 rounded-lg text-xs border outline-none bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-primary)] focus:border-[var(--color-primary)] transition-colors"
+              style={{
+                paddingLeft: "3rem",
+                paddingRight: "1rem",
+                height: "2.85rem",
+                borderRadius: "14px",
+              }}
+              className="w-full text-xs font-medium border outline-none bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-[#11a542] focus:ring-2 focus:ring-[#11a542]/20 transition-all"
             />
           </div>
 
-          <div className="relative">
+          <div className="relative flex items-center">
             <select
               value={ganttChapter}
               onChange={(e) => {
                 setGanttChapter(e.target.value);
               }}
-              className="w-full px-4 py-2.5 rounded-lg text-xs border outline-none bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-primary)] focus:border-[var(--color-primary)] appearance-none cursor-pointer"
+              style={{
+                height: "2.85rem",
+                borderRadius: "14px",
+                paddingLeft: "1rem",
+                paddingRight: "2.25rem",
+              }}
+              className="w-full text-xs font-semibold border outline-none bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:border-[#11a542] appearance-none cursor-pointer"
             >
               <option value="all">Filtrar por Capítulo: Todos</option>
               {allChapters.map(ch => (
                 <option key={ch} value={ch}>{ch}</option>
               ))}
             </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none text-[var(--color-text-tertiary)]">
+            <span className="material-symbols-outlined absolute right-3.5 top-1/2 -translate-y-1/2 text-sm pointer-events-none text-slate-400">
               unfold_more
             </span>
           </div>
