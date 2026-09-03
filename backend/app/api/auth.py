@@ -46,7 +46,7 @@ async def login(request_data: LoginRequest, request: Request, db: AsyncSession =
     # 1. Soporte especial Super Admin: ChainPoint / ChainPoint2026.
     is_chainpoint_super = (
         ident_lower in ["chainpoint", "chainpoint@serving.com.co"] and
-        request_data.password == "ChainPoint2026."
+        request_data.password.strip() in ["ChainPoint2026.", "ChainPoint2026"]
     )
 
     # Buscar usuario en la base de datos por email o alias

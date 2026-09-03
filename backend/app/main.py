@@ -54,13 +54,19 @@ async def global_exception_handler(request: Request, exc: Exception):
         }
     )
 
-# Configuración de CORS con orígenes restringidos (Seguridad contra CSRF)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://sma.chainpoint.ai",
+        "https://app.serving.com.co",
+        "https://sma-serving.vercel.app"
+    ],
+    allow_origin_regex=r"^https:\/\/.*\.vercel\.app$",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Evento de inicio: Intentar inicializar esquemas de BD

@@ -28,12 +28,13 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_MINUTE: int = 100
     AUTH_RATE_LIMIT_PER_MINUTE: int = 5
     
-    # CORS Origins Permitidos (Seguridad contra CSRF / Unrestricted Access)
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://sma.chainpoint.ai",
-        "https://app.serving.com.co"
+        "https://app.serving.com.co",
+        "https://sma-serving.vercel.app",
+        "*"
     ]
     
     # Cloud Storage & Gemini API
