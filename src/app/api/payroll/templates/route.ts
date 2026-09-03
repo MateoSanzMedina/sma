@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const pyResponse = await fetch("http://localhost:8000/api/v1/payroll/templates", {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
+    const pyResponse = await fetch(`${backendUrl}/api/v1/payroll/templates`, {
       method: "GET",
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(60000),
     });
 
     if (!pyResponse.ok) {
@@ -39,9 +40,11 @@ export async function POST(req: NextRequest) {
     pyFormData.append("type", type);
     pyFormData.append("file", file);
 
-    const pyResponse = await fetch("http://localhost:8000/api/v1/payroll/templates/upload", {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
+    const pyResponse = await fetch(`${backendUrl}/api/v1/payroll/templates/upload`, {
       method: "POST",
       body: pyFormData,
+      signal: AbortSignal.timeout(60000),
     });
 
     if (!pyResponse.ok) {

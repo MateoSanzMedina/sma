@@ -68,46 +68,59 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Intentar llamar al backend HTTP de Python (puerto 8000)
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
+
+    // 1. Intentar llamar al backend HTTP oficial en Render
     try {
       const pyFormData = new FormData();
       pyFormData.append("file", file);
 
-      console.log("Procesando costos en backend Python (http://localhost:8000)...");
-      const pyResponse = await fetch("http://localhost:8000/api/v1/costs/process", {
+      console.log(`Procesando costos en backend Python (${backendUrl}/api/v1/costs/process)...`);
+      const pyResponse = await fetch(`${backendUrl}/api/v1/costs/process`, {
         method: "POST",
         body: pyFormData,
-        signal: AbortSignal.timeout(30000), // Timeout de 30s
+        signal: AbortSignal.timeout(60000),
       });
 
       if (pyResponse.ok) {
         const pyResult = await pyResponse.json();
-        console.log("✅ Procesado con éxito en backend Python HTTP.");
+        console.log("✅ Procesado con éxito en backend Python.");
         return NextResponse.json(pyResult);
+      } else {
+        const errData = await pyResponse.json().catch(() => ({}));
+        return NextResponse.json(
+          { error: errData.detail || "Error al procesar el archivo de costos en el servidor." },
+          { status: pyResponse.status }
+        );
       }
     } catch (pyErr) {
-      console.warn("⚠️ Servidor HTTP Python no responde o dió timeout. Ejecutando motor Python CLI...", pyErr);
+      console.warn("⚠️ Servidor HTTP Python en la nube no respondió o dió timeout.", pyErr);
     }
 
-    // 2. Si el servidor HTTP de Python no responde, ejecutar el motor Python directamente vía CLI
-    console.log("Ejecutando motor de análisis Python en modo CLI directo...");
-    const buffer = await file.arrayBuffer();
-    const cliResult = await runPythonCostsCLI(buffer, file.name);
+    // 2. Solo intentar CLI local en desarrollo (en Vercel no hay Python instalado)
+    if (process.env.NODE_ENV !== "production") {
+      try {
+        console.log("Ejecutando motor de análisis Python en modo CLI local...");
+        const buffer = await file.arrayBuffer();
+        const cliResult = await runPythonCostsCLI(buffer, file.name);
 
-    if (cliResult && cliResult.data) {
-      console.log("✅ Procesado con éxito vía motor Python CLI.");
-      return NextResponse.json(cliResult);
+        if (cliResult && cliResult.data) {
+          return NextResponse.json(cliResult);
+        }
+      } catch (cliErr) {
+        console.warn("CLI local falló:", cliErr);
+      }
     }
 
     return NextResponse.json(
-      { error: "No se pudo procesar el archivo mediante el motor de Python." },
-      { status: 500 }
+      { error: "El servidor de análisis en Render está iniciando (arranque en frío). Por favor intente nuevamente en 30 segundos." },
+      { status: 503 }
     );
 
   } catch (error) {
     console.error("Error comparando costos en API route:", error);
     return NextResponse.json(
-      { error: "Error interno en el procesamiento de costos: " + (error instanceof Error ? error.message : "Desconocido") },
+      { error: "Error al procesar el archivo: " + (error instanceof Error ? error.message : "Desconocido") },
       { status: 500 }
     );
   }

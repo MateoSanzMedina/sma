@@ -15,16 +15,18 @@ export async function POST(req: NextRequest) {
       pyFormData.append("files", file);
     }
 
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
     let pyResponse: Response;
     try {
-      pyResponse = await fetch("http://localhost:8000/api/v1/payroll/generate/ingresos", {
+      pyResponse = await fetch(`${backendUrl}/api/v1/payroll/generate/ingresos`, {
         method: "POST",
         body: pyFormData,
+        signal: AbortSignal.timeout(60000),
       });
     } catch (e) {
-      console.error("Error conectando al backend de Python en puerto 8000:", e);
+      console.error("Error conectando al backend de Python:", e);
       return NextResponse.json(
-        { error: "El backend de Python en el puerto 8000 no está iniciado. Inicia el servidor ejecutando en la terminal: cd backend && python -m uvicorn app.main:app --port 8000" },
+        { error: "El backend de Python está iniciando en la nube. Por favor intente nuevamente en unos segundos." },
         { status: 503 }
       );
     }
