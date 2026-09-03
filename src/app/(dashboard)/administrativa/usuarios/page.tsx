@@ -289,9 +289,13 @@ export default function UsuariosPage() {
 
         <button
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950 transition-all hover:bg-amber-400 hover:shadow-lg hover:shadow-amber-500/20 active:scale-[0.99] cursor-pointer"
+          style={{
+            background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
+            boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
+          }}
+          className="inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-none"
         >
-          <UserPlus className="h-4 w-4" />
+          <UserPlus className="h-4 w-4 text-white" />
           <span>Nuevo Usuario</span>
         </button>
       </div>
@@ -493,24 +497,33 @@ export default function UsuariosPage() {
 
       {/* Modal: Crear Usuario */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div 
+            style={{
+              padding: "2rem",
+              borderRadius: "24px",
+              backgroundColor: "#0d1527",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.7)",
+            }}
+            className="w-full max-w-md"
+          >
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-amber-400" />
+                <UserPlus className="h-5 w-5 text-[#11a542]" />
                 Registrar Nuevo Usuario
               </h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold uppercase text-slate-300">
+            <form onSubmit={handleCreateUser} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-300 ml-1">
                   Nombre Completo
                 </label>
                 <input
@@ -519,12 +532,20 @@ export default function UsuariosPage() {
                   placeholder="Ej: Ing. Carlos Pérez"
                   value={newNombre}
                   onChange={(e) => setNewNombre(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm text-white focus:border-amber-500/60 focus:outline-none"
+                  style={{
+                    padding: "0.75rem 1rem",
+                    borderRadius: "14px",
+                    backgroundColor: "#070b14",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "#ffffff",
+                    fontSize: "0.875rem",
+                  }}
+                  className="focus:border-[#11a542] focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
                 />
               </div>
 
-              <div>
-                <label className="text-xs font-semibold uppercase text-slate-300">
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-300 ml-1">
                   Usuario o Correo
                 </label>
                 <input
@@ -533,18 +554,34 @@ export default function UsuariosPage() {
                   placeholder="cperez o cperez@serving.com.co"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm text-white focus:border-amber-500/60 focus:outline-none"
+                  style={{
+                    padding: "0.75rem 1rem",
+                    borderRadius: "14px",
+                    backgroundColor: "#070b14",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "#ffffff",
+                    fontSize: "0.875rem",
+                  }}
+                  className="focus:border-[#11a542] focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
                 />
               </div>
 
-              <div>
-                <label className="text-xs font-semibold uppercase text-slate-300">
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-300 ml-1">
                   Rol en Constructora Serving
                 </label>
                 <select
                   value={newRol}
                   onChange={(e) => setNewRol(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm text-white focus:border-amber-500/60 focus:outline-none"
+                  style={{
+                    padding: "0.75rem 1rem",
+                    borderRadius: "14px",
+                    backgroundColor: "#070b14",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "#ffffff",
+                    fontSize: "0.875rem",
+                  }}
+                  className="focus:border-[#11a542] focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
                 >
                   <option value="RESIDENTE">Ingeniero Residente de Obra</option>
                   <option value="DIRECTOR_OBRA">Director de Obra</option>
@@ -555,8 +592,8 @@ export default function UsuariosPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold uppercase text-slate-300">
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-300 ml-1">
                   Contraseña Inicial
                 </label>
                 <input
@@ -565,7 +602,15 @@ export default function UsuariosPage() {
                   placeholder="Mínimo 6 caracteres"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm text-white focus:border-amber-500/60 focus:outline-none"
+                  style={{
+                    padding: "0.75rem 1rem",
+                    borderRadius: "14px",
+                    backgroundColor: "#070b14",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "#ffffff",
+                    fontSize: "0.875rem",
+                  }}
+                  className="focus:border-[#11a542] focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
                 />
               </div>
 
@@ -573,14 +618,24 @@ export default function UsuariosPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800"
+                  style={{
+                    borderRadius: "9999px",
+                    padding: "0.625rem 1.25rem",
+                  }}
+                  className="border border-white/15 text-sm font-semibold text-slate-300 hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-amber-400 cursor-pointer"
+                  style={{
+                    background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
+                    boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
+                    borderRadius: "9999px",
+                    padding: "0.625rem 1.5rem",
+                  }}
+                  className="text-sm font-semibold text-white hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border-none"
                 >
                   {isSubmitting ? "Creando..." : "Crear Usuario"}
                 </button>
@@ -592,29 +647,38 @@ export default function UsuariosPage() {
 
       {/* Modal: Reset Password */}
       {showPasswordModal && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div 
+            style={{
+              padding: "2rem",
+              borderRadius: "24px",
+              backgroundColor: "#0d1527",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.7)",
+            }}
+            className="w-full max-w-md"
+          >
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <KeyRound className="h-5 w-5 text-amber-400" />
+                <KeyRound className="h-5 w-5 text-[#11a542]" />
                 Cambiar Contraseña
               </h2>
               <button
                 onClick={() => setShowPasswordModal(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="text-sm text-slate-400 mb-4">
+            <p className="text-sm text-slate-400 mb-5">
               Asignar una nueva contraseña para:{" "}
               <strong className="text-white">{selectedUser.nombre_completo}</strong>
             </p>
 
-            <form onSubmit={handleResetPassword} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold uppercase text-slate-300">
+            <form onSubmit={handleResetPassword} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-300 ml-1">
                   Nueva Contraseña
                 </label>
                 <input
@@ -623,7 +687,15 @@ export default function UsuariosPage() {
                   placeholder="Mínimo 6 caracteres"
                   value={resetPassValue}
                   onChange={(e) => setResetPassValue(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm text-white focus:border-amber-500/60 focus:outline-none"
+                  style={{
+                    padding: "0.75rem 1rem",
+                    borderRadius: "14px",
+                    backgroundColor: "#070b14",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "#ffffff",
+                    fontSize: "0.875rem",
+                  }}
+                  className="focus:border-[#11a542] focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
                 />
               </div>
 
@@ -631,13 +703,23 @@ export default function UsuariosPage() {
                 <button
                   type="button"
                   onClick={() => setShowPasswordModal(false)}
-                  className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-slate-800"
+                  style={{
+                    borderRadius: "9999px",
+                    padding: "0.625rem 1.25rem",
+                  }}
+                  className="border border-white/15 text-sm font-semibold text-slate-300 hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-amber-400 cursor-pointer"
+                  style={{
+                    background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
+                    boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
+                    borderRadius: "9999px",
+                    padding: "0.625rem 1.5rem",
+                  }}
+                  className="text-sm font-semibold text-white hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border-none"
                 >
                   Actualizar Contraseña
                 </button>

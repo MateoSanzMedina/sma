@@ -57,7 +57,7 @@ export default function LoginPage() {
       />
 
       {/* Contenedor Principal con Espaciado Generoso */}
-      <div className="w-full max-w-[440px] flex flex-col items-center gap-8 relative z-10">
+      <div className="w-full max-w-[460px] flex flex-col items-center gap-8 relative z-10">
         
         {/* Cabecera de Marca Serving S.A.S. */}
         <div className="flex flex-col items-center text-center gap-3.5">
@@ -89,37 +89,56 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Tarjeta Ejecutiva Minimalista con Curvatura 'rounded-[28px]' */}
+        {/* Tarjeta Ejecutiva con Padding Generoso Blindado (Evita que el texto toque el borde) */}
         <div 
-          className="w-full rounded-[28px] border border-white/[0.08] bg-[#0c1220]/80 p-8 sm:p-10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] backdrop-blur-2xl flex flex-col gap-6"
+          style={{
+            padding: "2.75rem 2.25rem",
+            borderRadius: "28px",
+            backgroundColor: "rgba(12, 18, 32, 0.90)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.75rem",
+            width: "100%",
+          }}
         >
           {/* Notificación de Error */}
           {error && (
-            <div className="flex items-start gap-3 rounded-2xl border border-rose-500/25 bg-rose-500/10 p-4 text-xs sm:text-sm font-medium text-rose-300 animate-in fade-in duration-200">
+            <div 
+              style={{ padding: "1rem 1.25rem", borderRadius: "16px" }}
+              className="flex items-start gap-3 border border-rose-500/25 bg-rose-500/10 text-xs sm:text-sm font-medium text-rose-300 animate-in fade-in duration-200"
+            >
               <AlertCircle className="h-5 w-5 shrink-0 text-rose-400 mt-0.5" />
               <span className="leading-relaxed">{error}</span>
             </div>
           )}
 
-          {/* Formulario */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
+          {/* Formulario con Separación Vertical Amplia */}
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem", width: "100%" }}>
             
             {/* Campo: Usuario o Correo */}
-            <div className="flex flex-col gap-2 w-full text-left">
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", width: "100%", textAlign: "left" }}>
               <label 
                 htmlFor="user-ident"
-                className="text-xs font-medium tracking-wide text-slate-300 ml-1"
+                style={{ marginLeft: "0.25rem" }}
+                className="text-xs font-medium tracking-wide text-slate-300"
               >
                 Usuario o Correo
               </label>
               
-              <div className="relative flex items-center w-full">
-                {/* Icono perfectamente ubicado y centrado verticalmente */}
-                <div className="absolute left-4 flex items-center justify-center pointer-events-none text-slate-400 z-10">
+              <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
+                {/* Icono perfectamente ubicado y centrado */}
+                <div 
+                  style={{ position: "absolute", left: "1.1rem", display: "flex", alignItems: "center", pointerEvents: "none", zIndex: 10 }}
+                  className="text-slate-400"
+                >
                   <UserIcon className="h-4.5 w-4.5 text-slate-400" />
                 </div>
                 
-                {/* Input con padding-left inline explícito de 52px (3.25rem) para evitar cualquier solapamiento */}
+                {/* Input con espaciado interno amplio */}
                 <input
                   id="user-ident"
                   type="text"
@@ -128,24 +147,38 @@ export default function LoginPage() {
                   placeholder="ChainPoint o usuario@serving.com.co"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  style={{ paddingLeft: "3.25rem", paddingRight: "1.25rem" }}
-                  className="w-full h-13 rounded-2xl border border-white/[0.08] bg-[#070b14] text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:border-[#11a542] focus:bg-[#070b14] focus:outline-none focus:ring-4 focus:ring-[#11a542]/15"
+                  style={{
+                    paddingLeft: "3.25rem",
+                    paddingRight: "1.25rem",
+                    height: "3.25rem",
+                    borderRadius: "16px",
+                    backgroundColor: "#070b14",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "#ffffff",
+                    fontSize: "0.875rem",
+                    width: "100%",
+                  }}
+                  className="placeholder:text-slate-500 transition-all duration-200 focus:border-[#11a542] focus:bg-[#070b14] focus:outline-none focus:ring-4 focus:ring-[#11a542]/15"
                 />
               </div>
             </div>
 
             {/* Campo: Contraseña */}
-            <div className="flex flex-col gap-2 w-full text-left">
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", width: "100%", textAlign: "left" }}>
               <label 
                 htmlFor="password-ident"
-                className="text-xs font-medium tracking-wide text-slate-300 ml-1"
+                style={{ marginLeft: "0.25rem" }}
+                className="text-xs font-medium tracking-wide text-slate-300"
               >
                 Contraseña
               </label>
               
-              <div className="relative flex items-center w-full">
-                {/* Icono de candado centrado */}
-                <div className="absolute left-4 flex items-center justify-center pointer-events-none text-slate-400 z-10">
+              <div style={{ position: "relative", display: "flex", alignItems: "center", width: "100%" }}>
+                {/* Icono de candado */}
+                <div 
+                  style={{ position: "absolute", left: "1.1rem", display: "flex", alignItems: "center", pointerEvents: "none", zIndex: 10 }}
+                  className="text-slate-400"
+                >
                   <Lock className="h-4.5 w-4.5 text-slate-400" />
                 </div>
                 
@@ -158,15 +191,26 @@ export default function LoginPage() {
                   placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  style={{ paddingLeft: "3.25rem", paddingRight: "3.25rem" }}
-                  className="w-full h-13 rounded-2xl border border-white/[0.08] bg-[#070b14] text-sm text-white placeholder:text-slate-500 transition-all duration-200 focus:border-[#11a542] focus:bg-[#070b14] focus:outline-none focus:ring-4 focus:ring-[#11a542]/15"
+                  style={{
+                    paddingLeft: "3.25rem",
+                    paddingRight: "3.25rem",
+                    height: "3.25rem",
+                    borderRadius: "16px",
+                    backgroundColor: "#070b14",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    color: "#ffffff",
+                    fontSize: "0.875rem",
+                    width: "100%",
+                  }}
+                  className="placeholder:text-slate-500 transition-all duration-200 focus:border-[#11a542] focus:bg-[#070b14] focus:outline-none focus:ring-4 focus:ring-[#11a542]/15"
                 />
 
                 {/* Botón Ver/Ocultar con espacio independiente */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer flex items-center justify-center"
+                  style={{ position: "absolute", right: "0.85rem", padding: "0.5rem" }}
+                  className="rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer flex items-center justify-center"
                   title={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
                 >
                   {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
@@ -178,11 +222,25 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mt-2 w-full h-13 rounded-full text-white font-semibold text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] hover:-translate-y-0.5"
               style={{
+                height: "3.25rem",
+                borderRadius: "9999px",
                 background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
-                boxShadow: "0 8px 25px -4px rgba(17, 165, 66, 0.45)"
+                boxShadow: "0 8px 25px -4px rgba(17, 165, 66, 0.45)",
+                marginTop: "0.75rem",
+                width: "100%",
+                color: "#ffffff",
+                fontWeight: 600,
+                fontSize: "0.875rem",
+                border: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.625rem",
+                cursor: "pointer",
+                transition: "all 300ms ease",
               }}
+              className="active:scale-[0.98] hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
