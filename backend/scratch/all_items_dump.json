@@ -1,0 +1,1414 @@
+{
+  "PRELIMINARES": [],
+  "ADECUACION LOTE": [
+    {
+      "code": "0010101",
+      "name": "Disposicion final de raices (ASUMIDO)",
+      "unit": "und",
+      "cost": 40883646.19783369
+    },
+    {
+      "code": "0010104",
+      "name": "Adecuacion carreteable (ASUMIDO)",
+      "unit": "m3",
+      "cost": 19939512.176312476
+    },
+    {
+      "code": "0010106",
+      "name": "Cerramiento temporal en teja de zing (ASUMIDO)",
+      "unit": "m2",
+      "cost": 20039426.216218766
+    },
+    {
+      "code": "0010108",
+      "name": "Localizacion y replanteo",
+      "unit": "dia",
+      "cost": 127444387.06079562
+    },
+    {
+      "code": "0010109",
+      "name": "Mantenimiento de vía externa",
+      "unit": "mes",
+      "cost": 3648051.0336470013
+    }
+  ],
+  "INSTALACIONES PROVISIONALES": [
+    {
+      "code": "0010201",
+      "name": "Campamento provisional de obra",
+      "unit": "und",
+      "cost": 51031602.611924484
+    }
+  ],
+  "REDES PROVISIONALES": [
+    {
+      "code": "0010301",
+      "name": "Red electrica provisional externa (ASUMIDO)",
+      "unit": "und",
+      "cost": 100000000.00000001
+    },
+    {
+      "code": "0010303",
+      "name": "Red acueducto / alcantarillado provisional (ASUMIDO)",
+      "unit": "und",
+      "cost": 11162969.94802737
+    }
+  ],
+  "URBANISMO GENERAL": [],
+  "ANDENES GENERAL": [],
+  "PAISAJISMO GENERAL": [
+    {
+      "code": "4010802",
+      "name": "Grama externa para zonas verdes al lado de los andenes a lado y lado de la via, grama en zona esterna de porteria al pie de cerramiento y taludes de corte y lleno generados en el movimiento de tierra.",
+      "unit": "m2",
+      "cost": 62587576.518132284
+    }
+  ],
+  "CERRAMIENTOS PERIMETRALES GENERALES": [
+    {
+      "code": "4010901",
+      "name": "Cerramiento en tuberia en acero + talon en concreto 20x40 + viga de fundacion 30x30 + micropilotes  cada 2m diametro",
+      "unit": "m",
+      "cost": 225937462.5058093
+    },
+    {
+      "code": "4010903",
+      "name": "Cerramiento en poste inmunizado mas malla eslabonada",
+      "unit": "m",
+      "cost": 122037913.04763523
+    },
+    {
+      "code": "4010904",
+      "name": "Cerramiento en eugenio (3 Eugenios por metro lineal, altura 50cm)",
+      "unit": "m",
+      "cost": 67887765.89862643
+    }
+  ],
+  "ZONAS DE BIENESTAR GENERALES": [
+    {
+      "code": "4011002",
+      "name": "Parque infantil",
+      "unit": "und",
+      "cost": 21481183.706527006
+    },
+    {
+      "code": "4011003",
+      "name": "Puente en madera inmunizada",
+      "unit": "m",
+      "cost": 20368640
+    }
+  ],
+  "VARIOS URBANISMO GENERAL": [
+    {
+      "code": "4011102",
+      "name": "Totem informativo",
+      "unit": "und",
+      "cost": 11907133.757666063
+    }
+  ],
+  "URBANISMO - MOVIMIENTO DE TIERRA": [],
+  "EXCAVACIONES": [
+    {
+      "code": "4020101",
+      "name": "Excavacion cargue y botada interna de tierra medido en sitio",
+      "unit": "m3",
+      "cost": 130432508.49397781
+    },
+    {
+      "code": "4020103",
+      "name": "Conformacion de material de excavacion en sitio de disposicion",
+      "unit": "m3",
+      "cost": 33509509.99176205
+    },
+    {
+      "code": "4210101",
+      "name": "Excavacion cargue y botada interna de tierra medido en sitio",
+      "unit": "m3",
+      "cost": 33073253.813824136
+    },
+    {
+      "code": "4210103",
+      "name": "Conformacion de material de excavacion en sitio de disposicion",
+      "unit": "m3",
+      "cost": 22829822.720398426
+    }
+  ],
+  "LLENOS": [
+    {
+      "code": "4020202",
+      "name": "Perfilacion y compactacion de subrasante",
+      "unit": "m2",
+      "cost": 19078584.384957314
+    },
+    {
+      "code": "4020203",
+      "name": "Lleno material de reemplazo con limo interno",
+      "unit": "m3",
+      "cost": 40397775.862636864
+    },
+    {
+      "code": "4210202",
+      "name": "Perfilacion y compactacion de subrasante",
+      "unit": "m2",
+      "cost": 6983074.151217553
+    },
+    {
+      "code": "4210203",
+      "name": "Lleno material de reemplazo con limo interno",
+      "unit": "m3",
+      "cost": 467931.1284246605
+    }
+  ],
+  "URBANISMO  - VIA": [],
+  "ESTRUCTURA": [
+    {
+      "code": "4030101",
+      "name": "Suministro transporte y colocación de base granular",
+      "unit": "m3",
+      "cost": 425460213.69271183
+    },
+    {
+      "code": "4030104",
+      "name": "Suministro transporte y colocación de cordon de las vias 35cm 3 caras",
+      "unit": "m",
+      "cost": 137277868.4104126
+    },
+    {
+      "code": "4030105",
+      "name": "Imprimacion con emulsion asfaltica",
+      "unit": "m2",
+      "cost": 25076352.515895143
+    },
+    {
+      "code": "4030106",
+      "name": "Suministro y colocacion de pavimento",
+      "unit": "m3",
+      "cost": 529363858.8403796
+    },
+    {
+      "code": "4030107",
+      "name": "Suministro y colocacion de geomala biaxial pbx 20-20",
+      "unit": "m2",
+      "cost": 43926392.84837854
+    },
+    {
+      "code": "4220101",
+      "name": "Suministro transporte y colocacion de base granular",
+      "unit": "m3",
+      "cost": 216284814.3493316
+    },
+    {
+      "code": "4220104",
+      "name": "Suministro transporte y colocación de cordon de las vias 35cm 3 caras",
+      "unit": "m",
+      "cost": 27110329.193143465
+    },
+    {
+      "code": "4220105",
+      "name": "Imprimacion con emulsion asfaltica",
+      "unit": "m2",
+      "cost": 9618490.350173043
+    },
+    {
+      "code": "4220106",
+      "name": "Suministro y colocacion de pavimento",
+      "unit": "m3",
+      "cost": 257526810.49438074
+    },
+    {
+      "code": "4220107",
+      "name": "Suministro y colocacion de geomala biaxial",
+      "unit": "m2",
+      "cost": 16818426.92980277
+    }
+  ],
+  "FILTROS": [
+    {
+      "code": "4030201",
+      "name": "Filtro con alveodren colector 50 cm (solo en el pie de talud de corte)",
+      "unit": "m",
+      "cost": 87929474.52989215
+    },
+    {
+      "code": "4220201",
+      "name": "Filtro con alveodren colector",
+      "unit": "m",
+      "cost": 18612349.01071214
+    }
+  ],
+  "CUNETAS": [
+    {
+      "code": "4030301",
+      "name": "Cuneta en geomembrana calibre 20 (ronda de coronacion) (0.25m x 0.35m x 0.25m)",
+      "unit": "m",
+      "cost": 17280244.51578722
+    },
+    {
+      "code": "4220301",
+      "name": "Cuneta en concreto  (Ancho:1.1m, h:0.2m)",
+      "unit": "m",
+      "cost": 46975344.559847176
+    }
+  ],
+  "ANDENES": [
+    {
+      "code": "4030401",
+      "name": "Andenes en concreto e:10 cm + Lineas de adoquin + Base + malla electrosoldada XX-84",
+      "unit": "m2",
+      "cost": 335603145.75864947
+    },
+    {
+      "code": "4220401",
+      "name": "Andenes en concreto",
+      "unit": "m2",
+      "cost": 39497777.85172159
+    }
+  ],
+  "VARIOS URBANISMO  - VIA": [
+    {
+      "code": "4030501",
+      "name": "Señalizacion horizontal y vertical (ASUMIDO)",
+      "unit": "und",
+      "cost": 11360361.18899701
+    },
+    {
+      "code": "4220501",
+      "name": "Señalizacion horizontal y vertical (ASUMIDO)",
+      "unit": "und",
+      "cost": 15660011.23392903
+    }
+  ],
+  "URBANISMO - RED ACUEDUCTO": [],
+  "RED DE DISTRIBUCION DE ACUEDUCTO": [
+    {
+      "code": "4040101",
+      "name": "Excavacion mecanica entre 0-2 m",
+      "unit": "m3",
+      "cost": 6057165.315355681
+    },
+    {
+      "code": "4040103",
+      "name": "Cargue y botada interno de tierra medido en sitio",
+      "unit": "m3",
+      "cost": 741971.4480885408
+    },
+    {
+      "code": "4040105",
+      "name": "Lleno material  de reemplazo con arenilla",
+      "unit": "m3",
+      "cost": 15175750.041812139
+    },
+    {
+      "code": "4040106",
+      "name": "Lleno material de excavacion",
+      "unit": "m3",
+      "cost": 7276987.168513783
+    },
+    {
+      "code": "4040107",
+      "name": "Tuberia PEAD 90mm PE100 PN 16",
+      "unit": "m",
+      "cost": 75117398.00840195
+    },
+    {
+      "code": "4040108",
+      "name": "Valvula compuerta HD 75mm",
+      "unit": "und",
+      "cost": 22635085.00781809
+    },
+    {
+      "code": "4040110",
+      "name": "Valvula ventosa 25mm",
+      "unit": "und",
+      "cost": 4953754.317848491
+    },
+    {
+      "code": "4040112",
+      "name": "Suministro e instalacion de tee PEAD 90mm",
+      "unit": "und",
+      "cost": 3514814.893337112
+    },
+    {
+      "code": "4040113",
+      "name": "Suministro e instalacion de tapon PEAD 90mm",
+      "unit": "und",
+      "cost": 1923418.6315703853
+    },
+    {
+      "code": "4040114",
+      "name": "Suministro e instalacion de codo 90° PEAD 90mm",
+      "unit": "und",
+      "cost": 2502140.9576391815
+    },
+    {
+      "code": "4040115",
+      "name": "Caja para valvula",
+      "unit": "und",
+      "cost": 16163120.775551006
+    },
+    {
+      "code": "4040117",
+      "name": "Domiciliar tuberia",
+      "unit": "und",
+      "cost": 28799999.99999999
+    },
+    {
+      "code": "4040118",
+      "name": "Hidrante 3\"",
+      "unit": "und",
+      "cost": 11967828.301381905
+    },
+    {
+      "code": "4040120",
+      "name": "Concreto atraque tuberia",
+      "unit": "m3",
+      "cost": 1691519.353240589
+    },
+    {
+      "code": "4040121",
+      "name": "Acero de refuerzo obras de urbanismo",
+      "unit": "kg",
+      "cost": 1377860.1200859922
+    },
+    {
+      "code": "4040122",
+      "name": "Presurizacion",
+      "unit": "m",
+      "cost": 7414014.369513338
+    },
+    {
+      "code": "4040123",
+      "name": "Lavada y desinfeccion",
+      "unit": "m",
+      "cost": 9748829.970289562
+    },
+    {
+      "code": "4040124",
+      "name": "Macromedidor (incluye caja)",
+      "unit": "und",
+      "cost": 8069915.152547375
+    },
+    {
+      "code": "4230101",
+      "name": "Excavacion mecanica entre 0-2 m",
+      "unit": "m3",
+      "cost": 2293353.0710559944
+    },
+    {
+      "code": "4230103",
+      "name": "Cargue y botada interno de tierra medido en sitio",
+      "unit": "m3",
+      "cost": 280923.89930252364
+    },
+    {
+      "code": "4230105",
+      "name": "Lleno material  de reemplazo con arenilla",
+      "unit": "m3",
+      "cost": 5745815.270343885
+    },
+    {
+      "code": "4230106",
+      "name": "Lleno material de excavacion",
+      "unit": "m3",
+      "cost": 3166724.669649321
+    },
+    {
+      "code": "4230107",
+      "name": "Tuberia  90mm PEAD PE100 PN 16",
+      "unit": "m",
+      "cost": 28440814.546628926
+    },
+    {
+      "code": "4230108",
+      "name": "Valvula compuerta",
+      "unit": "und",
+      "cost": 2515009.445313121
+    },
+    {
+      "code": "4230110",
+      "name": "Valvula ventosa",
+      "unit": "und",
+      "cost": 990750.8635696981
+    },
+    {
+      "code": "4230115",
+      "name": "Caja para valvula",
+      "unit": "und",
+      "cost": 2108233.144637088
+    },
+    {
+      "code": "4230118",
+      "name": "Hidrante",
+      "unit": "und",
+      "cost": 3989276.100460635
+    },
+    {
+      "code": "4230120",
+      "name": "Concreto atraque tuberia",
+      "unit": "m3",
+      "cost": 173489.1644349322
+    },
+    {
+      "code": "4230121",
+      "name": "Acero de refuerzo obras de urbanismo",
+      "unit": "kg",
+      "cost": 114821.67667383267
+    },
+    {
+      "code": "4230122",
+      "name": "Presurizacion",
+      "unit": "m",
+      "cost": 2807080.8270779816
+    },
+    {
+      "code": "4230123",
+      "name": "Lavada y desinfeccion",
+      "unit": "m",
+      "cost": 3691084.523463008
+    }
+  ],
+  "URBANISMO - RED ALCANTARILLADO RESIDUALES": [],
+  "RED ALCANTARILLADO RESIDUALES": [
+    {
+      "code": "4050101",
+      "name": "Excavacion mecanica entre 0-2 m",
+      "unit": "m3",
+      "cost": 32465674.647717338
+    },
+    {
+      "code": "4050102",
+      "name": "Excavacion mecanica entre 2-4 m",
+      "unit": "m3",
+      "cost": 23196613.581155997
+    },
+    {
+      "code": "4050105",
+      "name": "Cargue y botada de material interno",
+      "unit": "m3",
+      "cost": 1243041.3033730004
+    },
+    {
+      "code": "4050106",
+      "name": "Entibados de madera para excavacion de brechas de las redes",
+      "unit": "m2",
+      "cost": 25820145.394167047
+    },
+    {
+      "code": "4050108",
+      "name": "Lleno material de reemplazo con limo interno",
+      "unit": "m3",
+      "cost": 95669169.83267814
+    },
+    {
+      "code": "4050111",
+      "name": "Lleno material granular triturado 3/4\" para cimentacion tuberias",
+      "unit": "m3",
+      "cost": 44777782.20035199
+    },
+    {
+      "code": "4050112",
+      "name": "Tuberia novafort 6\"",
+      "unit": "m",
+      "cost": 23745423.047648676
+    },
+    {
+      "code": "4050113",
+      "name": "Tuberia novafort 8\"",
+      "unit": "m",
+      "cost": 65243264.957972854
+    },
+    {
+      "code": "4050124",
+      "name": "Cilindro vaciado para camaras de inspeccion d=1.2 m",
+      "unit": "m",
+      "cost": 17213784.370768704
+    },
+    {
+      "code": "4050125",
+      "name": "Cilindro prefabricado para camaras de inspeccion d= 1.2 m",
+      "unit": "m",
+      "cost": 49159816.98609738
+    },
+    {
+      "code": "4050126",
+      "name": "Cono prefabricado para camaras de inspeccion d=1.2 m",
+      "unit": "und",
+      "cost": 23072847.25479128
+    },
+    {
+      "code": "4050127",
+      "name": "Cuello prefabricado para camaras de inspeccion d=1.2 m",
+      "unit": "und",
+      "cost": 13233931.401162064
+    },
+    {
+      "code": "4050128",
+      "name": "Tapa prefabricado para camaras de inspeccion d=1.2 m",
+      "unit": "und",
+      "cost": 12859147.418999925
+    },
+    {
+      "code": "4050130",
+      "name": "Base y cañuela para camaras de inspeccion d=1.2 m",
+      "unit": "und",
+      "cost": 24246873.89958367
+    },
+    {
+      "code": "4050134",
+      "name": "Ganchos para mh",
+      "unit": "und",
+      "cost": 15384588.151416956
+    },
+    {
+      "code": "4050136",
+      "name": "Camara de caida",
+      "unit": "und",
+      "cost": 23380973.463392198
+    },
+    {
+      "code": "4050137",
+      "name": "Silla yee novafort 200x160 mm",
+      "unit": "und",
+      "cost": 12404405.626391524
+    },
+    {
+      "code": "4050146",
+      "name": "Codo pvc novafort",
+      "unit": "und",
+      "cost": 4493715.329712352
+    },
+    {
+      "code": "4050147",
+      "name": "Concreto atraque tuberia",
+      "unit": "m3",
+      "cost": 4418552.1567021785
+    },
+    {
+      "code": "4050148",
+      "name": "Acero de refuerzo",
+      "unit": "kg",
+      "cost": 1227826.4625655173
+    },
+    {
+      "code": "4050149",
+      "name": "Lavado y televisacion",
+      "unit": "m",
+      "cost": 27929070.12236707
+    },
+    {
+      "code": "4050150",
+      "name": "Domiciliar residuales",
+      "unit": "und",
+      "cost": 34672053.5955054
+    }
+  ],
+  "RED DE BOMBEO DE ALCANTARILLADO RESIDUALES": [
+    {
+      "code": "4050201",
+      "name": "Excavacion mecanica entre 0-2 m",
+      "unit": "m3",
+      "cost": 6765262.824298972
+    },
+    {
+      "code": "4050208",
+      "name": "Lleno material de reemplazo con limo interno",
+      "unit": "m3",
+      "cost": 14450940.647280995
+    },
+    {
+      "code": "4050212",
+      "name": "Tuberia PEAD 90mm PE100 PN 16",
+      "unit": "m",
+      "cost": 38453619.605939195
+    },
+    {
+      "code": "4050219",
+      "name": "Suministro e instalacion de codo 90° PEAD 90mm",
+      "unit": "und",
+      "cost": 1442563.9736777889
+    },
+    {
+      "code": "4050222",
+      "name": "Construccion de pozo de bombeo",
+      "unit": "m",
+      "cost": 104390383.42436036
+    },
+    {
+      "code": "4050226",
+      "name": "Equipo de bombeo incluye tablero de control",
+      "unit": "und",
+      "cost": 44079681.258867
+    }
+  ],
+  "URBANISMO - RED LLUVIAS": [],
+  "RED ALCANTARILLADO LLUVIAS": [
+    {
+      "code": "4060101",
+      "name": "Excavacion mecanica entre 0-2 m",
+      "unit": "m3",
+      "cost": 29175861.802114546
+    },
+    {
+      "code": "4060102",
+      "name": "Excavacion mecanica entre 2-4 m",
+      "unit": "m3",
+      "cost": 12042325.163714733
+    },
+    {
+      "code": "4060105",
+      "name": "Cargue y botada de material interno",
+      "unit": "m3",
+      "cost": 2084900.784972794
+    },
+    {
+      "code": "4060106",
+      "name": "Entibados de madera para excavación de brechas de las redes",
+      "unit": "m2",
+      "cost": 30684070.04583493
+    },
+    {
+      "code": "4060108",
+      "name": "Lleno material de reemplazo con limo interno",
+      "unit": "m3",
+      "cost": 67109809.76472567
+    },
+    {
+      "code": "4060111",
+      "name": "Lleno material granular triturado 3/4\" para cimentacion tuberias",
+      "unit": "m3",
+      "cost": 59127765.54805222
+    },
+    {
+      "code": "4060113",
+      "name": "Tuberia novafort 8\"",
+      "unit": "m",
+      "cost": 31984103.714802023
+    },
+    {
+      "code": "4060115",
+      "name": "Tuberia novafort 12\"",
+      "unit": "m",
+      "cost": 99441427.65536502
+    },
+    {
+      "code": "4060124",
+      "name": "Cilindro vaciado para camaras de inspeccion d=1.2 m",
+      "unit": "m",
+      "cost": 9887990.961459178
+    },
+    {
+      "code": "4060125",
+      "name": "Cilindro prefabricado para cámaras de inspeccion d=1.2 m",
+      "unit": "m",
+      "cost": 24232264.36894382
+    },
+    {
+      "code": "4060126",
+      "name": "Cono prefabricado para camaras de inspeccion d=1.2 m",
+      "unit": "und",
+      "cost": 11934231.338685144
+    },
+    {
+      "code": "4060127",
+      "name": "Cuello prefabricado para camaras de inspeccion d=1.2 m",
+      "unit": "und",
+      "cost": 6845136.93163555
+    },
+    {
+      "code": "4060168",
+      "name": "Tapa prefabricada para camaras de inspeccion",
+      "unit": "und",
+      "cost": 6651283.147758582
+    },
+    {
+      "code": "4060128",
+      "name": "Base y cañuela para camaras de inspeccion d=1.2 m",
+      "unit": "und",
+      "cost": 16721981.999712877
+    },
+    {
+      "code": "4060135",
+      "name": "Ganchos para mh",
+      "unit": "und",
+      "cost": 7893964.706906828
+    },
+    {
+      "code": "4060136",
+      "name": "Sumidero tipo b",
+      "unit": "und",
+      "cost": 82689200.24419348
+    },
+    {
+      "code": "4060148",
+      "name": "Descole pequeño de descarga  (ASUMIDO)",
+      "unit": "und",
+      "cost": 6747064.952228505
+    },
+    {
+      "code": "4060149",
+      "name": "Cabezote de descarga 12\"  (ASUMIDO)",
+      "unit": "und",
+      "cost": 13881869.03879654
+    },
+    {
+      "code": "4060150",
+      "name": "Camara de caida  (ASUMIDO)",
+      "unit": "und",
+      "cost": 7483449.011354782
+    },
+    {
+      "code": "4060151",
+      "name": "Canal trapezoidal  (ASUMIDO)",
+      "unit": "m",
+      "cost": 92681943.88687827
+    },
+    {
+      "code": "4060152",
+      "name": "Concreto atraque tuberia",
+      "unit": "m3",
+      "cost": 1694230.1214348846
+    },
+    {
+      "code": "4060154",
+      "name": "Lavado y televisacion",
+      "unit": "m",
+      "cost": 22708795.87583995
+    },
+    {
+      "code": "4060157",
+      "name": "Silla yee novafort 315x200 mm",
+      "unit": "und",
+      "cost": 4390362.265653677
+    },
+    {
+      "code": "4060160",
+      "name": "Codo pvc novafort 45\"",
+      "unit": "und",
+      "cost": 7019916.811510436
+    },
+    {
+      "code": "4060169",
+      "name": "Domiciliar lluvias",
+      "unit": "und",
+      "cost": 34672053.5955054
+    },
+    {
+      "code": "4060170",
+      "name": "Tapa losa d=1.2 m  (ASUMIDO)",
+      "unit": "und",
+      "cost": 5035302.883094228
+    }
+  ],
+  "URBANISMO - RED DE GAS": [],
+  "RED DE GAS": [
+    {
+      "code": "4070101",
+      "name": "Red de gas de 63 mm",
+      "unit": "m",
+      "cost": 26149376.34858554
+    },
+    {
+      "code": "4070102",
+      "name": "Red de gas de 32 mm",
+      "unit": "m",
+      "cost": 18801780.795001872
+    },
+    {
+      "code": "4070103",
+      "name": "Red de gas de 25 mm",
+      "unit": "m",
+      "cost": 12625870.189850515
+    },
+    {
+      "code": "4070104",
+      "name": "Domiciliar gas PE100 25 mm",
+      "unit": "und",
+      "cost": 28488641.397813335
+    },
+    {
+      "code": "4070105",
+      "name": "Mojon de señalizacion",
+      "unit": "und",
+      "cost": 2617555.4145440506
+    },
+    {
+      "code": "4070106",
+      "name": "Polivalvula 63mm",
+      "unit": "und",
+      "cost": 4283272.12917044
+    },
+    {
+      "code": "4070108",
+      "name": "Polivalvula 32mm",
+      "unit": "und",
+      "cost": 985152.5897092012
+    },
+    {
+      "code": "4260101",
+      "name": "Red de gas de 63 mm",
+      "unit": "m",
+      "cost": 12799844.879337667
+    },
+    {
+      "code": "4260105",
+      "name": "Mojon de señalizacion",
+      "unit": "und",
+      "cost": 654388.8536360126
+    }
+  ],
+  "URBANISMO - RED ELECTRICA": [],
+  "RED ELECTRICA OBRA CIVIL": [
+    {
+      "code": "4080101",
+      "name": "Red primaria canalizada subterranea obra civil",
+      "unit": "m",
+      "cost": 73873612.39516899
+    },
+    {
+      "code": "4080102",
+      "name": "Suministro e instalación de red secundaria canalizada en aluminio obra civil",
+      "unit": "m",
+      "cost": 86797243.91982974
+    },
+    {
+      "code": "4080104",
+      "name": "Caja norma RS3-003 60x80 cm",
+      "unit": "und",
+      "cost": 69801826.44094735
+    },
+    {
+      "code": "4080105",
+      "name": "Caja norma RS3-005 120x80 cm",
+      "unit": "und",
+      "cost": 56415477.450099565
+    },
+    {
+      "code": "4080106",
+      "name": "Transformador 75 kva tipo pedestal obra civil",
+      "unit": "und",
+      "cost": 11357423.785368541
+    },
+    {
+      "code": "4080107",
+      "name": "Transformador 50 kva tipo pedestal obra civil",
+      "unit": "und",
+      "cost": 11357423.785368541
+    },
+    {
+      "code": "4080108",
+      "name": "Transformador 37.5 kva tipo pedestal obra civil",
+      "unit": "und",
+      "cost": 11357423.785368541
+    },
+    {
+      "code": "4080111",
+      "name": "Domiciliaria electrica obra civil",
+      "unit": "und",
+      "cost": 15479666.357687118
+    },
+    {
+      "code": "4080112",
+      "name": "Concreto atraque tuberia",
+      "unit": "m3",
+      "cost": 13824917.790908659
+    },
+    {
+      "code": "4080113",
+      "name": "Totem para domiciliaria obra civil",
+      "unit": "und",
+      "cost": 147464782.84163523
+    },
+    {
+      "code": "",
+      "name": "Totem para zona comun obra civil (transformadores y bombeos)",
+      "unit": "und",
+      "cost": 14211852.535737041
+    }
+  ],
+  "RED ELECTRICA": [
+    {
+      "code": "4080201",
+      "name": "Red primaria canalizada subterranea electricos",
+      "unit": "m",
+      "cost": 85912849.0386355
+    },
+    {
+      "code": "4080206",
+      "name": "Transformador 75 kva tipo pedestal electricos",
+      "unit": "und",
+      "cost": 33229198.88369764
+    },
+    {
+      "code": "4080207",
+      "name": "Transformador 50 kva tipo pedestal electricos",
+      "unit": "und",
+      "cost": 28759943.50044567
+    },
+    {
+      "code": "4080208",
+      "name": "Transformador 37.5 kva tipo pedestal electricos",
+      "unit": "und",
+      "cost": 25188389.290781144
+    },
+    {
+      "code": "4080214",
+      "name": "Norma RA6-010",
+      "unit": "und",
+      "cost": 20617077.154289104
+    },
+    {
+      "code": "4080218",
+      "name": "Norma RA2-017 EPM",
+      "unit": "und",
+      "cost": 4776160.843115563
+    },
+    {
+      "code": "4080230",
+      "name": "Regleta primaria",
+      "unit": "und",
+      "cost": 20895911.909842525
+    },
+    {
+      "code": "4080231",
+      "name": "Regleta secundaria 4 vias",
+      "unit": "und",
+      "cost": 23186012.018143054
+    },
+    {
+      "code": "4080238",
+      "name": "Domiciliar electrica para lotes-con medidor",
+      "unit": "und",
+      "cost": 91881327.86772934
+    },
+    {
+      "code": "4080240",
+      "name": "Pruebas de cable VLF",
+      "unit": "und",
+      "cost": 10775781.514772682
+    },
+    {
+      "code": "4080241",
+      "name": "Conexion red existente y maniobras de legalizacion",
+      "unit": "und",
+      "cost": 7857340.687855082
+    },
+    {
+      "code": "4080242",
+      "name": "Proceso RETIE",
+      "unit": "und",
+      "cost": 13469726.89346585
+    },
+    {
+      "code": "4080244",
+      "name": "Regleta secundaria 6 vias",
+      "unit": "und",
+      "cost": 8873469.563602095
+    },
+    {
+      "code": "4080247",
+      "name": "Domiciliar electrica para zonas comunes de transformadores-con medidor",
+      "unit": "und",
+      "cost": 9630714.110491702
+    },
+    {
+      "code": "",
+      "name": "Pruebas de aislamiento y relacion de transformacion transformador",
+      "unit": "und",
+      "cost": 3367431.7233664626
+    },
+    {
+      "code": "",
+      "name": "Red secundaria en cable serie AA8000 2#4/0(F)+1#2/0(N)",
+      "unit": "m",
+      "cost": 34671036.22987134
+    },
+    {
+      "code": "",
+      "name": "Red secundaria en cable serie AA8000 2#2(F)+1#4(N)",
+      "unit": "m",
+      "cost": 686217.6863941966
+    },
+    {
+      "code": "",
+      "name": "Red secundaria en cable serie AA8000 2#250(F)+1#4/0(N)",
+      "unit": "m",
+      "cost": 21118754.375632133
+    },
+    {
+      "code": "",
+      "name": "Red secundaria en cable serie AA8000 2#350(F)+1#250(N)",
+      "unit": "m",
+      "cost": 38719929.026988216
+    },
+    {
+      "code": "",
+      "name": "Red secundaria en cable serie AA8000 2#2/0(F)+1#1/0(N)",
+      "unit": "m",
+      "cost": 4480651.348034666
+    }
+  ],
+  "URBANISMO - RED DE ILUMINACION (DISEÑO INCOMPLETO)": [],
+  "RED DE ILUMINACION  OBRA CIVIL": [
+    {
+      "code": "4090101",
+      "name": "Luminaria de alumbrado publico LED solar 3000 - 3900 lm obra civil",
+      "unit": "und",
+      "cost": 39942943.38123105
+    },
+    {
+      "code": "4280101",
+      "name": "Reflector LED SOLAR FLUX flujo continuo 7000 lumenes obra civil",
+      "unit": "und",
+      "cost": 21917821.992102824
+    }
+  ],
+  "RED DE ILUMINACION ELECTRICOS": [
+    {
+      "code": "4090201",
+      "name": "Luminaria de alumbrado publico LED solar 3000 - 3900 lm",
+      "unit": "und",
+      "cost": 61135634.634061165
+    },
+    {
+      "code": "4090202",
+      "name": "Proceso RETILAP",
+      "unit": "und",
+      "cost": 5051147.585049694
+    },
+    {
+      "code": "4280201",
+      "name": "Reflector LED SOLAR FLUX flujo continuo 7000 lumenes",
+      "unit": "und",
+      "cost": 50944698.19564234
+    },
+    {
+      "code": "4280202",
+      "name": "Proceso RETILAP",
+      "unit": "und",
+      "cost": 5051147.585049694
+    },
+    {
+      "code": "",
+      "name": "VIA EXTERNA RED DE TELECOMUNICACIONES",
+      "unit": "",
+      "cost": 45312236.57842022
+    },
+    {
+      "code": "",
+      "name": "RED DE TELECOMUNICACIONES",
+      "unit": "",
+      "cost": 45312236.57842022
+    },
+    {
+      "code": "",
+      "name": "Construcción de red de telecomunicaciones costeado por m/vía (EXTERNA)",
+      "unit": "m",
+      "cost": 45312236.57842022
+    },
+    {
+      "code": "",
+      "name": "MOVIMIENTO DE TIERRA DE LOTES 33,34,45",
+      "unit": "",
+      "cost": 89270551.04884528
+    },
+    {
+      "code": "",
+      "name": "MOVIMIENTO DE TIERRA DE LOTES 33,34,45",
+      "unit": "",
+      "cost": 89270551.04884528
+    },
+    {
+      "code": "",
+      "name": "corte y disposicion final dentro del proyecto",
+      "unit": "m3",
+      "cost": 41525408.982118
+    },
+    {
+      "code": "",
+      "name": "lleno para conformacion de terraza",
+      "unit": "m3",
+      "cost": 1172428.4000000001
+    },
+    {
+      "code": "",
+      "name": "engramado de taludes resultantes del movimiento de tierra",
+      "unit": "m2",
+      "cost": 6783682.6292
+    },
+    {
+      "code": "",
+      "name": "lleno material sobrante de excavación en el lote que se defina",
+      "unit": "m3",
+      "cost": 18965060.400000002
+    },
+    {
+      "code": "",
+      "name": "Localizacion y replanteo",
+      "unit": "dia",
+      "cost": 1470512.1583937956
+    },
+    {
+      "code": "",
+      "name": "Elaboración de planor record",
+      "unit": "und",
+      "cost": 3000000
+    },
+    {
+      "code": "",
+      "name": "Disposición final de raíces (ASUMIDO)",
+      "unit": "und",
+      "cost": 16353458.479133474
+    },
+    {
+      "code": "",
+      "name": "PORTERIA",
+      "unit": "",
+      "cost": 681668702.4605577
+    },
+    {
+      "code": "",
+      "name": "PORTERIA",
+      "unit": "",
+      "cost": 681668702.4605577
+    },
+    {
+      "code": "",
+      "name": "Construccion de porteria",
+      "unit": "m2",
+      "cost": 453132837.4686025
+    },
+    {
+      "code": "",
+      "name": "Cubierta metalica para la portería",
+      "unit": "m2",
+      "cost": 184443215.30671015
+    },
+    {
+      "code": "",
+      "name": "Puertas vehículares y peatonal",
+      "unit": "und",
+      "cost": 44092649.685245015
+    }
+  ],
+  "URBANISMO  - RED DE TELECOMUNICACIONES (DISEÑO INCOMPLETO)": [],
+  "RED DE TELECOMUNICACIONES": [
+    {
+      "code": "",
+      "name": "Construcción de red de telecomunicaciones costeado por m/vía (INTERNA)",
+      "unit": "m",
+      "cost": 206154214.13900116
+    }
+  ],
+  "URBANISMO - OBRAS COMPLEMENTARIAS": [],
+  "OBRAS COMPLEMENTARIAS": [
+    {
+      "code": "4110102",
+      "name": "Construccion PTAR (ASUMIDO)",
+      "unit": "und",
+      "cost": 98000000.00000003
+    }
+  ],
+  "URBANISMO - FINALES PARA ENTREGAS": [],
+  "FINALES PARA ENTREGAS": [
+    {
+      "code": "4120101",
+      "name": "Mojones señalización lotes",
+      "unit": "und",
+      "cost": 7873960.534878031
+    },
+    {
+      "code": "4120102",
+      "name": "Adecuacion de lotes para entrega final",
+      "unit": "und",
+      "cost": 68162996.19567235
+    }
+  ],
+  "VIA EXTERNA - MOVIMIENTO DE TIERRA": [],
+  "VIA EXTERNA  - VIA": [],
+  "VIA EXTERNA - RED ACUEDUCTO (SIN DISEÑO)": [],
+  "VIA EXTERNA - RED DE GAS": [],
+  "VIA EXTERNA - RED DE ILUMINACION (SIN DISEÑO)": [],
+  "EQUIPOS DE OBRA Y CONSUMIBLES": [],
+  "CONSUMIBLE": [
+    {
+      "code": "5010103",
+      "name": "Herramienta menor",
+      "unit": "mes",
+      "cost": 11803968.160195794
+    }
+  ],
+  "CONTROL DE SEGURIDAD Y AMBIENTAL": [],
+  "SEGURIDAD Y SALUD EN EL TRABAJO": [
+    {
+      "code": "6010101",
+      "name": "Seguridad industrial en obra",
+      "unit": "mes",
+      "cost": 17583292.53229473
+    },
+    {
+      "code": "6010102",
+      "name": "Dotacion personal de obra",
+      "unit": "und",
+      "cost": 14143213.238139145
+    }
+  ],
+  "CONTROL AMBIENTAL": [
+    {
+      "code": "6010201",
+      "name": "Manejo ambiental de obra",
+      "unit": "mes",
+      "cost": 41419798.97020244
+    },
+    {
+      "code": "6010206",
+      "name": "Plan de manejo de transito (no incluye informe)",
+      "unit": "und",
+      "cost": 22732405.905787315
+    }
+  ],
+  "GASTOS GENERALES DE OBRA": [],
+  "GASTOS ADMINISTRATIVOS": [
+    {
+      "code": "7010101",
+      "name": "Caja menor",
+      "unit": "mes",
+      "cost": 7637125.525970359
+    },
+    {
+      "code": "7010102",
+      "name": "Ensayos y asesorias de laboratorio",
+      "unit": "mes",
+      "cost": 20017076.340556007
+    },
+    {
+      "code": "7010103",
+      "name": "Servicios publicos provisionales de acueducto / alcantarillado",
+      "unit": "mes",
+      "cost": 5960886.05864889
+    },
+    {
+      "code": "7010104",
+      "name": "Servicios publicos provisionales de energia",
+      "unit": "mes",
+      "cost": 9077297.56799595
+    },
+    {
+      "code": "7010105",
+      "name": "Servicio publico internet y telefono",
+      "unit": "mes",
+      "cost": 2452783.3098191507
+    },
+    {
+      "code": "7010106",
+      "name": "Elementos de cafeteria y aseo",
+      "unit": "mes",
+      "cost": 6333016.594411194
+    },
+    {
+      "code": "7010107",
+      "name": "Elementos de papeleria",
+      "unit": "mes",
+      "cost": 1824025.5168235006
+    },
+    {
+      "code": "7010108",
+      "name": "Servicio de vigilancia privada",
+      "unit": "mes",
+      "cost": 115751270.2632061
+    },
+    {
+      "code": "7010111",
+      "name": "Impresion de planos record",
+      "unit": "mes",
+      "cost": 3809303.7905787206
+    },
+    {
+      "code": "7010112",
+      "name": "Acarreos",
+      "unit": "mes",
+      "cost": 120387829.16435885
+    },
+    {
+      "code": "7010113",
+      "name": "Transporte de personal",
+      "unit": "mes",
+      "cost": 291844082.6917601
+    }
+  ],
+  "PERSONAL DIRECCION DE OBRA": [
+    {
+      "code": "7010201",
+      "name": "Director de obra (Dedicación 30%)",
+      "unit": "mes",
+      "cost": 52252246.10786918
+    },
+    {
+      "code": "7010206",
+      "name": "Residente de urbanismo (Dedicación 100%)",
+      "unit": "mes",
+      "cost": 97448546.30933873
+    },
+    {
+      "code": "7010207",
+      "name": "Residente electrico (Dedicación 25%)",
+      "unit": "mes",
+      "cost": 12134603.354495862
+    },
+    {
+      "code": "7010208",
+      "name": "Residente de seguridad industrial (Dedicación 100%)",
+      "unit": "mes",
+      "cost": 52331721.23438984
+    },
+    {
+      "code": "7010209",
+      "name": "Residente ambiental (Dedicación 20%)",
+      "unit": "mes",
+      "cost": 9329523.23277414
+    },
+    {
+      "code": "7010214",
+      "name": "Auxiliar administrativo (Dedicación 50%)",
+      "unit": "mes",
+      "cost": 19386832.792682894
+    },
+    {
+      "code": "7010215",
+      "name": "Auxiliar ingenieria (Dedicación 80%)",
+      "unit": "mes",
+      "cost": 27055788.200028587
+    }
+  ],
+  "PERSONAL OPERATIVO DE OBRA": [
+    {
+      "code": "7010304",
+      "name": "Maestro urbanismo (Dedicación 100%)",
+      "unit": "mes",
+      "cost": 60544263.18890798
+    },
+    {
+      "code": "7010308",
+      "name": "Almacenista (Dedicación 100%)",
+      "unit": "mes",
+      "cost": 73014439.81383593
+    },
+    {
+      "code": "7010310",
+      "name": "Ayudante todero (2 ayudantes) (Dedicación 100%)",
+      "unit": "mes",
+      "cost": 76899678.37036818
+    },
+    {
+      "code": "7010318",
+      "name": "Portero de obra (Dedicación 100%)",
+      "unit": "mes",
+      "cost": 38449839.18518409
+    },
+    {
+      "code": "7010321",
+      "name": "Oficial (Dedicación 100%)",
+      "unit": "mes",
+      "cost": 53924521.45701544
+    }
+  ]
+}
