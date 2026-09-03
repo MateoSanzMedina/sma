@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from "next/server";
+import { resilientFetch } from "@/lib/apiConfig";
 import * as xlsx from "xlsx";
 
 function cleanNumeric(val: unknown): number {
@@ -55,13 +56,11 @@ export async function POST(req: NextRequest) {
         pyFormData.append("arus_files", f);
       }
 
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
-      console.log(`Intentando procesar en el backend de Python (${backendUrl}/api/v1/payroll/compare)...`);
-      const pyResponse = await fetch(`${backendUrl}/api/v1/payroll/compare`, {
+      console.log(`Intentando procesar en el backend de Python (resilientFetch)...`);
+      const pyResponse = await resilientFetch("/api/v1/payroll/compare", {
         method: "POST",
         body: pyFormData,
-        signal: AbortSignal.timeout(60000),
-      });
+      }, 60000);
 
       if (pyResponse.ok) {
         const pyResult = await pyResponse.json();
@@ -69,7 +68,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(pyResult);
       }
     } catch (e) {
-      console.warn("⚠️ El backend de Python en la nube no respondió. Procesando con motor híbrido local en Next.js...", e);
+      console.warn("⚠️ Backend Python no respondió. Procesando con motor híbrido local en Next.js...", e);
     }
 
     // --- PROCESAMIENTO HÍBRIDO LOCAL (Next.js + XLSX) ---

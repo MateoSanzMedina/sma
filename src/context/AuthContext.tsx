@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { resilientFetch } from "@/lib/apiConfig";
 
 export interface User {
   id: string;
@@ -46,11 +47,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (usernameOrEmail: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
     const cleanIdent = usernameOrEmail.trim();
 
     try {
-      const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
+      const res = await resilientFetch("/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

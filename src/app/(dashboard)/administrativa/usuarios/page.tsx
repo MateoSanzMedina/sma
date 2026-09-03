@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { resilientFetch } from "@/lib/apiConfig";
 import {
   Users,
   UserPlus,
@@ -85,15 +86,13 @@ export default function UsuariosPage() {
   // Formulario Reset Password
   const [resetPassValue, setResetPassValue] = useState("");
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
-
   // Cargar lista de usuarios
   const fetchUsers = async () => {
     setLoading(true);
     setErrorMsg(null);
 
     try {
-      const res = await fetch(`${apiUrl}/api/v1/users`, {
+      const res = await resilientFetch("/api/v1/users", {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -151,7 +150,7 @@ export default function UsuariosPage() {
     setErrorMsg(null);
 
     try {
-      const res = await fetch(`${apiUrl}/api/v1/users`, {
+      const res = await resilientFetch("/api/v1/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -199,7 +198,7 @@ export default function UsuariosPage() {
   // Activar / Suspender usuario
   const handleToggleStatus = async (user: UserItem) => {
     try {
-      const res = await fetch(`${apiUrl}/api/v1/users/${user.id}/toggle`, {
+      const res = await resilientFetch(`/api/v1/users/${user.id}/toggle`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -226,7 +225,7 @@ export default function UsuariosPage() {
     if (!selectedUser || !resetPassValue) return;
 
     try {
-      const res = await fetch(`${apiUrl}/api/v1/users/${selectedUser.id}/password`, {
+      const res = await resilientFetch(`/api/v1/users/${selectedUser.id}/password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -252,7 +251,7 @@ export default function UsuariosPage() {
     if (!confirm(`¿Está seguro de eliminar al usuario ${user.nombre_completo}?`)) return;
 
     try {
-      await fetch(`${apiUrl}/api/v1/users/${user.id}`, {
+      await resilientFetch(`/api/v1/users/${user.id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });

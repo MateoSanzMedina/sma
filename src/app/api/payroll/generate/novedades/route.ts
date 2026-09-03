@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resilientFetch } from "@/lib/apiConfig";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,18 +15,16 @@ export async function POST(req: NextRequest) {
       pyFormData.append("files", file);
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
     let pyResponse: Response;
     try {
-      pyResponse = await fetch(`${backendUrl}/api/v1/payroll/generate/novedades`, {
+      pyResponse = await resilientFetch("/api/v1/payroll/generate/novedades", {
         method: "POST",
         body: pyFormData,
-        signal: AbortSignal.timeout(60000),
-      });
+      }, 60000);
     } catch (e) {
       console.error("Error conectando al backend de Python:", e);
       return NextResponse.json(
-        { error: "El backend de Python está iniciando en la nube. Por favor intente nuevamente en unos segundos." },
+        { error: "El backend de Python no está disponible (iniciando en la nube o no encendido localmente). Por favor intente en unos segundos." },
         { status: 503 }
       );
     }

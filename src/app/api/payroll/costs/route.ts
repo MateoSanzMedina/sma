@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resilientFetch } from "@/lib/apiConfig";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import fs from "fs";
@@ -68,19 +69,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
-
-    // 1. Intentar llamar al backend HTTP oficial en Render
+    // 1. Intentar llamar al backend HTTP (Localhost o Render vía resilientFetch)
     try {
       const pyFormData = new FormData();
       pyFormData.append("file", file);
 
-      console.log(`Procesando costos en backend Python (${backendUrl}/api/v1/costs/process)...`);
-      const pyResponse = await fetch(`${backendUrl}/api/v1/costs/process`, {
+      console.log(`Procesando costos vía backend Python (resilientFetch)...`);
+      const pyResponse = await resilientFetch("/api/v1/costs/process", {
         method: "POST",
         body: pyFormData,
-        signal: AbortSignal.timeout(60000),
-      });
+      }, 60000);
 
       if (pyResponse.ok) {
         const pyResult = await pyResponse.json();
@@ -94,7 +92,7 @@ export async function POST(req: NextRequest) {
         );
       }
     } catch (pyErr) {
-      console.warn("⚠️ Servidor HTTP Python en la nube no respondió o dió timeout.", pyErr);
+      console.warn("⚠️ Backend Python no respondió.", pyErr);
     }
 
     // 2. Solo intentar CLI local en desarrollo (en Vercel no hay Python instalado)

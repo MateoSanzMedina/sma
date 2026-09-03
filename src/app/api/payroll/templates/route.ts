@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resilientFetch } from "@/lib/apiConfig";
 
 export async function GET() {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
-    const pyResponse = await fetch(`${backendUrl}/api/v1/payroll/templates`, {
+    const pyResponse = await resilientFetch("/api/v1/payroll/templates", {
       method: "GET",
-      signal: AbortSignal.timeout(60000),
-    });
+    }, 60000);
 
     if (!pyResponse.ok) {
       throw new Error(`Error en el backend de Python: ${pyResponse.statusText}`);
@@ -40,12 +39,10 @@ export async function POST(req: NextRequest) {
     pyFormData.append("type", type);
     pyFormData.append("file", file);
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
-    const pyResponse = await fetch(`${backendUrl}/api/v1/payroll/templates/upload`, {
+    const pyResponse = await resilientFetch("/api/v1/payroll/templates/upload", {
       method: "POST",
       body: pyFormData,
-      signal: AbortSignal.timeout(60000),
-    });
+    }, 60000);
 
     if (!pyResponse.ok) {
       throw new Error(`Error en el backend de Python: ${pyResponse.statusText}`);
