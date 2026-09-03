@@ -111,44 +111,46 @@ export default function AnticipoManagerPanel({
 
   return (
     <div
-      className="rounded-xl border transition-all duration-300 backdrop-blur-xl shadow-sm overflow-hidden"
       style={{
         backgroundColor: "var(--color-surface)",
         borderColor: "var(--color-border)",
+        borderRadius: "20px",
       }}
+      className="border transition-all duration-300 shadow-sm overflow-hidden"
     >
       {/* Barra Principal Plegable (Compacta y Elegante) */}
       <div 
         onClick={() => setIsOpen(!isOpen)}
-        className="px-5 py-3.5 flex items-center justify-between cursor-pointer select-none hover:bg-[var(--color-surface-hover)]/40 transition-colors"
+        style={{ padding: "1.15rem 1.5rem" }}
+        className="flex items-center justify-between cursor-pointer select-none hover:bg-[var(--color-surface-hover)]/40 transition-colors"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[var(--color-primary-light)] text-[var(--color-primary)] flex items-center justify-center border border-[var(--color-primary)]/20 shrink-0">
+        <div className="flex items-center gap-3.5">
+          <div className="w-9 h-9 rounded-xl bg-[var(--color-primary-light)] text-[#11a542] flex items-center justify-center border border-[#11a542]/20 shrink-0">
             <SlidersHorizontal className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2.5">
-              <h3 className="font-extrabold text-xs sm:text-sm text-[var(--color-text-primary)]">
+              <h3 className="font-bold text-sm text-[var(--color-text-primary)]">
                 Ajustar Anticipos por Proceso / Capítulo
               </h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--color-primary-light)] text-[var(--color-primary)] border border-[var(--color-primary)]/20">
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 60 Días (2 Meses) • 30%
               </span>
               {activeCustomRulesCount > 0 && (
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[var(--color-warning)]/10 text-[var(--color-warning)] border border-[var(--color-warning)]/30">
+                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
                   {activeCustomRulesCount} Reglas Personalizadas
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-[var(--color-text-secondary)] hidden sm:block mt-0.5">
+            <p className="text-xs text-[var(--color-text-secondary)] hidden sm:block mt-0.5">
               Despliega cualquier capítulo para personalizar procesos específicos o cambiar sus días de anticipo.
             </p>
           </div>
         </div>
 
         <button 
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all text-[var(--color-text-secondary)] bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] cursor-pointer"
-          style={{ borderColor: "var(--color-border)" }}
+          style={{ borderRadius: "9999px", padding: "0.5rem 1.15rem" }}
+          className="flex items-center gap-1.5 border text-xs font-bold transition-all text-[var(--color-text-secondary)] bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] cursor-pointer"
         >
           <span>{isOpen ? "Plegar" : "Personalizar"}</span>
           {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}

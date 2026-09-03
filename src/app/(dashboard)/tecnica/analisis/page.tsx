@@ -298,15 +298,17 @@ export default function AnalysisPage() {
 
           <div className="xl:col-span-3 flex flex-col">
             <div 
-              className="rounded-xl p-8 flex-1 flex flex-col items-center justify-center relative overflow-hidden group min-h-[520px]"
               style={{
+                padding: "2.5rem",
+                borderRadius: "24px",
                 backgroundColor: "var(--color-surface)",
                 border: "1px solid var(--color-border)",
                 boxShadow: "var(--shadow-sm)",
               }}
+              className="flex-1 flex flex-col items-center justify-center relative overflow-hidden group min-h-[500px]"
             >
               <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-accent)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-              <div className="w-24 h-24 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(0,0,0,0.5)] transform group-hover:scale-105 transition-transform duration-500 relative">
+              <div className="w-24 h-24 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl flex items-center justify-center mb-6 shadow-sm transform group-hover:scale-105 transition-transform duration-500 relative">
                 <div className="absolute inset-0 bg-[var(--color-accent)]/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <span className="material-symbols-outlined text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)] text-5xl transition-colors duration-500 relative z-10">
                   insights
@@ -321,15 +323,17 @@ export default function AnalysisPage() {
         </div>
       ) : (
         // Grid adaptado a ancho completo cuando los datos están listos
-        <div className="space-y-8">
+        <div className="flex flex-col gap-8">
           {analysisData.isOfflineFallback && (
             <div 
-              className="rounded-xl p-4 sm:p-5 flex items-start gap-4 border animate-fade-in mb-6 relative overflow-hidden group"
               style={{
+                padding: "1.25rem 1.5rem",
+                borderRadius: "18px",
                 backgroundColor: "rgba(255, 102, 0, 0.05)",
                 borderColor: "rgba(255, 102, 0, 0.2)",
                 boxShadow: "0 4px 20px -5px rgba(255, 102, 0, 0.15)",
               }}
+              className="flex items-start gap-4 border animate-fade-in relative overflow-hidden group"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-warning)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
               <span 
@@ -367,19 +371,21 @@ export default function AnalysisPage() {
 
             <div className="xl:col-span-3 flex flex-col">
               <div 
-                className="rounded-xl p-6 sm:p-8 animate-fade-in flex-1 flex flex-col justify-between min-h-[520px]"
                 style={{
+                  padding: "2rem",
+                  borderRadius: "24px",
                   backgroundColor: "var(--color-surface)",
                   border: "1px solid var(--color-border)",
-                  boxShadow: "var(--shadow-md)",
+                  boxShadow: "var(--shadow-sm)",
                 }}
+                className="animate-fade-in flex-1 flex flex-col justify-between"
               >
                 <div>
-                  <h3 className="text-lg font-bold flex items-center gap-2 mb-5" style={{ color: "var(--color-primary)" }}>
+                  <h3 className="text-lg font-bold flex items-center gap-2 mb-5 text-[#11a542]">
                     <Sparkles className="w-5 h-5 flex-shrink-0" />
                     Conclusiones de la IA
                   </h3>
-                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 select-text cursor-auto">
+                  <div className="space-y-3 max-h-[460px] overflow-y-auto pr-3 select-text cursor-auto">
                     {renderMarkdown(analysisData.analysis)}
                   </div>
                 </div>
@@ -388,7 +394,7 @@ export default function AnalysisPage() {
           </div>
 
           {/* Panel Dinámico de Configuración de Anticipos y Desembolsos */}
-          <div className="w-full animate-fade-in">
+          <div className="w-full animate-fade-in mt-2">
             <AnticipoManagerPanel
               dataPoints={analysisData.dataPoints || []}
               rules={anticipoRules}

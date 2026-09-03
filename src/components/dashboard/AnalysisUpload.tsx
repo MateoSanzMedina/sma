@@ -94,25 +94,27 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
 
   return (
     <div 
-      className="rounded-xl p-6 sm:p-8 animate-fade-in flex-1 flex flex-col min-h-[520px]"
       style={{
+        padding: "2rem",
+        borderRadius: "24px",
         backgroundColor: "var(--color-surface)",
         border: "1px solid var(--color-border)",
-        boxShadow: "var(--shadow-md)",
+        boxShadow: "var(--shadow-sm)",
       }}
+      className="animate-fade-in flex flex-col w-full"
     >
-      <div className="flex-grow flex flex-col">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold mb-2" style={{ color: "var(--color-text-primary)" }}>
+      <div className="flex flex-col">
+        <div className="mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-2" style={{ color: "var(--color-text-primary)" }}>
             Cargar Documentos de Proyecto
           </h2>
-          <p className="text-sm mb-6" style={{ color: "var(--color-text-secondary)" }}>
+          <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
             Sube el cronograma (XLSX exportado de MS Project) y el presupuesto de obra (XLSX) para correlacionarlos mediante IA.
           </p>
 
           {error && (
             <div 
-              className="mb-6 p-4 rounded-lg text-sm border" 
+              className="mt-4 p-4 rounded-xl text-sm border" 
               style={{ 
                 backgroundColor: "rgba(239, 68, 68, 0.1)", 
                 color: "var(--color-error)",
@@ -124,44 +126,38 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 flex-1 min-h-[200px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6 min-h-[180px]">
           {/* Schedule Upload Dropzone */}
           <div
-            className={`relative border border-dashed rounded-xl p-6 text-center transition-all duration-300 flex flex-col justify-center items-center flex-1 h-full min-h-[160px] ${
+            className={`relative border border-dashed rounded-2xl p-6 text-center transition-all duration-300 flex flex-col justify-center items-center flex-1 min-h-[160px] ${
               scheduleFile 
-                ? "bg-primary/5" 
-                : "hover:bg-white/5"
+                ? "bg-emerald-500/5 border-emerald-500" 
+                : "border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-white/5"
             }`}
-            style={{
-              borderColor: scheduleFile ? "var(--color-primary)" : "var(--color-border)",
-              backgroundColor: scheduleFile ? "var(--color-primary-light)" : "transparent"
-            }}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleFileDrop(e, "schedule")}
           >
             {scheduleFile ? (
-              <div className="flex flex-col items-center justify-center flex-grow w-full h-full">
-                <CheckCircle className="w-10 h-10 mb-3 flex-shrink-0" style={{ color: "var(--color-primary)" }} />
-                <span className="font-semibold mb-1 text-sm break-all" style={{ color: "var(--color-text-primary)" }}>{scheduleFile.name}</span>
-                <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>Cronograma (XLSX)</span>
+              <div className="flex flex-col items-center justify-center w-full">
+                <CheckCircle className="w-10 h-10 mb-3 flex-shrink-0 text-[#11a542]" />
+                <span className="font-bold mb-1 text-sm break-all text-slate-900 dark:text-white">{scheduleFile.name}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Cronograma (XLSX)</span>
                 <button 
                   onClick={() => setScheduleFile(null)} 
-                  className="mt-5 text-xs font-black hover:underline transition-colors cursor-pointer"
-                  style={{ color: "var(--color-error)" }}
+                  className="mt-4 text-xs font-bold text-rose-500 hover:underline cursor-pointer"
                 >
                   Eliminar archivo
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center flex-grow w-full h-full">
+              <div className="flex flex-col items-center justify-center w-full">
                 <div 
-                  className="w-14 h-14 rounded-full flex items-center justify-center mb-4 flex-shrink-0"
-                  style={{ backgroundColor: "var(--color-surface-hover)" }}
+                  className="w-13 h-13 rounded-2xl flex items-center justify-center mb-3 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                 >
-                  <FileSpreadsheet className="w-7 h-7" style={{ color: "var(--color-text-tertiary)" }} />
+                  <FileSpreadsheet className="w-6 h-6" />
                 </div>
-                <p className="text-sm font-bold mb-1" style={{ color: "var(--color-text-primary)" }}>Cronograma de Obra</p>
-                <p className="text-xs mb-5" style={{ color: "var(--color-text-tertiary)" }}>Formato .xlsx</p>
+                <p className="text-sm font-bold mb-0.5 text-slate-900 dark:text-white">Cronograma de Obra</p>
+                <p className="text-xs mb-4 text-slate-400">Formato .xlsx (Project)</p>
                 <input
                   type="file"
                   accept=".xlsx"
@@ -171,7 +167,8 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
                 />
                 <label
                   htmlFor="schedule-upload"
-                  className="inline-flex items-center justify-center px-10 py-3 rounded-full text-xs font-black min-w-[140px] cursor-pointer transition-all hover:scale-105 active:scale-95 whitespace-nowrap select-none border border-[var(--color-border)] text-[var(--color-text-primary)] bg-[var(--color-surface-hover)] shadow-sm"
+                  style={{ borderRadius: "9999px" }}
+                  className="inline-flex items-center justify-center px-6 py-2.5 text-xs font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 whitespace-nowrap select-none border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white bg-slate-100 dark:bg-slate-800 shadow-sm"
                 >
                   Seleccionar
                 </label>
@@ -181,41 +178,35 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
 
           {/* Budget Upload Dropzone */}
           <div
-            className={`relative border border-dashed rounded-xl p-6 text-center transition-all duration-300 flex flex-col justify-center items-center flex-1 h-full min-h-[160px] ${
+            className={`relative border border-dashed rounded-2xl p-6 text-center transition-all duration-300 flex flex-col justify-center items-center flex-1 min-h-[160px] ${
               budgetFile 
-                ? "bg-warning/5" 
-                : "hover:bg-white/5"
+                ? "bg-emerald-500/5 border-emerald-500" 
+                : "border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-white/5"
             }`}
-            style={{
-              borderColor: budgetFile ? "var(--color-warning)" : "var(--color-border)",
-              backgroundColor: budgetFile ? "rgba(255, 102, 0, 0.05)" : "transparent"
-            }}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => handleFileDrop(e, "budget")}
           >
             {budgetFile ? (
-              <div className="flex flex-col items-center justify-center flex-grow w-full h-full">
-                <CheckCircle className="w-10 h-10 mb-3 flex-shrink-0" style={{ color: "var(--color-warning)" }} />
-                <span className="font-semibold mb-1 text-sm break-all" style={{ color: "var(--color-text-primary)" }}>{budgetFile.name}</span>
-                <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>Presupuesto (XLSX)</span>
+              <div className="flex flex-col items-center justify-center w-full">
+                <CheckCircle className="w-10 h-10 mb-3 flex-shrink-0 text-[#11a542]" />
+                <span className="font-bold mb-1 text-sm break-all text-slate-900 dark:text-white">{budgetFile.name}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Presupuesto (XLSX)</span>
                 <button 
                   onClick={() => setBudgetFile(null)} 
-                  className="mt-5 text-xs font-black hover:underline transition-colors cursor-pointer"
-                  style={{ color: "var(--color-error)" }}
+                  className="mt-4 text-xs font-bold text-rose-500 hover:underline cursor-pointer"
                 >
                   Eliminar archivo
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center flex-grow w-full h-full">
+              <div className="flex flex-col items-center justify-center w-full">
                 <div 
-                  className="w-14 h-14 rounded-full flex items-center justify-center mb-4 flex-shrink-0"
-                  style={{ backgroundColor: "var(--color-surface-hover)" }}
+                  className="w-13 h-13 rounded-2xl flex items-center justify-center mb-3 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                 >
-                  <FileSpreadsheet className="w-7 h-7" style={{ color: "var(--color-text-tertiary)" }} />
+                  <FileSpreadsheet className="w-6 h-6" />
                 </div>
-                <p className="text-sm font-bold mb-1" style={{ color: "var(--color-text-primary)" }}>Presupuesto de Obra</p>
-                <p className="text-xs mb-5" style={{ color: "var(--color-text-tertiary)" }}>Formato .xlsx</p>
+                <p className="text-sm font-bold mb-0.5 text-slate-900 dark:text-white">Presupuesto de Obra</p>
+                <p className="text-xs mb-4 text-slate-400">Formato .xlsx</p>
                 <input
                   type="file"
                   accept=".xlsx"
@@ -225,7 +216,8 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
                 />
                 <label
                   htmlFor="budget-upload"
-                  className="inline-flex items-center justify-center px-10 py-3 rounded-full text-xs font-black min-w-[140px] cursor-pointer transition-all hover:scale-105 active:scale-95 whitespace-nowrap select-none border border-[var(--color-border)] text-[var(--color-text-primary)] bg-[var(--color-surface-hover)] shadow-sm"
+                  style={{ borderRadius: "9999px" }}
+                  className="inline-flex items-center justify-center px-6 py-2.5 text-xs font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 whitespace-nowrap select-none border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white bg-slate-100 dark:bg-slate-800 shadow-sm"
                 >
                   Seleccionar
                 </label>
@@ -234,19 +226,25 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
           </div>
         </div>
 
-        {/* Panel de Parámetros de Flujo Gerencial */}
+        {/* Panel de Parámetros de Flujo Gerencial con Espaciado Generoso */}
         <div 
-          className="p-4 rounded-xl mb-6 border bg-[var(--color-surface-hover)]/30 flex flex-col gap-3"
-          style={{ borderColor: "var(--color-border)" }}
+          style={{
+            padding: "1.25rem 1.5rem",
+            borderRadius: "18px",
+          }}
+          className="border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 flex flex-col gap-4 shadow-sm"
         >
-          <div className="text-xs font-black uppercase tracking-wider text-[var(--color-primary)]">
-            ⚙️ PARÁMETROS DE FLUJO GERENCIAL (DOCUMENTO DIST. COSTOS FLUJO)
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-[#11a542]">
+            <span>⚙️ Parámetros de Flujo Gerencial (Dist. Costos Flujo)</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Prorratear ítems sin asignar */}
-            <div className="flex items-center gap-3 select-none">
-              <label className="relative inline-flex items-center cursor-pointer">
+            <div 
+              style={{ padding: "0.85rem 1.15rem", borderRadius: "14px" }}
+              className="flex items-center gap-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 select-none shadow-sm"
+            >
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
                 <input
                   type="checkbox"
                   checked={prorateOrphans}
@@ -254,21 +252,24 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
                   className="sr-only peer"
                   disabled={loading}
                 />
-                <div className="w-10 h-5 bg-white/10 rounded-full peer peer-focus:ring-2 peer-focus:ring-[var(--color-primary)]/50 peer-checked:bg-[var(--color-primary)] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-2 peer-focus:ring-[#11a542]/40 peer-checked:bg-[#11a542] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
               </label>
               <div className="flex flex-col text-left">
-                <span className="text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>
+                <span className="text-xs font-bold leading-tight text-slate-900 dark:text-white">
                   Prorratear ítems sin asignar
                 </span>
-                <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+                <span className="text-[11px] leading-tight mt-0.5 text-slate-500 dark:text-slate-400">
                   Reasociar huérfanos entre las tareas del capítulo
                 </span>
               </div>
             </div>
 
-            {/* Distribución de Anticipo 30% / 70% */}
-            <div className="flex items-center gap-3 select-none">
-              <label className="relative inline-flex items-center cursor-pointer">
+            {/* Distribución de Anticipo */}
+            <div 
+              style={{ padding: "0.85rem 1.15rem", borderRadius: "14px" }}
+              className="flex items-center gap-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 select-none shadow-sm"
+            >
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
                 <input
                   type="checkbox"
                   checked={enableAnticipo}
@@ -276,13 +277,13 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
                   className="sr-only peer"
                   disabled={loading}
                 />
-                <div className="w-10 h-5 bg-white/10 rounded-full peer peer-focus:ring-2 peer-focus:ring-[var(--color-primary)]/50 peer-checked:bg-[var(--color-primary)] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div>
+                <div className="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:ring-2 peer-focus:ring-[#11a542]/40 peer-checked:bg-[#11a542] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full shadow-inner"></div>
               </label>
               <div className="flex flex-col text-left">
-                <span className="text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>
+                <span className="text-xs font-bold leading-tight text-slate-900 dark:text-white">
                   Desembolso de Anticipo ({anticipoPercentage}% / {100 - anticipoPercentage}%)
                 </span>
-                <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+                <span className="text-[11px] leading-tight mt-0.5 text-slate-500 dark:text-slate-400">
                   Anticipar insumos N meses antes de la tarea
                 </span>
               </div>
@@ -291,19 +292,19 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
 
           {/* Opciones adicionales cuando el anticipo está activo */}
           {enableAnticipo && (
-            <div className="mt-2 pt-3 border-t grid grid-cols-1 sm:grid-cols-2 gap-4 select-none animate-fade-in" style={{ borderColor: "var(--color-border)" }}>
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
               <div>
-                <label className="block text-[11px] font-bold mb-1" style={{ color: "var(--color-text-secondary)" }}>
+                <label className="block text-[11px] font-bold mb-1.5 text-slate-600 dark:text-slate-400">
                   Porcentaje de Anticipo Inicial:
                 </label>
                 <select
                   value={anticipoPercentage}
                   onChange={(e) => setAnticipoPercentage(Number(e.target.value))}
                   disabled={loading}
-                  className="w-full text-xs font-bold p-2 rounded-lg border bg-[var(--color-surface)] text-[var(--color-text-primary)] cursor-pointer"
-                  style={{ borderColor: "var(--color-border)" }}
+                  style={{ height: "2.75rem", borderRadius: "12px", padding: "0 0.75rem" }}
+                  className="w-full text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
                 >
-                  <option value={30}>30% Anticipo / 70% Ejecución (Estándar % Flujo)</option>
+                  <option value={30}>30% Anticipo / 70% Ejecución (Estándar)</option>
                   <option value={20}>20% Anticipo / 80% Ejecución</option>
                   <option value={40}>40% Anticipo / 60% Ejecución</option>
                   <option value={50}>50% Anticipo / 50% Ejecución</option>
@@ -311,15 +312,15 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold mb-1" style={{ color: "var(--color-text-secondary)" }}>
-                  ¿Cuántos meses antes se desembolsa el anticipo?
+                <label className="block text-[11px] font-bold mb-1.5 text-slate-600 dark:text-slate-400">
+                  ¿Cuántos meses antes se desembolsa?
                 </label>
                 <select
                   value={anticipoMonths}
                   onChange={(e) => setAnticipoMonths(Number(e.target.value))}
                   disabled={loading}
-                  className="w-full text-xs font-bold p-2 rounded-lg border bg-[var(--color-surface)] text-[var(--color-text-primary)] cursor-pointer"
-                  style={{ borderColor: "var(--color-border)" }}
+                  style={{ height: "2.75rem", borderRadius: "12px", padding: "0 0.75rem" }}
+                  className="w-full text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
                 >
                   <option value={1}>1 Mes de anticipación (30 días antes)</option>
                   <option value={2}>2 Meses de anticipación (60 días antes)</option>
@@ -332,26 +333,44 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center pt-6 border-t mt-auto gap-4" style={{ borderColor: "var(--color-border)" }}>
+      {/* Botón de Acción con Margen y Espacio Completo */}
+      <div 
+        style={{
+          marginTop: "1.5rem",
+          paddingTop: "1.5rem",
+          borderTop: "1px solid var(--color-border)",
+        }}
+        className="flex justify-end"
+      >
         <button
           onClick={handleSubmit}
           disabled={!scheduleFile || !budgetFile || loading}
-          className="w-full sm:w-auto flex items-center justify-center px-12 py-4 rounded-full font-black text-sm shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed whitespace-nowrap select-none cursor-pointer"
-          style={{ 
-            backgroundColor: "var(--color-primary)",
-            color: "white",
-            boxShadow: "0 10px 20px -5px rgba(1, 92, 50, 0.4)"
+          style={{
+            borderRadius: "9999px",
+            padding: "0.85rem 2.25rem",
+            height: "3.25rem",
+            background: (!scheduleFile || !budgetFile || loading) 
+              ? undefined 
+              : "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
+            boxShadow: (!scheduleFile || !budgetFile || loading)
+              ? undefined
+              : "0 6px 20px rgba(17, 165, 66, 0.35)",
           }}
+          className={`w-full sm:w-auto inline-flex items-center justify-center font-bold text-sm text-white transition-all cursor-pointer border-none ${
+            (!scheduleFile || !budgetFile || loading)
+              ? "bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed opacity-60"
+              : "hover:scale-[1.02] active:scale-[0.98]"
+          }`}
         >
           {loading ? (
             <>
-              <Loader2 className="w-5 h-5 mr-3 animate-spin flex-shrink-0" />
-              Analizando...
+              <Loader2 className="w-5 h-5 mr-2.5 animate-spin flex-shrink-0" />
+              <span>Analizando con IA...</span>
             </>
           ) : (
             <>
-              <UploadCloud className="w-5 h-5 mr-3 flex-shrink-0" />
-              Correlacionar Proyecto
+              <UploadCloud className="w-5 h-5 mr-2.5 flex-shrink-0" />
+              <span>Correlacionar Proyecto</span>
             </>
           )}
         </button>
