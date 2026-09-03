@@ -57,16 +57,21 @@ const CustomTooltip = ({ active, payload, label, chartDataMap, formatCurrency }:
     const groupData = chartDataMap[label];
     return (
       <div 
-        className="p-4 rounded-lg shadow-xl max-w-xs sm:max-w-md backdrop-blur-md select-text"
         style={{
-          backgroundColor: "rgba(17, 24, 39, 0.95)",
-          border: "1px solid var(--color-border-strong)",
+          padding: "1.25rem 1.5rem",
+          borderRadius: "18px",
+          backgroundColor: "#0f172a",
+          border: "1px solid rgba(255, 255, 255, 0.15)",
+          boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.1)",
+          minWidth: "280px",
+          maxWidth: "420px",
         }}
+        className="shadow-2xl backdrop-blur-md select-text text-white animate-fade-in text-xs"
       >
-        <p className="font-bold mb-2 border-b border-gray-700 pb-2 text-sm text-white">
+        <p style={{ fontWeight: 800, fontSize: "0.85rem", marginBottom: "0.75rem", borderBottom: "1px solid rgba(255, 255, 255, 0.12)", paddingBottom: "0.5rem", color: "#ffffff" }}>
           Fecha / Período: {label}
         </p>
-        <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", maxHeight: "240px", overflowY: "auto", paddingRight: "0.25rem" }}>
           {payload.map((entry, index: number) => {
             const tasksList = groupData?.tasks?.[entry.name] || [];
             const displayedTasks = tasksList.slice(0, 3);
@@ -81,17 +86,17 @@ const CustomTooltip = ({ active, payload, label, chartDataMap, formatCurrency }:
 
             return (
               <div key={index} className="flex flex-col">
-                <div className="flex justify-between items-center gap-4">
-                  <span className="text-xs font-bold uppercase tracking-wider" style={{ color: entry.color }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: entry.color }}>
                     {entry.name}
                   </span>
-                  <span className="font-mono text-sm font-semibold text-white">
+                  <span style={{ fontFamily: "monospace", fontSize: "0.85rem", fontWeight: 700, color: "#ffffff" }}>
                     {formatCurrency(entry.value)}
                   </span>
                 </div>
                 {tasksText && (
-                  <div className="mt-1 pl-2 border-l-2" style={{ borderColor: entry.color }}>
-                    <p className="text-[10px] italic leading-tight text-gray-400">
+                  <div style={{ marginTop: "0.25rem", paddingLeft: "0.5rem", borderLeft: `2px solid ${entry.color}` }}>
+                    <p style={{ fontSize: "10px", fontStyle: "italic", lineHeight: 1.3, color: "#94a3b8" }}>
                       {tasksText}
                     </p>
                   </div>
@@ -100,9 +105,9 @@ const CustomTooltip = ({ active, payload, label, chartDataMap, formatCurrency }:
             );
           })}
         </div>
-        <div className="mt-3 pt-2 border-t border-gray-700 flex justify-between">
-          <span className="text-xs font-bold text-gray-400">TOTAL PERÍODO</span>
-          <span className="font-bold text-sm text-[var(--color-warning)]">
+        <div style={{ marginTop: "0.75rem", paddingTop: "0.5rem", borderTop: "1px solid rgba(255, 255, 255, 0.12)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: "11px", fontWeight: 800, color: "#94a3b8" }}>TOTAL PERÍODO</span>
+          <span style={{ fontWeight: 900, fontSize: "0.9rem", color: "#10b981", fontFamily: "monospace" }}>
             {formatCurrency(payload.reduce((sum: number, e) => sum + e.value, 0))}
           </span>
         </div>
@@ -115,42 +120,47 @@ const CustomTooltip = ({ active, payload, label, chartDataMap, formatCurrency }:
 // Tooltip específico para el Diagrama de Gantt
 const GanttTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
-    // Al usar una barra apilada, el tooltip recibe payload para la barra transparente y la barra de duración.
-    // Extraemos los datos reales del elemento visible (el que tiene dataKey="durationDays")
     const activePayload = payload.find((p: any) => p.dataKey === "durationDays") || payload[0];
     const data = activePayload.payload;
     return (
       <div 
-        className="p-4 rounded-xl shadow-2xl backdrop-blur-md text-xs select-text text-white animate-fade-in"
         style={{
-          backgroundColor: "rgba(17, 24, 39, 0.95)",
-          border: "1px solid var(--color-border-strong)",
+          padding: "1.25rem 1.5rem",
+          borderRadius: "18px",
+          backgroundColor: "#0f172a",
+          border: "1px solid rgba(255, 255, 255, 0.15)",
+          boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(255, 255, 255, 0.1)",
+          minWidth: "300px",
+          maxWidth: "420px",
         }}
+        className="shadow-2xl backdrop-blur-md select-text text-white animate-fade-in text-xs"
       >
-        <p className="font-extrabold mb-1.5 border-b border-gray-700 pb-1.5 text-[var(--color-primary)] uppercase tracking-wider text-[10px]">
-          {data.chapter}
-        </p>
-        <p className="font-bold text-sm mb-3 text-white leading-snug">
+        <div style={{ marginBottom: "0.5rem", borderBottom: "1px solid rgba(255, 255, 255, 0.12)", paddingBottom: "0.5rem" }}>
+          <span style={{ fontSize: "10px", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", color: "#10b981" }}>
+            {data.chapter}
+          </span>
+        </div>
+        <p style={{ fontSize: "0.85rem", fontWeight: 800, lineHeight: 1.4, marginBottom: "0.85rem", color: "#ffffff" }}>
           {data.task_name}
         </p>
-        <div className="space-y-1.5 font-mono text-gray-400">
-          <div className="flex justify-between gap-6">
-            <span>Inicio:</span>
-            <span className="text-white font-bold">{data.start_date}</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem", fontFamily: "monospace", color: "#cbd5e1" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "1.5rem" }}>
+            <span style={{ color: "#94a3b8" }}>Inicio:</span>
+            <span style={{ color: "#ffffff", fontWeight: 700 }}>{data.start_date}</span>
           </div>
-          <div className="flex justify-between gap-6">
-            <span>Fin:</span>
-            <span className="text-white font-bold">{data.end_date}</span>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "1.5rem" }}>
+            <span style={{ color: "#94a3b8" }}>Fin:</span>
+            <span style={{ color: "#ffffff", fontWeight: 700 }}>{data.end_date}</span>
           </div>
-          <div className="flex justify-between gap-6">
-            <span>Duración:</span>
-            <span className="text-[var(--color-warning)] font-bold">{data.working_days} {data.working_days === 1 ? "día" : "días"}</span>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "1.5rem" }}>
+            <span style={{ color: "#94a3b8" }}>Duración:</span>
+            <span style={{ color: "#f59e0b", fontWeight: 700 }}>{data.working_days} {data.working_days === 1 ? "día" : "días"}</span>
           </div>
-          <div className="flex justify-between gap-6 border-t border-gray-800 pt-2 mt-2">
-            <span>Presupuesto:</span>
-            <span className="text-[var(--color-accent)] font-black">
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "1.5rem", borderTop: "1px solid rgba(255, 255, 255, 0.1)", paddingTop: "0.6rem", marginTop: "0.25rem" }}>
+            <span style={{ color: "#94a3b8" }}>Presupuesto:</span>
+            <span style={{ color: "#10b981", fontWeight: 900 }}>
               {data.budget_required === 0 ? (
-                <span className="text-[10px] text-gray-400 italic font-bold">Hito / Sin costo directo</span>
+                <span style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic", fontWeight: 700 }}>Hito / Sin costo directo</span>
               ) : (
                 new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", minimumFractionDigits: 0 }).format(data.budget_required)
               )}
@@ -404,27 +414,61 @@ export default function BudgetTimelineChart({ data, tasks, totalBudget }: Budget
         {/* Controles de la Cabecera */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
           {/* Toggles de Vista Píldora */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700 justify-center shadow-inner">
+          <div 
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "5px",
+              gap: "6px",
+              borderRadius: "9999px",
+              backgroundColor: "var(--color-surface-hover)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
             <button
               onClick={() => setChartView("flow")}
-              style={{ borderRadius: "9999px" }}
-              className={`px-4 py-2 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 select-none ${
-                chartView === "flow"
-                  ? "bg-[#015c32] text-white shadow-sm"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+              style={{
+                borderRadius: "9999px",
+                padding: "0.55rem 1.25rem",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                fontSize: "0.75rem",
+                fontWeight: 800,
+                whiteSpace: "nowrap",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                border: "none",
+                background: chartView === "flow" 
+                  ? "linear-gradient(135deg, #015c32 0%, #11a542 100%)" 
+                  : "transparent",
+                color: chartView === "flow" ? "#ffffff" : "var(--color-text-secondary)",
+                boxShadow: chartView === "flow" ? "0 2px 8px rgba(17, 165, 66, 0.3)" : "none",
+              }}
             >
               <span className="material-symbols-outlined text-sm">bar_chart</span>
               <span>Flujo de Caja</span>
             </button>
             <button
               onClick={() => setChartView("gantt")}
-              style={{ borderRadius: "9999px" }}
-              className={`px-4 py-2 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 select-none ${
-                chartView === "gantt"
-                  ? "bg-[#015c32] text-white shadow-sm"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+              style={{
+                borderRadius: "9999px",
+                padding: "0.55rem 1.25rem",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                fontSize: "0.75rem",
+                fontWeight: 800,
+                whiteSpace: "nowrap",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                border: "none",
+                background: chartView === "gantt" 
+                  ? "linear-gradient(135deg, #015c32 0%, #11a542 100%)" 
+                  : "transparent",
+                color: chartView === "gantt" ? "#ffffff" : "var(--color-text-secondary)",
+                boxShadow: chartView === "gantt" ? "0 2px 8px rgba(17, 165, 66, 0.3)" : "none",
+              }}
             >
               <span className="material-symbols-outlined text-sm">stacked_bar_chart</span>
               <span>Diagrama Gantt</span>
@@ -502,34 +546,62 @@ export default function BudgetTimelineChart({ data, tasks, totalBudget }: Budget
       {/* Selector de periodo para vista de flujo (Diario/Semanal/Mensual) */}
       {chartView === "flow" && (
         <div className="flex justify-end mb-4 relative z-10 animate-fade-in">
-          <div className="flex items-center gap-1 bg-[var(--color-bg)] p-1 rounded-full border border-[var(--color-border)] shadow-inner">
+          <div 
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "4px",
+              gap: "4px",
+              borderRadius: "9999px",
+              backgroundColor: "var(--color-surface-hover)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
             <button
               onClick={() => setGrouping("daily")}
-              className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all cursor-pointer ${
-                grouping === "daily"
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
-              }`}
+              style={{
+                borderRadius: "9999px",
+                padding: "0.45rem 1rem",
+                fontSize: "11px",
+                fontWeight: 800,
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                background: grouping === "daily" ? "linear-gradient(135deg, #015c32 0%, #11a542 100%)" : "transparent",
+                color: grouping === "daily" ? "#ffffff" : "var(--color-text-secondary)",
+              }}
             >
               Diario
             </button>
             <button
               onClick={() => setGrouping("weekly")}
-              className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all cursor-pointer ${
-                grouping === "weekly"
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
-              }`}
+              style={{
+                borderRadius: "9999px",
+                padding: "0.45rem 1rem",
+                fontSize: "11px",
+                fontWeight: 800,
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                background: grouping === "weekly" ? "linear-gradient(135deg, #015c32 0%, #11a542 100%)" : "transparent",
+                color: grouping === "weekly" ? "#ffffff" : "var(--color-text-secondary)",
+              }}
             >
               Semanal
             </button>
             <button
               onClick={() => setGrouping("monthly")}
-              className={`px-4 py-1.5 rounded-full text-[10px] font-black transition-all cursor-pointer ${
-                grouping === "monthly"
-                  ? "bg-[var(--color-primary)] text-white shadow-sm"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
-              }`}
+              style={{
+                borderRadius: "9999px",
+                padding: "0.45rem 1rem",
+                fontSize: "11px",
+                fontWeight: 800,
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                background: grouping === "monthly" ? "linear-gradient(135deg, #015c32 0%, #11a542 100%)" : "transparent",
+                color: grouping === "monthly" ? "#ffffff" : "var(--color-text-secondary)",
+              }}
             >
               Mensual
             </button>

@@ -504,26 +504,59 @@ export default function CierreCostosPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center p-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
+                <div 
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: "5px",
+                    gap: "6px",
+                    borderRadius: "9999px",
+                    backgroundColor: "var(--color-surface-hover)",
+                    border: "1px solid var(--color-border)",
+                    flexShrink: 0,
+                  }}
+                >
                   <button
                     onClick={() => setProjectionMode("historical")}
-                    style={{ borderRadius: "9999px" }}
-                    className={`px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none ${
-                      projectionMode === "historical" 
-                        ? "bg-[#015c32] text-white shadow-sm" 
-                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
+                    style={{
+                      borderRadius: "9999px",
+                      padding: "0.55rem 1.25rem",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      fontSize: "0.75rem",
+                      fontWeight: 800,
+                      whiteSpace: "nowrap",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      border: "none",
+                      background: projectionMode === "historical" 
+                        ? "linear-gradient(135deg, #015c32 0%, #11a542 100%)" 
+                        : "transparent",
+                      color: projectionMode === "historical" ? "#ffffff" : "var(--color-text-secondary)",
+                      boxShadow: projectionMode === "historical" ? "0 2px 8px rgba(17, 165, 66, 0.3)" : "none",
+                    }}
                   >
                     Histórica (Real)
                   </button>
                   <button
                     onClick={() => setProjectionMode("theoretical")}
-                    style={{ borderRadius: "9999px" }}
-                    className={`px-4 py-2 text-xs font-bold transition-all cursor-pointer select-none ${
-                      projectionMode === "theoretical" 
-                        ? "bg-[#015c32] text-white shadow-sm" 
-                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
+                    style={{
+                      borderRadius: "9999px",
+                      padding: "0.55rem 1.25rem",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      fontSize: "0.75rem",
+                      fontWeight: 800,
+                      whiteSpace: "nowrap",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      border: "none",
+                      background: projectionMode === "theoretical" 
+                        ? "linear-gradient(135deg, #015c32 0%, #11a542 100%)" 
+                        : "transparent",
+                      color: projectionMode === "theoretical" ? "#ffffff" : "var(--color-text-secondary)",
+                      boxShadow: projectionMode === "theoretical" ? "0 2px 8px rgba(17, 165, 66, 0.3)" : "none",
+                    }}
                   >
                     Teórica (Ideal)
                   </button>

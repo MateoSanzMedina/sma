@@ -270,27 +270,61 @@ export default function ItemBudgetCorrelationPanel({
 
         {/* Switch de Modo de Vista y Exportación */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center p-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <div 
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "5px",
+              gap: "6px",
+              borderRadius: "9999px",
+              backgroundColor: "var(--color-surface-hover)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
             <button
               onClick={() => setViewMode("grouped")}
-              style={{ borderRadius: "9999px" }}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
-                viewMode === "grouped"
-                  ? "bg-[#015c32] text-white shadow-sm"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-              }`}
+              style={{
+                borderRadius: "9999px",
+                padding: "0.55rem 1.25rem",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                fontSize: "0.75rem",
+                fontWeight: 800,
+                whiteSpace: "nowrap",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                border: "none",
+                background: viewMode === "grouped" 
+                  ? "linear-gradient(135deg, #015c32 0%, #11a542 100%)" 
+                  : "transparent",
+                color: viewMode === "grouped" ? "#ffffff" : "var(--color-text-secondary)",
+                boxShadow: viewMode === "grouped" ? "0 2px 8px rgba(17, 165, 66, 0.3)" : "none",
+              }}
             >
               <Layers className="w-3.5 h-3.5" />
               <span>Por Ítems / Jerárquico</span>
             </button>
             <button
               onClick={() => setViewMode("flat")}
-              style={{ borderRadius: "9999px" }}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
-                viewMode === "flat"
-                  ? "bg-[#015c32] text-white shadow-sm"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-              }`}
+              style={{
+                borderRadius: "9999px",
+                padding: "0.55rem 1.25rem",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                fontSize: "0.75rem",
+                fontWeight: 800,
+                whiteSpace: "nowrap",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                border: "none",
+                background: viewMode === "flat" 
+                  ? "linear-gradient(135deg, #015c32 0%, #11a542 100%)" 
+                  : "transparent",
+                color: viewMode === "flat" ? "#ffffff" : "var(--color-text-secondary)",
+                boxShadow: viewMode === "flat" ? "0 2px 8px rgba(17, 165, 66, 0.3)" : "none",
+              }}
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
               <span>Matriz Plana (1 a 1)</span>
