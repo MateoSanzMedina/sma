@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Cargar sesión guardada en localStorage
+    // Cargar sesión guardada en almacenamiento local
     try {
       const savedToken = localStorage.getItem("sma_token");
       const savedUser = localStorage.getItem("sma_user");
@@ -49,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://sma-backend-m7ia.onrender.com";
 
     try {
-      // 1. Intentar llamar al backend oficial en Render
       const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,31 +75,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: false, error: errorMsg };
 
     } catch (netErr: any) {
-      // 2. Fallback de contingencia administrativa segura si Render está en arranque en frío (Cold Start)
-      if (
-        email.trim().toLowerCase() === "admin@serving.com.co" &&
-        pass === "Serving2026*SecureAdmin!"
-      ) {
-        const emergencyUser: User = {
-          id: "admin-serving-root",
-          email: "admin@serving.com.co",
-          nombre_completo: "Administrador General Serving",
-          rol: "ADMIN"
-        };
-        const emergencyToken = "local_admin_session_token_serving_2026";
-        setToken(emergencyToken);
-        setUser(emergencyUser);
-        localStorage.setItem("sma_token", emergencyToken);
-        localStorage.setItem("sma_user", JSON.stringify(emergencyUser));
-        document.cookie = `sma_auth=true; path=/; max-age=604800; SameSite=Lax`;
-        setIsLoading(false);
-        return { success: true };
-      }
-
       setIsLoading(false);
       return { 
         success: false, 
-        error: "No se pudo conectar con el servidor de autenticación. Verifique su conexión." 
+        error: "Error de conexión con el servidor. Intente nuevamente en unos segundos." 
       };
     }
   };

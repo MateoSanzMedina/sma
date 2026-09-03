@@ -37,14 +37,8 @@ export default function LoginPage() {
     if (res.success) {
       router.replace("/dashboard");
     } else {
-      setError(res.error || "Error al iniciar sesión.");
+      setError(res.error || "Credenciales de acceso incorrectas.");
     }
-  };
-
-  const handleFillDemo = () => {
-    setEmail("admin@serving.com.co");
-    setPassword("Serving2026*SecureAdmin!");
-    setError(null);
   };
 
   return (
@@ -147,24 +141,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Caja Informativa de Credenciales de Demostración */}
-          <div className="mt-6 rounded-xl border border-slate-800/80 bg-slate-950/40 p-3.5 text-xs text-slate-400">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-semibold text-slate-300">Cuenta de Administrador:</span>
-              <button
-                type="button"
-                onClick={handleFillDemo}
-                className="text-[11px] font-medium text-amber-400 hover:text-amber-300 transition-colors underline cursor-pointer"
-              >
-                Autocompletar
-              </button>
-            </div>
-            <div className="space-y-0.5 font-mono text-[11px] text-slate-400">
-              <p>Email: <span className="text-slate-200">admin@serving.com.co</span></p>
-              <p>Clave: <span className="text-slate-200">Serving2026*SecureAdmin!</span></p>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
