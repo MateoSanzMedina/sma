@@ -218,3 +218,64 @@ body {
 .animate-slide-right {
   animation: slideInRight var(--transition-normal) ease forwards;
 }
+
+/* ===== UI/UX Pro Max - Botones Corporativos Estándar ===== */
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+.btn-serving-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  background: linear-gradient(135deg, #015c32 0%, #11a542 100%);
+  box-shadow: 0 4px 15px rgba(17, 165, 66, 0.3);
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
+}
+
+.btn-serving-primary:hover {
+  background: linear-gradient(135deg, #014d2a 0%, #14c750 100%);
+  box-shadow: 0 8px 25px rgba(17, 165, 66, 0.45);
+  transform: translateY(-1.5px);
+}
+
+.btn-serving-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-serving-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.btn-serving-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1.5px);
+}
+
+.btn-serving-secondary:active {
+  transform: scale(0.98);
+}
