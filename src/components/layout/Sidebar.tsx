@@ -3,46 +3,73 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import {
+  LayoutDashboard,
+  HardHat,
+  TrendingUp,
+  Receipt,
+  Users,
+  ShieldCheck,
+  UserCog,
+  FileText,
+  Blocks,
+  Settings,
+  Pin,
+  PinOff,
+  type LucideIcon
+} from "lucide-react";
 
-const navGroups = [
+interface NavItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  exact?: boolean;
+}
+
+interface NavGroup {
+  group: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
   {
     group: "General",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: "dashboard", exact: true }
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true }
     ]
   },
   {
     group: "Área Técnica",
     items: [
-      { label: "Proyectos", href: "/tecnica/proyectos", icon: "construction" },
-      { label: "Flujo Gerencia", href: "/tecnica/analisis", icon: "analytics" },
-      { label: "Cierre de Costos", href: "/tecnica/cierre-costos", icon: "request_quote" }
+      { label: "Proyectos", href: "/tecnica/proyectos", icon: HardHat },
+      { label: "Flujo Gerencia", href: "/tecnica/analisis", icon: TrendingUp },
+      { label: "Cierre de Costos", href: "/tecnica/cierre-costos", icon: Receipt }
     ]
   },
   {
     group: "Área Comercial",
     items: [
-      { label: "CRM", href: "/comercial/crm", icon: "group" }
+      { label: "CRM", href: "/comercial/crm", icon: Users }
     ]
   },
   {
     group: "Gestión Humana",
     items: [
-      { label: "Seguridad Social", href: "/gestion-humana/seguridad-social", icon: "badge" }
+      { label: "Seguridad Social", href: "/gestion-humana/seguridad-social", icon: ShieldCheck }
     ]
   },
   {
     group: "Área Administrativa",
     items: [
-      { label: "Usuarios & Accesos", href: "/administrativa/usuarios", icon: "manage_accounts" },
-      { label: "Documentos", href: "/administrativa/documentos", icon: "edit_document" },
-      { label: "Integraciones", href: "/administrativa/integraciones", icon: "extension" }
+      { label: "Usuarios & Accesos", href: "/administrativa/usuarios", icon: UserCog },
+      { label: "Documentos", href: "/administrativa/documentos", icon: FileText },
+      { label: "Integraciones", href: "/administrativa/integraciones", icon: Blocks }
     ]
   }
 ];
 
-const bottomItems = [
-  { label: "Configuración", href: "/configuracion", icon: "settings" },
+const bottomItems: NavItem[] = [
+  { label: "Configuración", href: "/configuracion", icon: Settings },
 ];
 
 export default function Sidebar() {
@@ -110,7 +137,8 @@ export default function Sidebar() {
               </p>
             )}
             {group.items.map((item) => {
-              const isActive = (item as { exact?: boolean }).exact ? pathname === item.href : pathname.startsWith(item.href);
+              const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+              const Icon = item.icon;
               
               return (
                 <Link
@@ -118,7 +146,7 @@ export default function Sidebar() {
                   href={item.href}
                   title={!isExpanded ? item.label : ''}
                   className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 overflow-hidden ${
-                    isActive ? 'shadow-sm border border-white/5' : 'hover:bg-white/5'
+                    isActive ? 'shadow-sm border border-white/5 font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5'
                   } ${!isExpanded ? 'justify-center' : ''}`}
                   style={{
                     color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
@@ -136,20 +164,16 @@ export default function Sidebar() {
                   }}
                 >
                   {isActive && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md" style={{ backgroundColor: "var(--color-primary)" }} />
+                    <div className="absolute left-0 top-0 bottom-0 w-1 rounded-r-md" style={{ backgroundColor: "var(--color-primary)" }} />
                   )}
-                  <span
-                    className="material-symbols-outlined shrink-0"
+                  <Icon
+                    className="shrink-0 h-5 w-5 transition-colors"
                     style={{ 
-                      color: isActive ? "var(--color-primary)" : "inherit",
-                      fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0", 
-                      fontSize: '22px' 
+                      color: isActive ? "var(--color-primary)" : "inherit"
                     }}
-                  >
-                    {item.icon}
-                  </span>
+                  />
                   {isExpanded && (
-                    <p className="text-sm font-medium leading-normal truncate transition-all duration-300">
+                    <p className="text-sm leading-normal truncate transition-all duration-300">
                       {item.label}
                     </p>
                   )}
@@ -163,13 +187,14 @@ export default function Sidebar() {
       <div className="mt-auto p-4 border-t flex flex-col gap-4" style={{ borderColor: "var(--color-border)" }}>
         {bottomItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
               title={!isExpanded ? item.label : ''}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 overflow-hidden ${
-                isActive ? 'shadow-sm border border-white/5' : 'hover:bg-white/5'
+                isActive ? 'shadow-sm border border-white/5 font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5'
               } ${!isExpanded ? 'justify-center' : ''}`}
               style={{
                 color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
@@ -187,31 +212,32 @@ export default function Sidebar() {
               }}
             >
               {isActive && (
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md" style={{ backgroundColor: "var(--color-primary)" }} />
+                <div className="absolute left-0 top-0 bottom-0 w-1 rounded-r-md" style={{ backgroundColor: "var(--color-primary)" }} />
               )}
-              <span className="material-symbols-outlined shrink-0" style={{ 
-                  color: isActive ? "var(--color-primary)" : "inherit",
-                  fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0", 
-                  fontSize: '22px' 
-                }}>
-                {item.icon}
-              </span>
-              {isExpanded && <span className="text-sm font-medium leading-normal truncate">{item.label}</span>}
+              <Icon
+                className="shrink-0 h-5 w-5 transition-colors"
+                style={{ 
+                  color: isActive ? "var(--color-primary)" : "inherit"
+                }}
+              />
+              {isExpanded && <span className="text-sm leading-normal truncate">{item.label}</span>}
             </Link>
           );
         })}
         
         <button
           onClick={toggleLock}
-          className={`flex items-center gap-3 px-2 py-2 rounded-lg transition-colors hover:bg-white/5 cursor-pointer ${!isExpanded ? 'justify-center' : ''}`}
+          className={`flex items-center gap-3 px-2 py-2 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer ${!isExpanded ? 'justify-center' : ''}`}
           style={{ color: "var(--color-text-secondary)" }}
           title={isLocked ? "Desbloquear menú" : "Fijar menú"}
           onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-text-primary)"}
           onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-text-secondary)"}
         >
-          <span className="material-symbols-outlined" style={{ fontSize: '20px', fontVariationSettings: isLocked ? "'FILL' 1" : "'FILL' 0" }}>
-            {isLocked ? 'keep' : 'keep_off'}
-          </span>
+          {isLocked ? (
+            <Pin className="h-5 w-5 shrink-0 text-[#11a542]" />
+          ) : (
+            <PinOff className="h-5 w-5 shrink-0" />
+          )}
           {isExpanded && <span className="text-[11px] font-semibold uppercase tracking-widest whitespace-nowrap overflow-hidden text-ellipsis">Fijar Menú</span>}
         </button>
 

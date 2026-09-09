@@ -1,3 +1,4 @@
+@import "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200";
 @import "tailwindcss";
 
 /* ===== SMA SERVING - Design System Tokens ===== label placeholder aria-label */
@@ -150,6 +151,8 @@ body {
   word-wrap: normal;
   white-space: nowrap;
   direction: ltr;
+  font-feature-settings: 'liga' 1;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ===== Utility Classes ===== */
