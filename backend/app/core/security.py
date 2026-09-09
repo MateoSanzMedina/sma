@@ -12,6 +12,40 @@ import pyotp
 
 security_bearer = HTTPBearer(auto_error=False)
 
+def validate_password_complexity(password: str) -> None:
+    """Valida los requisitos mínimos de seguridad para contraseñas (OWASP A07).
+    - Mínimo 8 caracteres.
+    - Al menos una letra mayúscula.
+    - Al menos una letra minúscula.
+    - Al menos un número.
+    - Al menos un carácter especial (!@#$%^&*...).
+    """
+    if not password or len(password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña debe tener al menos 8 caracteres."
+        )
+    if not re.search(r"[A-Z]", password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña debe incluir al menos una letra mayúscula."
+        )
+    if not re.search(r"[a-z]", password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña debe incluir al menos una letra minúscula."
+        )
+    if not re.search(r"\d", password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña debe incluir al menos un número."
+        )
+    if not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?~`]", password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contraseña debe incluir al menos un carácter especial (ej: !@#$%^&*)."
+        )
+
 def hash_password(password: str) -> str:
     """Hashea la contraseña usando Bcrypt con salt seguro y truncado a 72 bytes (OWASP A02)."""
     if not password:

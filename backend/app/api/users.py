@@ -7,7 +7,12 @@ from datetime import datetime, timezone
 
 from app.db.session import get_db
 from app.models.models import Usuario, Empresa, SecurityAuditLog
-from app.core.security import hash_password, get_current_user, RoleChecker
+from app.core.security import (
+    hash_password,
+    get_current_user,
+    RoleChecker,
+    validate_password_complexity
+)
 
 router = APIRouter()
 
@@ -23,11 +28,11 @@ class UserItemResponse(BaseModel):
 class CreateUserRequest(BaseModel):
     email: str
     nombre_completo: str
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8)
     rol: str = "RESIDENTE"
 
 class ResetPasswordRequest(BaseModel):
-    new_password: str = Field(..., min_length=6)
+    new_password: str = Field(..., min_length=8)
 
 class UpdateUserRequest(BaseModel):
     nombre_completo: Optional[str] = None
@@ -84,6 +89,7 @@ async def create_user(
             detail=f"Ya existe un usuario registrado con el correo/usuario '{clean_email}'."
         )
 
+    validate_password_complexity(req.password)
     hashed = hash_password(req.password)
     empresa_id = current_user.get("empresa_id")
 
@@ -165,6 +171,7 @@ async def reset_user_password(
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado.")
 
+    validate_password_complexity(req.new_password)
     user.password_hash = hash_password(req.new_password)
     user.failed_login_attempts = 0
     user.locked_until = None

@@ -17,7 +17,10 @@ import {
   AlertCircle,
   X,
   Search,
-  Building
+  Building,
+  Eye,
+  EyeOff,
+  Check
 } from "lucide-react";
 
 interface UserItem {
@@ -85,6 +88,27 @@ export default function UsuariosPage() {
 
   // Formulario Reset Password
   const [resetPassValue, setResetPassValue] = useState("");
+
+  // Visibilidad de contraseñas
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+
+  // Validador de complejidad de contraseña en tiempo real (OWASP A07: 8+ chars, Mayús, Minús, Núm, Especial)
+  const checkPasswordRequirements = (pwd: string) => {
+    const minLength = pwd.length >= 8;
+    const hasUpper = /[A-Z]/.test(pwd);
+    const hasLower = /[a-z]/.test(pwd);
+    const hasNumber = /\d/.test(pwd);
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(pwd);
+    return {
+      minLength,
+      hasUpper,
+      hasLower,
+      hasNumber,
+      hasSpecial,
+      isValid: minLength && hasUpper && hasLower && hasNumber && hasSpecial,
+    };
+  };
 
   // Cargar lista de usuarios
   const fetchUsers = async () => {
@@ -154,6 +178,12 @@ export default function UsuariosPage() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNombre.trim() || !newEmail.trim() || !newPassword) return;
+
+    const reqs = checkPasswordRequirements(newPassword);
+    if (!reqs.isValid) {
+      setErrorMsg("La contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula, número y al menos un carácter especial (!@#$%...).");
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMsg(null);
@@ -232,6 +262,12 @@ export default function UsuariosPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser || !resetPassValue) return;
+
+    const reqs = checkPasswordRequirements(resetPassValue);
+    if (!reqs.isValid) {
+      setErrorMsg("La nueva contraseña debe tener mínimo 8 caracteres, mayúscula, minúscula, número y al menos un carácter especial (!@#$%...).");
+      return;
+    }
 
     try {
       const res = await resilientFetch(`/api/v1/users/${selectedUser.id}/password`, {
@@ -634,22 +670,62 @@ export default function UsuariosPage() {
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-300 ml-1">
                   Contraseña Inicial
                 </label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Mínimo 6 caracteres"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  style={{
-                    padding: "0.75rem 1rem",
-                    borderRadius: "14px",
-                    backgroundColor: "#070b14",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    color: "#ffffff",
-                    fontSize: "0.875rem",
-                  }}
-                  className="focus:border-[#11a542] focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
-                />
+                <div className="relative flex items-center w-full">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    required
+                    placeholder="Mínimo 8 caracteres (A-Z, a-z, 0-9, !@#$)"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    style={{
+                      padding: "0.75rem 2.75rem 0.75rem 1rem",
+                      borderRadius: "14px",
+                      backgroundColor: "#070b14",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "#ffffff",
+                      fontSize: "0.875rem",
+                      width: "100%",
+                    }}
+                    className="focus:border-[#11a542] focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                    title={showNewPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+
+                {/* Requisitos mínimos de seguridad en tiempo real */}
+                {newPassword.length > 0 && (
+                  <div className="mt-1.5 p-3 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 text-[11px]">
+                    <p className="font-semibold text-slate-300">Requisitos de seguridad (OWASP):</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <span className={`flex items-center gap-1.5 ${newPassword.length >= 8 ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+                        <Check className={`h-3 w-3 ${newPassword.length >= 8 ? "text-emerald-400" : "text-slate-600"}`} />
+                        8+ caracteres
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${/[A-Z]/.test(newPassword) ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+                        <Check className={`h-3 w-3 ${/[A-Z]/.test(newPassword) ? "text-emerald-400" : "text-slate-600"}`} />
+                        Mayúscula (A-Z)
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${/[a-z]/.test(newPassword) ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+                        <Check className={`h-3 w-3 ${/[a-z]/.test(newPassword) ? "text-emerald-400" : "text-slate-600"}`} />
+                        Minúscula (a-z)
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${/\d/.test(newPassword) ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+                        <Check className={`h-3 w-3 ${/\d/.test(newPassword) ? "text-emerald-400" : "text-slate-600"}`} />
+                        Número (0-9)
+                      </span>
+                      <span className={`col-span-2 flex items-center gap-1.5 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(newPassword) ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+                        <Check className={`h-3 w-3 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(newPassword) ? "text-emerald-400" : "text-slate-600"}`} />
+                        Carácter especial (!@#$%^&*...)
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-3">
@@ -719,22 +795,62 @@ export default function UsuariosPage() {
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-300 ml-1">
                   Nueva Contraseña
                 </label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Mínimo 6 caracteres"
-                  value={resetPassValue}
-                  onChange={(e) => setResetPassValue(e.target.value)}
-                  style={{
-                    padding: "0.75rem 1rem",
-                    borderRadius: "14px",
-                    backgroundColor: "#070b14",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    color: "#ffffff",
-                    fontSize: "0.875rem",
-                  }}
-                  className="focus:border-[#11a542] focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
-                />
+                <div className="relative flex items-center w-full">
+                  <input
+                    type={showResetPassword ? "text" : "password"}
+                    required
+                    placeholder="Mínimo 8 caracteres (A-Z, a-z, 0-9, !@#$)"
+                    value={resetPassValue}
+                    onChange={(e) => setResetPassValue(e.target.value)}
+                    style={{
+                      padding: "0.75rem 2.75rem 0.75rem 1rem",
+                      borderRadius: "14px",
+                      backgroundColor: "#070b14",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "#ffffff",
+                      fontSize: "0.875rem",
+                      width: "100%",
+                    }}
+                    className="focus:border-[#11a542] focus:outline-none focus:ring-2 focus:ring-[#11a542]/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassword(!showResetPassword)}
+                    className="absolute right-3 p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                    title={showResetPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                  >
+                    {showResetPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+
+                {/* Requisitos mínimos de seguridad en tiempo real */}
+                {resetPassValue.length > 0 && (
+                  <div className="mt-1.5 p-3 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 text-[11px]">
+                    <p className="font-semibold text-slate-300">Requisitos de seguridad (OWASP):</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <span className={`flex items-center gap-1.5 ${resetPassValue.length >= 8 ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+                        <Check className={`h-3 w-3 ${resetPassValue.length >= 8 ? "text-emerald-400" : "text-slate-600"}`} />
+                        8+ caracteres
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${/[A-Z]/.test(resetPassValue) ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+                        <Check className={`h-3 w-3 ${/[A-Z]/.test(resetPassValue) ? "text-emerald-400" : "text-slate-600"}`} />
+                        Mayúscula (A-Z)
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${/[a-z]/.test(resetPassValue) ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+                        <Check className={`h-3 w-3 ${/[a-z]/.test(resetPassValue) ? "text-emerald-400" : "text-slate-600"}`} />
+                        Minúscula (a-z)
+                      </span>
+                      <span className={`flex items-center gap-1.5 ${/\d/.test(resetPassValue) ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+                        <Check className={`h-3 w-3 ${/\d/.test(resetPassValue) ? "text-emerald-400" : "text-slate-600"}`} />
+                        Número (0-9)
+                      </span>
+                      <span className={`col-span-2 flex items-center gap-1.5 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(resetPassValue) ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+                        <Check className={`h-3 w-3 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(resetPassValue) ? "text-emerald-400" : "text-slate-600"}`} />
+                        Carácter especial (!@#$%^&*...)
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-3">
