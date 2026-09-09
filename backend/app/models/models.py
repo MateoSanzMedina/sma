@@ -47,8 +47,8 @@ class Empresa(Base):
     direccion = Column(Text, nullable=True)
     telefono = Column(String(50), nullable=True)
     activo = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     usuarios = relationship("Usuario", back_populates="empresa")
     proyectos = relationship("Proyecto", back_populates="empresa")
@@ -65,12 +65,12 @@ class Usuario(Base):
     empresa_id = Column(GUID, ForeignKey("empresas.id", ondelete="CASCADE"), nullable=False)
     activo = Column(Boolean, default=True)
     failed_login_attempts = Column(Integer, default=0)
-    locked_until = Column(DateTime, nullable=True)
-    last_login_at = Column(DateTime, nullable=True)
+    locked_until = Column(DateTime(timezone=True), nullable=True)
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
     totp_secret = Column(String(255), nullable=True)
     totp_enabled = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     empresa = relationship("Empresa", back_populates="usuarios")
 
@@ -88,8 +88,8 @@ class Proyecto(Base):
     fecha_fin = Column(Date, nullable=True)
     estado = Column(String(30), default="EN_EJECUCION")
     metadata_json = Column(JSON, default=dict)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     empresa = relationship("Empresa", back_populates="proyectos")
     capitulos = relationship("Capitulo", back_populates="proyecto")
@@ -103,7 +103,7 @@ class Capitulo(Base):
     codigo = Column(String(50), nullable=False)
     nombre = Column(String(255), nullable=False)
     orden = Column(Integer, default=0)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     proyecto = relationship("Proyecto", back_populates="capitulos")
     apus = relationship("APU", back_populates="capitulo")
@@ -121,7 +121,7 @@ class APU(Base):
     rendimiento = Column(Numeric(12, 4), default=1.0)
     costo_unitario = Column(Numeric(18, 2), default=0.00)
     metadata_json = Column(JSON, default=dict)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     capitulo = relationship("Capitulo", back_populates="apus")
     insumos = relationship("APUInsumo", back_populates="apu")
@@ -137,7 +137,7 @@ class APUInsumo(Base):
     unidad = Column(String(20), nullable=False)
     cantidad = Column(Numeric(12, 4), nullable=False)
     precio_unitario = Column(Numeric(18, 2), nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     apu = relationship("APU", back_populates="insumos")
 
@@ -155,7 +155,7 @@ class Nomina(Base):
     total_descuentos = Column(Numeric(18, 2), default=0.00)
     total_pagar = Column(Numeric(18, 2), default=0.00)
     created_by = Column(GUID, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     detalles = relationship("NominaDetalle", back_populates="nomina")
 
@@ -174,7 +174,7 @@ class NominaDetalle(Base):
     descuentos = Column(Numeric(18, 2), default=0.00)
     neto_pagar = Column(Numeric(18, 2), nullable=False)
     novedades_json = Column(JSON, default=dict)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     nomina = relationship("Nomina", back_populates="detalles")
 
@@ -191,8 +191,8 @@ class AgenteAuditLog(Base):
     reasoning = Column(Text, nullable=True)
     status = Column(String(30), default="PENDING_REVIEW")  # PENDING_REVIEW, APPROVED, REJECTED, AUTO_APPROVED
     reviewed_by_id = Column(GUID, ForeignKey("usuarios.id", ondelete="SET NULL"), nullable=True)
-    reviewed_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class SecurityAuditLog(Base):
@@ -204,4 +204,4 @@ class SecurityAuditLog(Base):
     user_agent = Column(Text, nullable=True)
     evento = Column(String(100), nullable=False)
     detalle = Column(JSON, default=dict)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
