@@ -1,4 +1,5 @@
 import jwt
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any
 import bcrypt
@@ -31,8 +32,14 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Genera un Token JWT firmado de acceso seguro."""
-    to_encode = data.copy()
+    """Genera un Token JWT firmado de acceso seguro serializando objetos UUID a string."""
+    to_encode = {}
+    for k, v in data.items():
+        if isinstance(v, uuid.UUID) or (hasattr(v, "hex") and hasattr(v, "urn")):
+            to_encode[k] = str(v)
+        else:
+            to_encode[k] = v
+
     now = datetime.now(timezone.utc)
     if expires_delta:
         expire = now + expires_delta
@@ -48,12 +55,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
     return encoded_jwt
 
-def create_temp_2fa_token(user_id: str, email: str) -> str:
+def create_temp_2fa_token(user_id: Any, email: str) -> str:
     """Genera un token temporal de 5 minutos únicamente válido para verificación 2FA."""
     now = datetime.now(timezone.utc)
     expire = now + timedelta(minutes=settings.TEMP_TOKEN_EXPIRE_MINUTES)
     payload = {
-        "sub": user_id,
+        "sub": str(user_id),
         "email": email,
         "purpose": "2fa_pending",
         "iat": now,

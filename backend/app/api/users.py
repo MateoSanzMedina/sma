@@ -47,10 +47,10 @@ async def list_users(
     
     return [
         UserItemResponse(
-            id=u.id,
+            id=str(u.id),
             email=u.email,
             nombre_completo=u.nombre_completo,
-            rol=u.rol,
+            rol=str(u.rol),
             activo=u.activo,
             last_login_at=u.last_login_at,
             created_at=u.created_at
@@ -106,10 +106,10 @@ async def create_user(
     await db.refresh(new_user)
 
     return UserItemResponse(
-        id=new_user.id,
+        id=str(new_user.id),
         email=new_user.email,
         nombre_completo=new_user.nombre_completo,
-        rol=new_user.rol,
+        rol=str(new_user.rol),
         activo=new_user.activo,
         last_login_at=new_user.last_login_at,
         created_at=new_user.created_at
@@ -141,10 +141,10 @@ async def toggle_user_status(
     await db.refresh(user)
 
     return UserItemResponse(
-        id=user.id,
+        id=str(user.id),
         email=user.email,
         nombre_completo=user.nombre_completo,
-        rol=user.rol,
+        rol=str(user.rol),
         activo=user.activo,
         last_login_at=user.last_login_at,
         created_at=user.created_at

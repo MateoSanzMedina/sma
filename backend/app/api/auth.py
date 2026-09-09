@@ -141,7 +141,7 @@ async def login(request_data: LoginRequest, request: Request, db: AsyncSession =
 
         try:
             sec_log = SecurityAuditLog(
-                usuario_id=user.id,
+                usuario_id=str(user.id) if user.id else None,
                 ip_address=ip_address,
                 user_agent=user_agent,
                 evento="LOGIN_PASSWORD_INVALID",
@@ -162,10 +162,10 @@ async def login(request_data: LoginRequest, request: Request, db: AsyncSession =
 
     # Si el usuario tiene 2FA activado, emitir desafío TOTP pre-auth
     if user.totp_enabled and user.totp_secret:
-        temp_token = create_temp_2fa_token(user.id, user.email)
+        temp_token = create_temp_2fa_token(str(user.id), user.email)
         try:
             sec_log = SecurityAuditLog(
-                usuario_id=user.id,
+                usuario_id=str(user.id) if user.id else None,
                 ip_address=ip_address,
                 user_agent=user_agent,
                 evento="LOGIN_2FA_CHALLENGE_ISSUED",
@@ -184,20 +184,20 @@ async def login(request_data: LoginRequest, request: Request, db: AsyncSession =
 
     # Si no tiene 2FA, emitir token JWT final
     token_payload = {
-        "sub": user.id,
+        "sub": str(user.id),
         "email": user.email,
-        "role": user.rol,
-        "empresa_id": user.empresa_id
+        "role": str(user.rol),
+        "empresa_id": str(user.empresa_id)
     }
     access_token = create_access_token(data=token_payload)
 
     try:
         sec_log = SecurityAuditLog(
-            usuario_id=user.id,
+            usuario_id=str(user.id) if user.id else None,
             ip_address=ip_address,
             user_agent=user_agent,
             evento="LOGIN_SUCCESSFUL",
-            detalle={"role": user.rol}
+            detalle={"role": str(user.rol)}
         )
         db.add(sec_log)
         await db.commit()
@@ -209,11 +209,11 @@ async def login(request_data: LoginRequest, request: Request, db: AsyncSession =
         access_token=access_token,
         token_type="bearer",
         user=UserResponse(
-            id=user.id,
+            id=str(user.id),
             email=user.email,
             nombre_completo=user.nombre_completo,
-            rol=user.rol,
-            empresa_id=user.empresa_id,
+            rol=str(user.rol),
+            empresa_id=str(user.empresa_id),
             totp_enabled=bool(user.totp_enabled)
         )
     )
@@ -246,7 +246,7 @@ async def verify_2fa(request_data: Verify2FARequest, request: Request, db: Async
     if not is_valid:
         try:
             sec_log = SecurityAuditLog(
-                usuario_id=user.id,
+                usuario_id=str(user.id) if user.id else None,
                 ip_address=ip_address,
                 user_agent=user_agent,
                 evento="2FA_VERIFY_FAILED",
@@ -263,20 +263,20 @@ async def verify_2fa(request_data: Verify2FARequest, request: Request, db: Async
 
     # 4. Código válido: emitir token definitivo
     token_payload = {
-        "sub": user.id,
+        "sub": str(user.id),
         "email": user.email,
-        "role": user.rol,
-        "empresa_id": user.empresa_id
+        "role": str(user.rol),
+        "empresa_id": str(user.empresa_id)
     }
     access_token = create_access_token(data=token_payload)
 
     try:
         sec_log = SecurityAuditLog(
-            usuario_id=user.id,
+            usuario_id=str(user.id) if user.id else None,
             ip_address=ip_address,
             user_agent=user_agent,
             evento="LOGIN_2FA_SUCCESSFUL",
-            detalle={"role": user.rol}
+            detalle={"role": str(user.rol)}
         )
         db.add(sec_log)
         await db.commit()
@@ -288,11 +288,11 @@ async def verify_2fa(request_data: Verify2FARequest, request: Request, db: Async
         access_token=access_token,
         token_type="bearer",
         user=UserResponse(
-            id=user.id,
+            id=str(user.id),
             email=user.email,
             nombre_completo=user.nombre_completo,
-            rol=user.rol,
-            empresa_id=user.empresa_id,
+            rol=str(user.rol),
+            empresa_id=str(user.empresa_id),
             totp_enabled=True
         )
     )
@@ -401,10 +401,10 @@ async def get_profile(current_user: dict = Depends(get_current_user), db: AsyncS
         )
 
     return UserResponse(
-        id=user.id,
+        id=str(user.id),
         email=user.email,
         nombre_completo=user.nombre_completo,
-        rol=user.rol,
-        empresa_id=user.empresa_id,
+        rol=str(user.rol),
+        empresa_id=str(user.empresa_id),
         totp_enabled=bool(user.totp_enabled)
     )
