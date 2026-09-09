@@ -141,7 +141,7 @@ async def login(request_data: LoginRequest, request: Request, db: AsyncSession =
 
         try:
             sec_log = SecurityAuditLog(
-                usuario_id=str(user.id) if user.id else None,
+                usuario_id=user.id,
                 ip_address=ip_address,
                 user_agent=user_agent,
                 evento="LOGIN_PASSWORD_INVALID",
@@ -150,7 +150,7 @@ async def login(request_data: LoginRequest, request: Request, db: AsyncSession =
             db.add(sec_log)
             await db.commit()
         except Exception:
-            pass
+            await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales de acceso incorrectas."
@@ -162,10 +162,10 @@ async def login(request_data: LoginRequest, request: Request, db: AsyncSession =
 
     # Si el usuario tiene 2FA activado, emitir desafío TOTP pre-auth
     if user.totp_enabled and user.totp_secret:
-        temp_token = create_temp_2fa_token(str(user.id), user.email)
+        temp_token = create_temp_2fa_token(user.id, user.email)
         try:
             sec_log = SecurityAuditLog(
-                usuario_id=str(user.id) if user.id else None,
+                usuario_id=user.id,
                 ip_address=ip_address,
                 user_agent=user_agent,
                 evento="LOGIN_2FA_CHALLENGE_ISSUED",
@@ -174,7 +174,7 @@ async def login(request_data: LoginRequest, request: Request, db: AsyncSession =
             db.add(sec_log)
             await db.commit()
         except Exception:
-            pass
+            await db.rollback()
             
         return LoginResponse(
             requires_2fa=True,
@@ -182,40 +182,44 @@ async def login(request_data: LoginRequest, request: Request, db: AsyncSession =
             message="Ingrese el código de 6 dígitos de su aplicación de autenticación."
         )
 
+    # Materializar datos de respuesta antes de operaciones de base de datos
+    user_resp = UserResponse(
+        id=str(user.id),
+        email=user.email,
+        nombre_completo=user.nombre_completo,
+        rol=str(user.rol),
+        empresa_id=str(user.empresa_id),
+        totp_enabled=bool(user.totp_enabled)
+    )
+
     # Si no tiene 2FA, emitir token JWT final
     token_payload = {
-        "sub": str(user.id),
-        "email": user.email,
-        "role": str(user.rol),
-        "empresa_id": str(user.empresa_id)
+        "sub": user_resp.id,
+        "email": user_resp.email,
+        "role": user_resp.rol,
+        "empresa_id": user_resp.empresa_id
     }
     access_token = create_access_token(data=token_payload)
 
     try:
         sec_log = SecurityAuditLog(
-            usuario_id=str(user.id) if user.id else None,
+            usuario_id=user.id,
             ip_address=ip_address,
             user_agent=user_agent,
             evento="LOGIN_SUCCESSFUL",
-            detalle={"role": str(user.rol)}
+            detalle={"role": user_resp.rol}
         )
         db.add(sec_log)
         await db.commit()
-    except Exception:
-        pass
+    except Exception as audit_err:
+        await db.rollback()
+        logger.warning(f"No se pudo persistir registro de auditoría: {audit_err}")
 
     return LoginResponse(
         requires_2fa=False,
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse(
-            id=str(user.id),
-            email=user.email,
-            nombre_completo=user.nombre_completo,
-            rol=str(user.rol),
-            empresa_id=str(user.empresa_id),
-            totp_enabled=bool(user.totp_enabled)
-        )
+        user=user_resp
     )
 
 
@@ -246,7 +250,7 @@ async def verify_2fa(request_data: Verify2FARequest, request: Request, db: Async
     if not is_valid:
         try:
             sec_log = SecurityAuditLog(
-                usuario_id=str(user.id) if user.id else None,
+                usuario_id=user.id,
                 ip_address=ip_address,
                 user_agent=user_agent,
                 evento="2FA_VERIFY_FAILED",
@@ -255,46 +259,49 @@ async def verify_2fa(request_data: Verify2FARequest, request: Request, db: Async
             db.add(sec_log)
             await db.commit()
         except Exception:
-            pass
+            await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Código de autenticación inválido o expirado. Verifique la hora de su dispositivo."
         )
 
-    # 4. Código válido: emitir token definitivo
+    # 4. Código válido: materializar datos antes de auditoría
+    user_resp = UserResponse(
+        id=str(user.id),
+        email=user.email,
+        nombre_completo=user.nombre_completo,
+        rol=str(user.rol),
+        empresa_id=str(user.empresa_id),
+        totp_enabled=True
+    )
+
     token_payload = {
-        "sub": str(user.id),
-        "email": user.email,
-        "role": str(user.rol),
-        "empresa_id": str(user.empresa_id)
+        "sub": user_resp.id,
+        "email": user_resp.email,
+        "role": user_resp.rol,
+        "empresa_id": user_resp.empresa_id
     }
     access_token = create_access_token(data=token_payload)
 
     try:
         sec_log = SecurityAuditLog(
-            usuario_id=str(user.id) if user.id else None,
+            usuario_id=user.id,
             ip_address=ip_address,
             user_agent=user_agent,
             evento="LOGIN_2FA_SUCCESSFUL",
-            detalle={"role": str(user.rol)}
+            detalle={"role": user_resp.rol}
         )
         db.add(sec_log)
         await db.commit()
-    except Exception:
-        pass
+    except Exception as audit_err:
+        await db.rollback()
+        logger.warning(f"No se pudo persistir registro de auditoría 2FA: {audit_err}")
 
     return LoginResponse(
         requires_2fa=False,
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse(
-            id=str(user.id),
-            email=user.email,
-            nombre_completo=user.nombre_completo,
-            rol=str(user.rol),
-            empresa_id=str(user.empresa_id),
-            totp_enabled=True
-        )
+        user=user_resp
     )
 
 
