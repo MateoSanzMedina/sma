@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
+    "dev:backend": "python -m uvicorn app.main:app --app-dir backend --port 8000 --reload",
+    "dev:all": "concurrently -k -n \"BACKEND,FRONTEND\" -c \"blue.bold,green.bold\" \"npm run dev:backend\" \"npm run dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -30,6 +32,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^10.0.5",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",

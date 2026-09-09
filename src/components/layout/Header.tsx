@@ -21,7 +21,7 @@ export default function Header() {
 
   return (
     <header 
-      className="flex items-center justify-between whitespace-nowrap border-b px-4 sm:px-6 md:px-8 py-4 sticky top-0 z-20 shrink-0 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 transition-colors"
+      className="h-16 flex items-center justify-between whitespace-nowrap border-b px-4 sm:px-6 md:px-8 sticky top-0 z-20 shrink-0 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 transition-colors"
     >
       <div className="flex items-center gap-4">
         {/* Espacio reservado para breadcrumbs / acciones de página */}

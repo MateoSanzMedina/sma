@@ -119,22 +119,19 @@ export default function DashboardPage() {
   }, [analysisData]);
 
   return (
-    <div className="space-y-8 max-w-full animate-fade-in">
+    <div className="space-y-6 max-w-full animate-fade-in">
       {/* 1. Header Principal del Dashboard */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div 
-              className="p-2.5 rounded-xl flex items-center justify-center text-white shadow-md"
-              style={{ background: "linear-gradient(135deg, var(--color-primary), #11a542)" }}
-            >
-              <Building2 className="w-6 h-6" />
+            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[#11a542] shrink-0">
+              <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ color: "var(--color-text-primary)" }}>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                 Panel de Control Gerencial
               </h1>
-              <p className="text-xs sm:text-sm mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
                 Constructora Serving S.A.S. — Monitoreo Técnico, Financiero y de Ejecución en Tiempo Real.
               </p>
             </div>
@@ -142,8 +139,8 @@ export default function DashboardPage() {
         </div>
 
         {metrics && (
-          <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold select-none">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold select-none">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>Proyecto Activo: <strong>Bosque de Agua</strong></span>
           </div>
         )}
@@ -153,25 +150,16 @@ export default function DashboardPage() {
       {metrics ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* KPI 1: Presupuesto Costo Directo */}
-          <div 
-            style={{ 
-              padding: "1.5rem",
-              borderRadius: "22px",
-              backgroundColor: "var(--color-surface)", 
-              borderColor: "var(--color-border)",
-              boxShadow: "var(--shadow-sm)"
-            }}
-            className="border transition-all duration-300 relative overflow-hidden group hover:shadow-md"
-          >
+          <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-200 relative overflow-hidden group hover:shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Presupuesto Costo Directo
               </span>
               <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                 <DollarSign className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-2xl font-black tracking-tight font-mono text-[#11a542]">
+            <p className="text-2xl font-bold tracking-tight font-mono text-[#11a542]">
               {formatShortCurrency(metrics.directBudget)}
             </p>
             <p className="text-[11px] mt-2 text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-medium">
@@ -181,25 +169,16 @@ export default function DashboardPage() {
           </div>
 
           {/* KPI 2: Presupuesto General (con AIU) */}
-          <div 
-            style={{ 
-              padding: "1.5rem",
-              borderRadius: "22px",
-              backgroundColor: "var(--color-surface)", 
-              borderColor: "var(--color-border)",
-              boxShadow: "var(--shadow-sm)"
-            }}
-            className="border transition-all duration-300 relative overflow-hidden group hover:shadow-md"
-          >
+          <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-200 relative overflow-hidden group hover:shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Presupuesto General (+ AIU)
               </span>
               <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
                 <TrendingUp className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-2xl font-black tracking-tight font-mono text-slate-900 dark:text-white">
+            <p className="text-2xl font-bold tracking-tight font-mono text-slate-900 dark:text-white">
               {formatShortCurrency(metrics.totalBudget)}
             </p>
             <p className="text-[11px] mt-2 text-slate-500 dark:text-slate-400 font-medium">
@@ -208,25 +187,16 @@ export default function DashboardPage() {
           </div>
 
           {/* KPI 3: Tareas de Cronograma Correlacionadas */}
-          <div 
-            style={{ 
-              padding: "1.5rem",
-              borderRadius: "22px",
-              backgroundColor: "var(--color-surface)", 
-              borderColor: "var(--color-border)",
-              boxShadow: "var(--shadow-sm)"
-            }}
-            className="border transition-all duration-300 relative overflow-hidden group hover:shadow-md"
-          >
+          <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-200 relative overflow-hidden group hover:shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Actividades MS Project
               </span>
               <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
                 <Layers className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-2xl font-black tracking-tight font-mono text-slate-900 dark:text-white">
+            <p className="text-2xl font-bold tracking-tight font-mono text-slate-900 dark:text-white">
               {metrics.tasksCount} <span className="text-sm font-bold text-slate-400">tareas</span>
             </p>
             <p className="text-[11px] mt-2 text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5">
@@ -236,25 +206,16 @@ export default function DashboardPage() {
           </div>
 
           {/* KPI 4: Horizonte de Ejecución */}
-          <div 
-            style={{ 
-              padding: "1.5rem",
-              borderRadius: "22px",
-              backgroundColor: "var(--color-surface)", 
-              borderColor: "var(--color-border)",
-              boxShadow: "var(--shadow-sm)"
-            }}
-            className="border transition-all duration-300 relative overflow-hidden group hover:shadow-md"
-          >
+          <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-200 relative overflow-hidden group hover:shadow-md">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Horizonte Temporal
               </span>
               <div className="p-2 rounded-xl bg-emerald-500/10 text-[#11a542]">
                 <Calendar className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-2xl font-black tracking-tight font-mono text-slate-900 dark:text-white">
+            <p className="text-2xl font-bold tracking-tight font-mono text-slate-900 dark:text-white">
               {metrics.totalDays} <span className="text-sm font-bold text-slate-400">días</span>
             </p>
             <p className="text-[11px] mt-2 text-slate-500 dark:text-slate-400 font-medium truncate" title={`${metrics.startDate} al ${metrics.endDate}`}>
@@ -265,35 +226,22 @@ export default function DashboardPage() {
       ) : (
         /* Estado sin proyecto cargado */
         <div 
-          style={{ 
-            padding: "3rem 2rem",
-            borderRadius: "24px",
-            backgroundColor: "var(--color-surface)", 
-            borderColor: "var(--color-border)",
-            boxShadow: "var(--shadow-sm)"
-          }}
-          className="border text-center space-y-4"
+          className="p-6 sm:p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm text-center space-y-3.5"
         >
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-[#11a542] flex items-center justify-center mx-auto">
-            <Building2 className="w-8 h-8" />
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[#11a542] flex items-center justify-center mx-auto">
+            <Building2 className="w-6 h-6" />
           </div>
           <div className="max-w-md mx-auto">
-            <h3 className="text-lg font-black text-slate-900 dark:text-white">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
               No hay una ejecución de obra activa en memoria
             </h3>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
               Carga tu presupuesto en Excel y cronograma de MS Project para visualizar KPIs reales, curva de flujo de caja y auditoría de costos.
             </p>
           </div>
           <Link
             href="/tecnica/analisis"
-            style={{
-              borderRadius: "9999px",
-              padding: "0.75rem 1.75rem",
-              background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
-              boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
-            }}
-            className="inline-flex items-center gap-2 text-xs font-bold text-white transition-transform hover:scale-105 active:scale-95"
+            className="h-10 px-5 rounded-xl text-xs sm:text-sm font-semibold inline-flex items-center gap-2 bg-gradient-to-r from-[#015c32] to-[#11a542] hover:opacity-90 text-white shadow-sm transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
             <span>Ir a Flujo Gerencia y Procesar Obra</span>
@@ -304,27 +252,18 @@ export default function DashboardPage() {
       {/* 3. Secciones Principales: Distribución por Capítulos y Módulos de Operación */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Columna Izquierda (2 Cols): Desglose de Capítulos Constructivos Reales */}
-        <div 
-          style={{ 
-            padding: "2rem",
-            borderRadius: "24px",
-            backgroundColor: "var(--color-surface)", 
-            borderColor: "var(--color-border)",
-            boxShadow: "var(--shadow-sm)"
-          }}
-          className="lg:col-span-2 border flex flex-col justify-between"
-        >
+        <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm lg:col-span-2 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
                 <PieChart className="w-5 h-5 text-[#11a542]" />
-                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Distribución Financiera por Capítulos de Obra
                 </h3>
               </div>
               <Link 
                 href="/tecnica/analisis" 
-                className="text-xs font-bold text-[#11a542] hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-[#11a542] hover:underline flex items-center gap-1"
               >
                 <span>Ver Matriz Completa</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -336,14 +275,14 @@ export default function DashboardPage() {
                 {metrics.chapters.slice(0, 6).map((chap, idx) => (
                   <div key={idx} className="space-y-1.5">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-slate-900 dark:text-white truncate max-w-[60%]">
+                      <span className="font-semibold text-slate-900 dark:text-white truncate max-w-[60%]">
                         {chap.name}
                       </span>
                       <div className="flex items-center gap-3">
-                        <span className="font-mono font-bold text-slate-500 dark:text-slate-400">
+                        <span className="font-mono font-medium text-slate-500 dark:text-slate-400">
                           {formatCurrency(chap.amount)}
                         </span>
-                        <span className="font-mono font-black text-[#11a542] w-12 text-right">
+                        <span className="font-mono font-bold text-[#11a542] w-12 text-right">
                           {chap.percentage.toFixed(1)}%
                         </span>
                       </div>
@@ -377,20 +316,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Columna Derecha (1 Col): Acceso a Módulos Especializados */}
-        <div 
-          style={{ 
-            padding: "2rem",
-            borderRadius: "24px",
-            backgroundColor: "var(--color-surface)", 
-            borderColor: "var(--color-border)",
-            boxShadow: "var(--shadow-sm)"
-          }}
-          className="border flex flex-col justify-between"
-        >
+        <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2.5 mb-6">
               <HardHat className="w-5 h-5 text-[#11a542]" />
-              <h3 className="text-base font-black text-slate-900 dark:text-white">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 Módulos de Gestión Serving
               </h3>
             </div>
@@ -399,15 +329,14 @@ export default function DashboardPage() {
               {/* Módulo 1: Flujo Gerencia */}
               <Link
                 href="/tecnica/analisis"
-                style={{ borderRadius: "18px", padding: "1rem 1.25rem" }}
-                className="border border-slate-200 dark:border-slate-800 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all group cursor-pointer block"
+                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all group cursor-pointer block"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                     <Activity className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-[#11a542] transition-colors">
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#11a542] transition-colors">
                       Flujo Gerencia &amp; Curva S
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -421,15 +350,14 @@ export default function DashboardPage() {
               {/* Módulo 2: Cierre de Costos */}
               <Link
                 href="/tecnica/cierre-costos"
-                style={{ borderRadius: "18px", padding: "1rem 1.25rem" }}
-                className="border border-slate-200 dark:border-slate-800 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all group cursor-pointer block"
+                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all group cursor-pointer block"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
                     <FileSpreadsheet className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-[#11a542] transition-colors">
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#11a542] transition-colors">
                       Cierre de Costos SAO
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -443,15 +371,14 @@ export default function DashboardPage() {
               {/* Módulo 3: Seguridad Social */}
               <Link
                 href="/gestion-humana/seguridad-social"
-                style={{ borderRadius: "18px", padding: "1rem 1.25rem" }}
-                className="border border-slate-200 dark:border-slate-800 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all group cursor-pointer block"
+                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-all group cursor-pointer block"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
                     <Users className="w-4 h-4" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-[#11a542] transition-colors">
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#11a542] transition-colors">
                       Gestión Humana &amp; Planillas
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -464,10 +391,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div 
-            style={{ borderRadius: "18px" }}
-            className="mt-6 p-4 bg-emerald-500/5 border border-emerald-500/15 flex items-center gap-3"
-          >
+          <div className="mt-6 p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/15 flex items-center gap-3">
             <Sparkles className="w-4 h-4 text-[#11a542] shrink-0" />
             <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">
               Motor potenciado por <strong>Gemini 3.7 Flash</strong> y <strong>Gemini 3.1 Pro</strong>.

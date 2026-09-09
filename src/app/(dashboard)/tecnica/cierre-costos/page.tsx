@@ -9,14 +9,19 @@ import {
   Search, 
   Info, 
   TrendingUp, 
-  TrendingDown,
-  RefreshCw,
-  ChevronDown,
-  ChevronUp,
-  AlertCircle,
-  Download,
-  CheckCircle2,
-  XCircle
+  TrendingDown, 
+  RefreshCw, 
+  ChevronDown, 
+  ChevronUp, 
+  AlertCircle, 
+  Download, 
+  CheckCircle2, 
+  XCircle,
+  RotateCcw,
+  Receipt,
+  Recycle,
+  Droplets,
+  HardHat
 } from "lucide-react";
 import { saveLargeItem, getLargeItem, removeLargeItem } from "@/lib/indexedDbStorage";
 
@@ -267,22 +272,21 @@ export default function CierreCostosPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <span 
-              className="material-symbols-outlined text-4xl"
-              style={{ color: "var(--color-primary)" }}
-            >
-              construction
-            </span>
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-              Control y Cierre de Costos (SAO)
-            </h1>
+            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[#11a542] shrink-0">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Control y Cierre de Costos (SAO)
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 max-w-2xl">
+                Monitorea desviaciones de rendimientos unitarios, proyecta sobrantes de materiales y concilia APUs de obra.
+              </p>
+            </div>
           </div>
-          <p className="text-base mt-2" style={{ color: "var(--color-text-secondary)" }}>
-            Monitorea desviaciones de rendimientos unitarios, proyecta sobrantes de materiales y concilia APUs de obra.
-          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           {result && (
             <button
               onClick={() => {
@@ -292,16 +296,9 @@ export default function CierreCostosPage() {
                   removeLargeItem("sma_cierre_costos_result").catch(console.error);
                 }
               }}
-              style={{
-                borderRadius: "9999px",
-                padding: "0.65rem 1.35rem",
-                backgroundColor: "rgba(239, 68, 68, 0.08)",
-                borderColor: "rgba(239, 68, 68, 0.25)",
-                color: "#f87171",
-              }}
-              className="flex items-center gap-2 border text-xs font-black transition-all cursor-pointer select-none hover:bg-red-500/15 active:scale-95 duration-150"
+              className="h-9 px-3.5 rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-1.5 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-sm">restart_alt</span>
+              <RotateCcw className="w-3.5 h-3.5" />
               <span>Nuevo Cierre</span>
             </button>
           )}
@@ -309,15 +306,9 @@ export default function CierreCostosPage() {
           {result?.excel_b64 && (
             <button
               onClick={downloadExcel}
-              style={{
-                borderRadius: "9999px",
-                padding: "0.65rem 1.35rem",
-                background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
-                boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
-              }}
-              className="flex items-center justify-center gap-2 text-xs font-bold text-white transition-all shadow-md hover:scale-[1.02] active:scale-95 cursor-pointer border-none"
+              className="h-9 px-4 rounded-lg bg-gradient-to-r from-[#015c32] to-[#11a542] hover:opacity-90 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm hover:shadow transition-all cursor-pointer"
             >
-              <Download className="w-4 h-4 text-white" />
+              <Download className="w-3.5 h-3.5" />
               <span>Descargar Excel (.xlsx)</span>
             </button>
           )}
@@ -325,39 +316,27 @@ export default function CierreCostosPage() {
       </div>
 
       {/* Main Upload and Info Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
         {/* Upload File Panel */}
         <div className="xl:col-span-2 flex flex-col">
           <div 
-            style={{
-              padding: "2rem",
-              borderRadius: "24px",
-              backgroundColor: "var(--color-surface)",
-              border: "1px solid var(--color-border)",
-              boxShadow: "var(--shadow-sm)",
-            }}
-            className="flex flex-col justify-between min-h-[440px]"
+            className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between min-h-[380px]"
           >
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
                   Cargar Costos por Niveles
                 </h2>
-                <p className="text-xs mt-1" style={{ color: "var(--color-text-secondary)" }}>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Sube la planilla Excel de análisis de costos quincenales para procesar las desviaciones.
                 </p>
               </div>
 
               {error && (
                 <div 
-                  className="p-4 rounded-xl text-sm border flex items-start gap-2.5" 
-                  style={{ 
-                    backgroundColor: "rgba(239, 68, 68, 0.05)", 
-                    color: "var(--color-error)",
-                    borderColor: "rgba(239, 68, 68, 0.15)"
-                  }}
+                  className="p-3 rounded-xl text-xs border flex items-start gap-2 bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20" 
                 >
-                  <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
               )}
@@ -365,10 +344,10 @@ export default function CierreCostosPage() {
               {/* Excel Dropzone */}
               <div className="space-y-1.5">
                 <div
-                  className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all duration-300 flex flex-col justify-center items-center h-44 cursor-pointer select-none ${
+                  className={`relative border-2 border-dashed rounded-xl p-5 text-center transition-all duration-200 flex flex-col justify-center items-center h-36 cursor-pointer select-none ${
                     file 
                       ? "border-[#11a542] bg-[#11a542]/5" 
-                      : "border-slate-300 dark:border-slate-700 hover:border-[#11a542] hover:bg-slate-50 dark:hover:bg-slate-900/50"
+                      : "border-slate-300 dark:border-slate-700 hover:border-[#11a542] hover:bg-slate-50 dark:hover:bg-slate-800/40"
                   }`}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={handleFileDrop}
@@ -383,21 +362,21 @@ export default function CierreCostosPage() {
                   />
                   {file ? (
                     <div className="flex flex-col items-center justify-center text-center">
-                      <FileSpreadsheet className="w-10 h-10 mb-3 text-[#11a542]" />
-                      <span className="font-bold text-sm truncate max-w-xs text-slate-900 dark:text-white">
+                      <FileSpreadsheet className="w-8 h-8 mb-2 text-[#11a542]" />
+                      <span className="font-bold text-xs truncate max-w-xs text-slate-900 dark:text-white">
                         {file.name}
                       </span>
-                      <span className="text-[11px] mt-1 text-slate-500 dark:text-slate-400">
+                      <span className="text-[10px] mt-0.5 text-slate-500 dark:text-slate-400">
                         Clic para cambiar archivo
                       </span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center">
-                      <UploadCloud className="w-10 h-10 mb-2 text-slate-400" />
-                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      <UploadCloud className="w-8 h-8 mb-1.5 text-slate-400" />
+                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                         Arrastra o haz clic para subir Excel
                       </p>
-                      <p className="text-[11px] mt-1 text-slate-400">
+                      <p className="text-[10px] mt-0.5 text-slate-400">
                         Planilla SAO Costos por Niveles (XLSX, XLS)
                       </p>
                     </div>
@@ -406,47 +385,35 @@ export default function CierreCostosPage() {
               </div>
             </div>
 
-            <button
-              onClick={handleSubmit}
-              disabled={loading || !file}
-              style={{
-                borderRadius: "9999px",
-                height: "3.25rem",
-                marginTop: "1.5rem",
-                background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
-                boxShadow: "0 4px 15px rgba(17, 165, 66, 0.25)",
-              }}
-              className="w-full font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed select-none text-white border-none text-sm"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Procesando Costos...</span>
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-5 h-5" />
-                  <span>Analizar Costos de Obra</span>
-                </>
-              )}
-            </button>
-
-            {result?.excel_b64 && (
+            <div className="pt-4 flex flex-col gap-2">
               <button
-                onClick={downloadExcel}
-                style={{
-                  borderRadius: "9999px",
-                  height: "3.25rem",
-                  marginTop: "1rem",
-                  background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
-                  boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
-                }}
-                className="w-full font-bold flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 active:scale-95 text-white border-none text-sm hover:scale-[1.01]"
+                onClick={handleSubmit}
+                disabled={loading || !file}
+                className="h-10 w-full rounded-xl font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed select-none text-white text-xs bg-gradient-to-r from-[#015c32] to-[#11a542] hover:opacity-90 shadow-sm"
               >
-                <Download className="w-5 h-5" />
-                <span>Descargar Excel Final Procesado (.xlsx)</span>
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Procesando Costos...</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Analizar Costos de Obra</span>
+                  </>
+                )}
               </button>
-            )}
+
+              {result?.excel_b64 && (
+                <button
+                  onClick={downloadExcel}
+                  className="h-10 w-full rounded-xl font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99] text-white text-xs bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 shadow-sm"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Descargar Excel Final Procesado (.xlsx)</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -454,50 +421,37 @@ export default function CierreCostosPage() {
         <div className="xl:col-span-3 flex flex-col">
           {!result ? (
             <div 
-              style={{
-                padding: "2.5rem",
-                borderRadius: "24px",
-                backgroundColor: "var(--color-surface)",
-                border: "1px solid var(--color-border)",
-                boxShadow: "var(--shadow-sm)",
-              }}
-              className="flex-1 flex flex-col items-center justify-center text-center relative overflow-hidden group min-h-[440px]"
+              className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex-1 flex flex-col items-center justify-center text-center min-h-[380px]"
             >
-              <div className="w-16 h-16 bg-[#11a542]/10 border border-[#11a542]/20 rounded-2xl flex items-center justify-center mb-6">
-                <FileSpreadsheet className="w-8 h-8 text-[#11a542]" />
+              <div className="w-12 h-12 bg-[#11a542]/10 border border-[#11a542]/20 rounded-xl flex items-center justify-center mb-4">
+                <FileSpreadsheet className="w-6 h-6 text-[#11a542]" />
               </div>
-              <h3 className="text-lg font-bold mb-2 text-slate-900 dark:text-white">
+              <h3 className="text-base font-bold mb-1.5 text-slate-900 dark:text-white">
                 Validación de Cierre de Costos
               </h3>
-              <p className="text-xs max-w-md leading-relaxed text-slate-500 dark:text-slate-400">
+              <p className="text-xs max-w-sm leading-relaxed text-slate-500 dark:text-slate-400">
                 Sube el archivo Excel de control de presupuestos para que el motor detecte desviaciones de obra física, proyecciones de costo a fin de obra y sugiera reutilización de materiales sobrantes.
               </p>
-              <div className="mt-6 flex gap-3 text-left max-w-md rounded-2xl p-4 bg-[#11a542]/5 border border-[#11a542]/20 text-xs text-slate-600 dark:text-slate-300">
-                <Info className="w-5 h-5 shrink-0 text-[#11a542] mt-0.5" />
-                <span>Al procesar el archivo, podrás <strong>descargar la versión completada en Excel</strong> con las 7 columnas de fórmulas y la pestaña de mezclas de concreto.</span>
+              <div className="mt-5 flex gap-2.5 text-left max-w-sm rounded-xl p-3.5 bg-[#11a542]/5 border border-[#11a542]/20 text-xs text-slate-600 dark:text-slate-300">
+                <Info className="w-4 h-4 shrink-0 text-[#11a542] mt-0.5" />
+                <span className="text-[11px] leading-relaxed">Al procesar el archivo, podrás <strong>descargar la versión completada en Excel</strong> con las 7 columnas de fórmulas y la pestaña de mezclas de concreto.</span>
               </div>
             </div>
           ) : (
             /* Results Summary Dashboard */
-            <div className="space-y-6 flex-1 flex flex-col justify-between">
+            <div className="space-y-4 flex-1 flex flex-col justify-between">
               {/* Dynamic Projection Toggle Card */}
               <div 
-                style={{ 
-                  padding: "1.25rem 1.75rem", 
-                  borderRadius: "20px",
-                  backgroundColor: "var(--color-surface)", 
-                  borderColor: "var(--color-border)" 
-                }}
-                className="border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
+                className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs"
               >
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white">Método de Proyección de Cierre</h3>
-                    <div className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-[#11a542]/10 text-[#11a542] border border-[#11a542]/20">
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Método de Proyección de Cierre</h3>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-[#11a542]/10 text-[#11a542] border border-[#11a542]/20">
                       Configurable
-                    </div>
+                    </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     {projectionMode === "historical" 
                       ? "Proyección Histórica: Calcula el faltante manteniendo los rendimientos reales de obra ejecutados."
                       : "Proyección Teórica: Calcula el faltante asumiendo rendimientos unitarios ideales del presupuesto base."}
@@ -505,58 +459,25 @@ export default function CierreCostosPage() {
                 </div>
 
                 <div 
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    padding: "5px",
-                    gap: "6px",
-                    borderRadius: "9999px",
-                    backgroundColor: "var(--color-surface-hover)",
-                    border: "1px solid var(--color-border)",
-                    flexShrink: 0,
-                  }}
+                  className="inline-flex p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 gap-1 shrink-0"
                 >
                   <button
                     onClick={() => setProjectionMode("historical")}
-                    style={{
-                      borderRadius: "9999px",
-                      padding: "0.55rem 1.25rem",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      fontSize: "0.75rem",
-                      fontWeight: 800,
-                      whiteSpace: "nowrap",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      border: "none",
-                      background: projectionMode === "historical" 
-                        ? "linear-gradient(135deg, #015c32 0%, #11a542 100%)" 
-                        : "transparent",
-                      color: projectionMode === "historical" ? "#ffffff" : "var(--color-text-secondary)",
-                      boxShadow: projectionMode === "historical" ? "0 2px 8px rgba(17, 165, 66, 0.3)" : "none",
-                    }}
+                    className={`h-7 px-3 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                      projectionMode === "historical"
+                        ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-bold"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
                   >
                     Histórica (Real)
                   </button>
                   <button
                     onClick={() => setProjectionMode("theoretical")}
-                    style={{
-                      borderRadius: "9999px",
-                      padding: "0.55rem 1.25rem",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      fontSize: "0.75rem",
-                      fontWeight: 800,
-                      whiteSpace: "nowrap",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      border: "none",
-                      background: projectionMode === "theoretical" 
-                        ? "linear-gradient(135deg, #015c32 0%, #11a542 100%)" 
-                        : "transparent",
-                      color: projectionMode === "theoretical" ? "#ffffff" : "var(--color-text-secondary)",
-                      boxShadow: projectionMode === "theoretical" ? "0 2px 8px rgba(17, 165, 66, 0.3)" : "none",
-                    }}
+                    className={`h-7 px-3 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                      projectionMode === "theoretical"
+                        ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-bold"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
                   >
                     Teórica (Ideal)
                   </button>
@@ -564,48 +485,32 @@ export default function CierreCostosPage() {
               </div>
 
               {/* KPI Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div 
-                  style={{ 
-                    padding: "1.25rem 1.5rem", 
-                    borderRadius: "18px",
-                    backgroundColor: "var(--color-surface)", 
-                    borderColor: "var(--color-border)" 
-                  }}
-                  className="border flex flex-col justify-between shadow-sm"
+                  className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-xs"
                 >
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Costo Base Total</p>
-                  <p className="text-xl font-black mt-1 text-slate-900 dark:text-white">{formatCurrency(result.summary.total_base)}</p>
-                  <p className="text-[10px] mt-1 text-slate-400">{result.summary.total_items} actividades APU</p>
+                  <p className="text-lg sm:text-xl font-bold font-mono mt-1 text-slate-900 dark:text-white">{formatCurrency(result.summary.total_base)}</p>
+                  <p className="text-[10px] mt-0.5 text-slate-400">{result.summary.total_items} actividades APU</p>
                 </div>
 
                 <div 
-                  style={{ 
-                    padding: "1.25rem 1.5rem", 
-                    borderRadius: "18px",
-                    backgroundColor: "var(--color-surface)", 
-                    borderColor: "var(--color-border)" 
-                  }}
-                  className="border flex flex-col justify-between shadow-sm"
+                  className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-xs"
                 >
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Ejecución Real</p>
-                  <p className="text-xl font-black mt-1 text-slate-900 dark:text-white">{formatCurrency(result.summary.total_ejec)}</p>
-                  <p className="text-[10px] mt-1 text-slate-400">
-                    {((result.summary.total_ejec / (result.summary.total_base || 1)) * 100).toFixed(1)}% avance costo
+                  <p className="text-lg sm:text-xl font-bold font-mono mt-1 text-slate-900 dark:text-white">{formatCurrency(result.summary.total_ejec)}</p>
+                  <p className="text-[10px] mt-0.5 text-slate-400">
+                    {result.summary.total_base > 0 
+                      ? `${((result.summary.total_ejec / result.summary.total_base) * 100).toFixed(1)}% avance costo`
+                      : "0%"}
                   </p>
                 </div>
 
                 <div 
-                  style={{ 
-                    padding: "1.25rem 1.5rem", 
-                    borderRadius: "18px",
-                    backgroundColor: "var(--color-surface)", 
-                    borderColor: "var(--color-border)" 
-                  }}
-                  className="border flex flex-col justify-between shadow-sm"
+                  className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col justify-between shadow-xs"
                 >
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Proyección Final</p>
-                  <p className="text-xl font-black mt-1 text-slate-900 dark:text-white">
+                  <p className="text-lg sm:text-xl font-bold font-mono mt-1 text-slate-900 dark:text-white">
                     {formatCurrency(projectionMode === "historical" ? result.summary.total_proj_hist : result.summary.total_proj_theo)}
                   </p>
                   <div className="flex items-center gap-1.5 mt-1">
@@ -614,11 +519,11 @@ export default function CierreCostosPage() {
                       return (
                         <>
                           {dev > 0 ? (
-                            <TrendingUp className="w-4 h-4 text-red-500" />
+                            <TrendingUp className="w-3.5 h-3.5 text-rose-500" />
                           ) : (
-                            <TrendingDown className="w-4 h-4 text-[#11a542]" />
+                            <TrendingDown className="w-3.5 h-3.5 text-[#11a542]" />
                           )}
-                          <span className={`text-[10px] font-extrabold ${dev > 0 ? "text-red-500" : "text-[#11a542]"}`}>
+                          <span className={`text-[10px] font-bold ${dev > 0 ? "text-rose-500" : "text-[#11a542]"}`}>
                             {dev > 0 ? "+" : ""}{formatCurrency(dev)} ({((dev / (result.summary.total_base || 1)) * 100).toFixed(1)}%)
                           </span>
                         </>
@@ -630,24 +535,22 @@ export default function CierreCostosPage() {
 
               {/* Alert Count Banner */}
               <div 
-                style={{ 
-                  padding: "1rem 1.5rem",
-                  borderRadius: "16px",
-                  backgroundColor: result.summary.total_alerts > 0 ? "rgba(239, 68, 68, 0.05)" : "rgba(17, 165, 66, 0.05)", 
-                  borderColor: result.summary.total_alerts > 0 ? "rgba(239, 68, 68, 0.2)" : "rgba(17, 165, 66, 0.2)" 
-                }}
-                className="border flex items-center justify-between text-xs"
+                className={`p-3 rounded-xl border flex items-center justify-between text-xs ${
+                  result.summary.total_alerts > 0 
+                    ? "bg-rose-500/5 border-rose-500/20" 
+                    : "bg-emerald-500/5 border-emerald-500/20"
+                }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <AlertCircle className={`w-4 h-4 shrink-0 ${result.summary.total_alerts > 0 ? "text-red-500" : "text-[#11a542]"}`} />
-                  <span className="text-slate-700 dark:text-slate-300 font-medium">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className={`w-4 h-4 shrink-0 ${result.summary.total_alerts > 0 ? "text-rose-500" : "text-[#11a542]"}`} />
+                  <span className="text-slate-700 dark:text-slate-300 font-medium text-[11px]">
                     {result.summary.total_alerts > 0 
                       ? `Se detectaron ${result.summary.total_alerts} alertas críticas por sobrecosto o desviación en mezclas.`
                       : "No se registran sobrecostos críticos en los insumos."}
                   </span>
                 </div>
                 {result.summary.total_reutilizations > 0 && (
-                  <span className="font-extrabold text-blue-500 dark:text-blue-400">
+                  <span className="font-bold text-blue-500 dark:text-blue-400 text-[11px]">
                     {result.summary.total_reutilizations} materiales reutilizables
                   </span>
                 )}
@@ -663,35 +566,27 @@ export default function CierreCostosPage() {
           {/* Reutilization Recommendations */}
           {result.reutilizaciones.length > 0 && (
             <div 
-              style={{ 
-                padding: "1.75rem",
-                borderRadius: "24px",
-                backgroundColor: "var(--color-surface)", 
-                borderColor: "var(--color-border)",
-                boxShadow: "var(--shadow-sm)"
-              }}
-              className="border space-y-4"
+              className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3"
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                  <span className="material-symbols-outlined text-blue-500" style={{ fontVariationSettings: "'FILL' 1" }}>recycling</span>
+                <h3 className="text-xs sm:text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                  <Recycle className="w-4 h-4 text-blue-500" />
                   <span>Recomendaciones de Reutilización</span>
                 </h3>
-                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20">
                   Eficiencia de Materiales
                 </span>
               </div>
-              <div className="space-y-3 max-h-[260px] overflow-y-auto pr-2">
+              <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-2">
                 {result.reutilizaciones.map((tip, idx) => (
                   <div 
                     key={idx}
-                    style={{ borderRadius: "16px", backgroundColor: "rgba(59, 130, 246, 0.05)", borderColor: "rgba(59, 130, 246, 0.18)" }}
-                    className="p-4 border flex items-start gap-3 text-xs leading-relaxed"
+                    className="p-3.5 rounded-xl border border-blue-500/20 bg-blue-500/5 flex items-start gap-2.5 text-xs leading-relaxed"
                   >
-                    <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                    <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-bold text-slate-900 dark:text-white uppercase">Transferencia de {tip.insumo_name}</p>
-                      <p className="mt-1 text-slate-600 dark:text-slate-400">{tip.message}</p>
+                      <p className="font-bold text-slate-900 dark:text-white uppercase text-[11px]">Transferencia de {tip.insumo_name}</p>
+                      <p className="mt-0.5 text-slate-600 dark:text-slate-400 text-xs">{tip.message}</p>
                     </div>
                   </div>
                 ))}
@@ -702,39 +597,31 @@ export default function CierreCostosPage() {
           {/* Deviation Alerts */}
           {result.alerts.length > 0 && (
             <div 
-              style={{ 
-                padding: "1.75rem",
-                borderRadius: "24px",
-                backgroundColor: "var(--color-surface)", 
-                borderColor: "var(--color-border)",
-                boxShadow: "var(--shadow-sm)"
-              }}
-              className="border space-y-4"
+              className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3"
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                <h3 className="text-xs sm:text-sm font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                  <AlertTriangle className="w-4 h-4 text-rose-500" />
                   <span>Alertas Críticas de Desviación</span>
                 </h3>
-                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-red-500/10 text-red-500 border border-red-500/20">
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-rose-500/10 text-rose-500 border border-rose-500/20">
                   Sobrecostos
                 </span>
               </div>
-              <div className="space-y-3 max-h-[260px] overflow-y-auto pr-2">
+              <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-2">
                 {result.alerts.map((al, idx) => (
                   <div 
                     key={idx}
-                    style={{ 
-                      borderRadius: "16px",
-                      backgroundColor: al.type === "danger" ? "rgba(239, 68, 68, 0.05)" : "rgba(251, 191, 36, 0.05)", 
-                      borderColor: al.type === "danger" ? "rgba(239, 68, 68, 0.2)" : "rgba(251, 191, 36, 0.2)" 
-                    }}
-                    className="p-4 border flex items-start gap-3 text-xs leading-relaxed animate-fade-in"
+                    className={`p-3.5 rounded-xl border flex items-start gap-2.5 text-xs leading-relaxed animate-fade-in ${
+                      al.type === "danger" 
+                        ? "bg-rose-500/5 border-rose-500/20" 
+                        : "bg-amber-500/5 border-amber-500/20"
+                    }`}
                   >
-                    <AlertCircle className={`w-5 h-5 shrink-0 mt-0.5 ${al.type === "danger" ? "text-red-500" : "text-yellow-500"}`} />
+                    <AlertCircle className={`w-4 h-4 shrink-0 mt-0.5 ${al.type === "danger" ? "text-rose-500" : "text-amber-500"}`} />
                     <div>
-                      <p className="font-bold text-slate-900 dark:text-white uppercase">{al.title}</p>
-                      <p className="mt-1 text-slate-600 dark:text-slate-400">{al.message}</p>
+                      <p className="font-bold text-slate-900 dark:text-white uppercase text-[11px]">{al.title}</p>
+                      <p className="mt-0.5 text-slate-600 dark:text-slate-400 text-xs">{al.message}</p>
                     </div>
                   </div>
                 ))}
@@ -747,27 +634,20 @@ export default function CierreCostosPage() {
       {/* Concrete Mix Validation Section */}
       {result && result.concrete_validation && result.concrete_validation.length > 0 && (
         <div 
-          style={{ 
-            padding: "2rem",
-            borderRadius: "24px",
-            backgroundColor: "var(--color-surface)", 
-            borderColor: "var(--color-border)", 
-            boxShadow: "var(--shadow-sm)" 
-          }}
-          className="border space-y-6"
+          className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4"
         >
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-lg font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                <span className="material-symbols-outlined text-amber-500">water_drop</span>
+              <h3 className="text-sm sm:text-base font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                <Droplets className="w-4 h-4 text-amber-500" />
                 <span>Validación de Mezclas de Concreto (Cemento vs. Arena y Triturado)</span>
               </h3>
-              <p className="text-xs mt-1 text-slate-500 dark:text-slate-400">
+              <p className="text-xs mt-0.5 text-slate-500 dark:text-slate-400">
                 Compara el Cemento registrado en el APU contra el Cemento teórico esperable según las dosificaciones de Arena y Triturado. (Tolerancia: ±15%).
               </p>
             </div>
 
-            <span className="px-3.5 py-1.5 rounded-full text-xs font-black uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0">
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
               {result.concrete_validation.length} APUs Auditados
             </span>
           </div>

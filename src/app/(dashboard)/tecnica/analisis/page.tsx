@@ -11,7 +11,7 @@ import AnalysisChat from "@/components/dashboard/AnalysisChat";
 import AnticipoManagerPanel from "@/components/dashboard/AnticipoManagerPanel";
 import { AnticipoRule, DataPoint, recalculateDistributedPoints } from "@/lib/anticipoUtils";
 import { saveLargeItem, getLargeItem, removeLargeItem } from "@/lib/indexedDbStorage";
-import { Sparkles } from "lucide-react";
+import { Sparkles, TrendingUp, RotateCcw, BarChart3, AlertCircle, WifiOff } from "lucide-react";
 
 // Helper to parse double asterisks into strong tags
 const parseBold = (text: string) => {
@@ -243,25 +243,26 @@ export default function AnalysisPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-full">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+    <div className="space-y-6 max-w-full">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-4xl font-black flex items-center gap-4 tracking-tight">
-            <span 
-              className="material-symbols-outlined text-4xl flex-shrink-0"
-              style={{ color: "var(--color-primary)" }}
-            >
-              analytics
-            </span>
-            <span style={{ color: "var(--color-text-primary)" }}>Flujo Gerencia</span>
-          </h1>
-          <p className="text-base mt-2 max-w-2xl leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
-            Correlaciona presupuestos con cronogramas automáticamente utilizando inteligencia artificial.
-          </p>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[#11a542] shrink-0">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Flujo Gerencia
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 max-w-2xl leading-relaxed">
+                Correlaciona presupuestos con cronogramas automáticamente utilizando inteligencia artificial.
+              </p>
+            </div>
+          </div>
         </div>
 
         {analysisData && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 shrink-0">
             <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 select-none">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Datos de ejecución activa
@@ -275,15 +276,10 @@ export default function AnalysisPage() {
                   removeLargeItem("sma_anticipo_rules").catch(console.error);
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-black transition-all cursor-pointer select-none hover:bg-red-500/10 active:scale-95 duration-150"
-              style={{
-                backgroundColor: "rgba(239, 68, 68, 0.05)",
-                borderColor: "rgba(239, 68, 68, 0.2)",
-                color: "#f87171",
-              }}
+              className="h-9 px-3.5 rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-1.5 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-sm">restart_alt</span>
-              Limpiar Análisis
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Limpiar Análisis</span>
             </button>
           </div>
         )}
@@ -291,31 +287,20 @@ export default function AnalysisPage() {
 
       {!analysisData ? (
         // Grid original (Carga + Esperando Datos)
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
           <div className="xl:col-span-2 flex flex-col">
             <AnalysisUpload onAnalysisComplete={handleAnalysisComplete} />
           </div>
 
           <div className="xl:col-span-3 flex flex-col">
             <div 
-              style={{
-                padding: "2.5rem",
-                borderRadius: "24px",
-                backgroundColor: "var(--color-surface)",
-                border: "1px solid var(--color-border)",
-                boxShadow: "var(--shadow-sm)",
-              }}
-              className="flex-1 flex flex-col items-center justify-center relative overflow-hidden group min-h-[500px]"
+              className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex-1 flex flex-col items-center justify-center relative overflow-hidden group min-h-[420px]"
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-accent)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-              <div className="w-24 h-24 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl flex items-center justify-center mb-6 shadow-sm transform group-hover:scale-105 transition-transform duration-500 relative">
-                <div className="absolute inset-0 bg-[var(--color-accent)]/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <span className="material-symbols-outlined text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)] text-5xl transition-colors duration-500 relative z-10">
-                  insights
-                </span>
+              <div className="w-12 h-12 bg-[#11a542]/10 border border-[#11a542]/20 rounded-xl flex items-center justify-center mb-4">
+                <BarChart3 className="w-6 h-6 text-[#11a542]" />
               </div>
-              <h3 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3 tracking-tight">Esperando Datos</h3>
-              <p className="text-[var(--color-text-secondary)] max-w-md text-center text-sm leading-relaxed">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1.5 tracking-tight">Esperando Datos</h3>
+              <p className="text-slate-500 dark:text-slate-400 max-w-sm text-center text-xs leading-relaxed">
                 Sube tus archivos de cronograma (Project/XLSX) y presupuesto (Excel) en el panel lateral para que la IA visualice la distribución del flujo de caja.
               </p>
             </div>
@@ -323,40 +308,22 @@ export default function AnalysisPage() {
         </div>
       ) : (
         // Grid adaptado a ancho completo cuando los datos están listos
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-6">
           {analysisData.isOfflineFallback && (
             <div 
-              style={{
-                padding: "1.25rem 1.5rem",
-                borderRadius: "18px",
-                backgroundColor: "rgba(255, 102, 0, 0.05)",
-                borderColor: "rgba(255, 102, 0, 0.2)",
-                boxShadow: "0 4px 20px -5px rgba(255, 102, 0, 0.15)",
-              }}
-              className="flex items-start gap-4 border animate-fade-in relative overflow-hidden group"
+              className="p-4 rounded-xl border border-amber-500/25 bg-amber-500/5 flex items-start gap-3 animate-fade-in"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-warning)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-              <span 
-                className="material-symbols-outlined text-2xl flex-shrink-0 mt-0.5"
-                style={{ color: "var(--color-warning)" }}
-              >
-                wifi_off
-              </span>
-              <div className="flex-1 space-y-1">
-                <h4 className="text-sm sm:text-base font-bold text-[var(--color-text-primary)] flex items-center gap-2">
+              <WifiOff className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-0.5">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   Operando en Modo Resiliente Local
                   <span 
-                    className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider animate-pulse"
-                    style={{ 
-                      backgroundColor: "rgba(255, 102, 0, 0.15)", 
-                      color: "var(--color-warning)",
-                      border: "1px solid rgba(255, 102, 0, 0.3)"
-                    }}
+                    className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
                   >
                     Activo
                   </span>
                 </h4>
-                <p className="text-xs sm:text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Se detectó una indisponibilidad o demora en la conexión con la API de Vertex AI. El motor semántico local de 3 capas procesó con éxito el <strong>100% de los ítems de obra</strong> garantizando una asignación financiera exacta del flujo de caja.
                 </p>
               </div>

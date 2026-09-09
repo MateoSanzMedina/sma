@@ -102,37 +102,38 @@ export default function Sidebar() {
     <aside
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`flex flex-col border-r border-border-color transition-all duration-300 ease-in-out shrink-0 z-40 shadow-subtle h-screen ${isExpanded ? 'w-64' : 'w-20'}`}
-      style={{
-        backgroundColor: "var(--color-surface)",
-        borderColor: "var(--color-border)",
-      }}
+      className={`flex flex-col border-r transition-all duration-300 ease-in-out shrink-0 z-40 h-screen bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-sm ${isExpanded ? 'w-64' : 'w-20'}`}
     >
-      <div className="p-4 flex flex-col gap-4">
-        <div className={`flex items-center gap-3 px-2 ${!isExpanded ? 'justify-center' : ''}`}>
+      {/* 1. Header de Marca / Logo alineado a la altura del Navbar (h-16) */}
+      <div className="h-16 px-4 sm:px-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 shrink-0">
+        <div className={`flex items-center gap-3 ${!isExpanded ? 'w-full justify-center' : ''}`}>
           <div 
-            className="flex items-center justify-center rounded-xl w-10 h-10 shrink-0 overflow-hidden font-bold text-white shadow-sm"
-            style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-accent))" }}
+            className="flex items-center justify-center rounded-xl w-9 h-9 shrink-0 overflow-hidden font-extrabold text-white text-base shadow-sm ring-1 ring-emerald-500/30 bg-gradient-to-br from-[#015c32] to-[#11a542]"
           >
             S
           </div>
           {isExpanded && (
-            <div className="flex flex-col animate-in fade-in duration-300">
-              <h1 className="font-display text-base font-bold leading-none" style={{ color: "var(--color-text-primary)" }}>Serving</h1>
-              <p className="text-[10px] font-bold uppercase tracking-wider mt-1" style={{ color: "var(--color-text-secondary)" }}>Management App</p>
+            <div className="flex flex-col min-w-0 animate-in fade-in duration-200">
+              <span className="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
+                Serving
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-[#11a542] mt-0.5">
+                Management App
+              </span>
             </div>
           )}
         </div>
       </div>
 
-      <nav className="flex flex-col gap-4 mt-4 px-3 flex-1 overflow-y-auto">
+      {/* 2. Navegación Principal con espaciado generoso (px-3 py-4) */}
+      <nav className="flex flex-col gap-4 py-4 px-3 flex-1 overflow-y-auto">
         {navGroups.map((group, groupIdx) => (
-          <div key={group.group} className="flex flex-col gap-1.5">
+          <div key={group.group} className="flex flex-col gap-1">
             {groupIdx > 0 && !isExpanded && (
-              <hr className="border-t opacity-10 my-1" style={{ borderColor: "var(--color-border)" }} />
+              <hr className="border-t border-slate-200 dark:border-slate-800 my-1 opacity-60" />
             )}
             {isExpanded && (
-              <p className="text-[10px] font-bold uppercase tracking-wider px-3 mt-2 mb-1" style={{ color: "var(--color-text-tertiary)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wider px-3 pt-2 pb-1 text-slate-400 dark:text-slate-500 select-none">
                 {group.group}
               </p>
             )}
@@ -145,37 +146,23 @@ export default function Sidebar() {
                   key={item.href}
                   href={item.href}
                   title={!isExpanded ? item.label : ''}
-                  className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 overflow-hidden ${
-                    isActive ? 'shadow-sm border border-white/5 font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5'
-                  } ${!isExpanded ? 'justify-center' : ''}`}
-                  style={{
-                    color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                    backgroundColor: isActive ? "var(--color-primary-light)" : "transparent"
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.color = "var(--color-text-primary)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.color = "var(--color-text-secondary)";
-                    }
-                  }}
+                  className={`group relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] transition-all duration-150 overflow-hidden ${
+                    isActive 
+                      ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-[#015c32] dark:text-emerald-300 font-bold border border-emerald-500/20 dark:border-emerald-500/30 shadow-xs' 
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-medium border border-transparent'
+                  } ${!isExpanded ? 'justify-center px-0' : ''}`}
                 >
-                  {isActive && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 rounded-r-md" style={{ backgroundColor: "var(--color-primary)" }} />
-                  )}
                   <Icon
-                    className="shrink-0 h-5 w-5 transition-colors"
-                    style={{ 
-                      color: isActive ? "var(--color-primary)" : "inherit"
-                    }}
+                    className={`shrink-0 h-[18px] w-[18px] transition-colors ${
+                      isActive 
+                        ? 'text-[#11a542] dark:text-[#11a542]' 
+                        : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+                    }`}
                   />
                   {isExpanded && (
-                    <p className="text-sm leading-normal truncate transition-all duration-300">
+                    <span className="leading-normal truncate">
                       {item.label}
-                    </p>
+                    </span>
                   )}
                 </Link>
               );
@@ -184,7 +171,8 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="mt-auto p-4 border-t flex flex-col gap-4" style={{ borderColor: "var(--color-border)" }}>
+      {/* 3. Footer / Configuración y Bloqueo */}
+      <div className="mt-auto p-3.5 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2 shrink-0">
         {bottomItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -193,56 +181,43 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               title={!isExpanded ? item.label : ''}
-              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-300 overflow-hidden ${
-                isActive ? 'shadow-sm border border-white/5 font-semibold' : 'hover:bg-black/5 dark:hover:bg-white/5'
-              } ${!isExpanded ? 'justify-center' : ''}`}
-              style={{
-                color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                backgroundColor: isActive ? "var(--color-primary-light)" : "transparent"
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.color = "var(--color-text-primary)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.color = "var(--color-text-secondary)";
-                }
-              }}
+              className={`group relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-[13px] transition-all duration-150 overflow-hidden ${
+                isActive 
+                  ? 'bg-emerald-500/10 dark:bg-emerald-500/15 text-[#015c32] dark:text-emerald-300 font-bold border border-emerald-500/20 dark:border-emerald-500/30' 
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-medium border border-transparent'
+              } ${!isExpanded ? 'justify-center px-0' : ''}`}
             >
-              {isActive && (
-                <div className="absolute left-0 top-0 bottom-0 w-1 rounded-r-md" style={{ backgroundColor: "var(--color-primary)" }} />
-              )}
               <Icon
-                className="shrink-0 h-5 w-5 transition-colors"
-                style={{ 
-                  color: isActive ? "var(--color-primary)" : "inherit"
-                }}
+                className={`shrink-0 h-[18px] w-[18px] transition-colors ${
+                  isActive 
+                    ? 'text-[#11a542]' 
+                    : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+                }`}
               />
-              {isExpanded && <span className="text-sm leading-normal truncate">{item.label}</span>}
+              {isExpanded && <span className="leading-normal truncate">{item.label}</span>}
             </Link>
           );
         })}
         
         <button
           onClick={toggleLock}
-          className={`flex items-center gap-3 px-2 py-2 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer ${!isExpanded ? 'justify-center' : ''}`}
-          style={{ color: "var(--color-text-secondary)" }}
+          className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer ${!isExpanded ? 'justify-center px-0' : ''}`}
           title={isLocked ? "Desbloquear menú" : "Fijar menú"}
-          onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-text-primary)"}
-          onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-text-secondary)"}
         >
           {isLocked ? (
-            <Pin className="h-5 w-5 shrink-0 text-[#11a542]" />
+            <Pin className="h-4 w-4 shrink-0 text-[#11a542]" />
           ) : (
-            <PinOff className="h-5 w-5 shrink-0" />
+            <PinOff className="h-4 w-4 shrink-0 text-slate-400" />
           )}
-          {isExpanded && <span className="text-[11px] font-semibold uppercase tracking-widest whitespace-nowrap overflow-hidden text-ellipsis">Fijar Menú</span>}
+          {isExpanded && (
+            <span className="text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">
+              Fijar Menú
+            </span>
+          )}
         </button>
 
-        <div className={`px-2 ${!isExpanded ? 'text-center' : ''}`}>
-          <p className="text-[9px] font-medium leading-tight" style={{ color: "var(--color-text-tertiary)" }}>
+        <div className={`px-2 pt-1 ${!isExpanded ? 'text-center' : ''}`}>
+          <p className="text-[9px] font-medium text-slate-400 dark:text-slate-500">
             {isExpanded ? '© Serving S.A.S - 2026' : 'SV'}
           </p>
         </div>
