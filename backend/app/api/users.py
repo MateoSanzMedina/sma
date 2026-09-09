@@ -16,12 +16,22 @@ from app.core.security import (
 
 router = APIRouter()
 
+DEFAULT_ROLE_PERMISSIONS = {
+    "ADMIN": ["dashboard", "proyectos", "analisis", "cierre-costos", "crm", "seguridad-social", "usuarios", "documentos", "integraciones", "configuracion"],
+    "DIRECTOR_OBRA": ["dashboard", "proyectos", "analisis", "cierre-costos", "documentos", "configuracion"],
+    "RESIDENTE": ["dashboard", "proyectos", "cierre-costos", "configuracion"],
+    "GESTION_HUMANA": ["dashboard", "seguridad-social", "documentos", "configuracion"],
+    "CONTABILIDAD": ["dashboard", "cierre-costos", "seguridad-social", "documentos", "configuracion"],
+    "CLIENTE": ["dashboard", "proyectos", "documentos", "configuracion"]
+}
+
 class UserItemResponse(BaseModel):
     id: str
     email: str
     nombre_completo: str
     rol: str
     activo: bool
+    permisos: Optional[List[str]] = []
     last_login_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
 
@@ -30,6 +40,7 @@ class CreateUserRequest(BaseModel):
     nombre_completo: str
     password: str = Field(..., min_length=8)
     rol: str = "RESIDENTE"
+    permisos: Optional[List[str]] = None
 
 class ResetPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8)
@@ -37,6 +48,7 @@ class ResetPasswordRequest(BaseModel):
 class UpdateUserRequest(BaseModel):
     nombre_completo: Optional[str] = None
     rol: Optional[str] = None
+    permisos: Optional[List[str]] = None
 
 VALID_ROLES = {"ADMIN", "DIRECTOR_OBRA", "RESIDENTE", "GESTION_HUMANA", "CONTABILIDAD", "CLIENTE"}
 
@@ -57,6 +69,7 @@ async def list_users(
             nombre_completo=u.nombre_completo,
             rol=str(u.rol),
             activo=u.activo,
+            permisos=getattr(u, 'permisos', None) if (getattr(u, 'permisos', None) and len(u.permisos) > 0) else DEFAULT_ROLE_PERMISSIONS.get(str(u.rol), []),
             last_login_at=u.last_login_at,
             created_at=u.created_at
         )
@@ -99,12 +112,19 @@ async def create_user(
         emp = res_emp.scalar_one_or_none()
         empresa_id = emp.id if emp else "serving-default-id"
 
+    perms = req.permisos if req.permisos is not None else DEFAULT_ROLE_PERMISSIONS.get(req.rol, [])
+    if req.rol == "ADMIN" and "usuarios" not in perms:
+        perms.append("usuarios")
+    elif req.rol != "ADMIN" and "usuarios" in perms:
+        perms.remove("usuarios")
+
     new_user = Usuario(
         email=clean_email,
         password_hash=hashed,
         nombre_completo=req.nombre_completo.strip(),
         rol=req.rol,
         empresa_id=empresa_id,
+        permisos=perms,
         activo=True
     )
     db.add(new_user)
@@ -117,8 +137,88 @@ async def create_user(
         nombre_completo=new_user.nombre_completo,
         rol=str(new_user.rol),
         activo=new_user.activo,
+        permisos=getattr(new_user, 'permisos', None) or perms,
         last_login_at=new_user.last_login_at,
         created_at=new_user.created_at
+    )
+
+@router.patch("/{user_id}", response_model=UserItemResponse)
+async def update_user_profile_and_permissions(
+    user_id: str,
+    req: UpdateUserRequest,
+    current_user: dict = Depends(RoleChecker(["ADMIN"])),
+    db: AsyncSession = Depends(get_db)
+):
+    """Permite al administrador modificar el rol, nombre y permisos modulares de un usuario."""
+    stmt = select(Usuario).where(Usuario.id == user_id)
+    res = await db.execute(stmt)
+    user = res.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+
+    # 1. Protección contra auto-degradación de rol del Administrador en sesión
+    if current_user["user_id"] == user_id and req.rol and req.rol != "ADMIN":
+        raise HTTPException(
+            status_code=400,
+            detail="Por seguridad corporativa, no puedes remover tu propio rol de Administrador."
+        )
+
+    if req.nombre_completo is not None:
+        user.nombre_completo = req.nombre_completo.strip()
+
+    if req.rol is not None:
+        if req.rol not in VALID_ROLES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Rol no válido. Roles permitidos: {', '.join(VALID_ROLES)}"
+            )
+        user.rol = req.rol
+
+    if req.permisos is not None:
+        perms = list(req.permisos)
+        # Si es ADMIN, siempre conserva acceso al módulo usuarios
+        if user.rol == "ADMIN" and "usuarios" not in perms:
+            perms.append("usuarios")
+        # Si NO es ADMIN, jamás puede tener acceso al módulo usuarios
+        if user.rol != "ADMIN" and "usuarios" in perms:
+            perms.remove("usuarios")
+        user.permisos = perms
+    elif req.rol is not None and (not getattr(user, 'permisos', None) or len(user.permisos) == 0):
+        # Si se cambió el rol pero no se enviaron permisos específicos, cargar los defaults del nuevo rol
+        user.permisos = DEFAULT_ROLE_PERMISSIONS.get(user.rol, [])
+
+    user.updated_at = datetime.now(timezone.utc)
+
+    # Registro de auditoría de seguridad
+    try:
+        sec_log = SecurityAuditLog(
+            usuario_id=current_user.get("user_id"),
+            ip_address="127.0.0.1",
+            evento="USER_PERMISSIONS_UPDATED",
+            detalle={
+                "target_user_id": str(user.id),
+                "target_email": user.email,
+                "new_role": user.rol,
+                "permissions_count": len(user.permisos or [])
+            }
+        )
+        db.add(sec_log)
+    except Exception:
+        pass
+
+    await db.commit()
+    await db.refresh(user)
+
+    return UserItemResponse(
+        id=str(user.id),
+        email=user.email,
+        nombre_completo=user.nombre_completo,
+        rol=str(user.rol),
+        activo=user.activo,
+        permisos=getattr(user, 'permisos', None) if (getattr(user, 'permisos', None) and len(user.permisos) > 0) else DEFAULT_ROLE_PERMISSIONS.get(str(user.rol), []),
+        last_login_at=user.last_login_at,
+        created_at=user.created_at
     )
 
 @router.patch("/{user_id}/toggle", response_model=UserItemResponse)
@@ -152,6 +252,7 @@ async def toggle_user_status(
         nombre_completo=user.nombre_completo,
         rol=str(user.rol),
         activo=user.activo,
+        permisos=getattr(user, 'permisos', None) if (getattr(user, 'permisos', None) and len(user.permisos) > 0) else DEFAULT_ROLE_PERMISSIONS.get(str(user.rol), []),
         last_login_at=user.last_login_at,
         created_at=user.created_at
     )

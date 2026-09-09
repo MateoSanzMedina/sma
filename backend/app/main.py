@@ -14,6 +14,7 @@ from app.api.costs import router as costs_router
 from app.api.auth import router as auth_router
 from app.api.audit import router as audit_router
 from app.api.users import router as users_router
+from sqlalchemy import text
 from app.db.session import engine, Base
 import uvicorn
 import logging
@@ -61,13 +62,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Evento de inicio: Intentar inicializar esquemas de BD
+# Evento de inicio: Intentar inicializar esquemas de BD y migración idempotente
 @app.on_event("startup")
 async def startup_event():
     logger.info("Iniciando SMA Backend Service...")
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            # Migración idempotente de columna permisos si no existe
+            try:
+                await conn.execute(text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS permisos JSONB DEFAULT '[]'::jsonb"))
+            except Exception:
+                try:
+                    await conn.execute(text("ALTER TABLE usuarios ADD COLUMN permisos JSON DEFAULT '[]'"))
+                except Exception:
+                    pass
         logger.info("Base de datos e índices sincronizados.")
     except Exception as e:
         logger.warning(f"Aviso de inicio: No hay una base de datos PostgreSQL activa en localhost ({type(e).__name__}). El servidor iniciará correctamente.")

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { resilientFetch } from "@/lib/apiConfig";
 import {
@@ -20,7 +21,10 @@ import {
   Building,
   Eye,
   EyeOff,
-  Check
+  Check,
+  SlidersHorizontal,
+  Lock,
+  Layers
 } from "lucide-react";
 
 interface UserItem {
@@ -29,6 +33,7 @@ interface UserItem {
   nombre_completo: string;
   rol: string;
   activo: boolean;
+  permisos?: string[];
   last_login_at?: string;
   created_at?: string;
 }
@@ -66,8 +71,31 @@ const ROLES_INFO: Record<string, { label: string; badge: string; desc: string }>
   }
 };
 
+const DEFAULT_ROLE_PERMS: Record<string, string[]> = {
+  ADMIN: ["dashboard", "proyectos", "analisis", "cierre-costos", "crm", "seguridad-social", "usuarios", "documentos", "integraciones", "configuracion"],
+  DIRECTOR_OBRA: ["dashboard", "proyectos", "analisis", "cierre-costos", "documentos", "configuracion"],
+  RESIDENTE: ["dashboard", "proyectos", "cierre-costos", "configuracion"],
+  GESTION_HUMANA: ["dashboard", "seguridad-social", "documentos", "configuracion"],
+  CONTABILIDAD: ["dashboard", "cierre-costos", "seguridad-social", "documentos", "configuracion"],
+  CLIENTE: ["dashboard", "proyectos", "documentos", "configuracion"]
+};
+
+const MODULES_CATALOG = [
+  { key: "dashboard", label: "Dashboard General", desc: "Métricas principales y resumen de operaciones", group: "General" },
+  { key: "proyectos", label: "Gestión de Proyectos", desc: "Listado, creación y configuración de obras", group: "Área Técnica" },
+  { key: "analisis", label: "Flujo Gerencia", desc: "Análisis financiero y control de rendimientos", group: "Área Técnica" },
+  { key: "cierre-costos", label: "Cierre de Costos", desc: "Generación de cierres y liquidación de costos", group: "Área Técnica" },
+  { key: "crm", label: "CRM Comercial", desc: "Gestión de prospectos, clientes y oportunidades", group: "Área Comercial" },
+  { key: "seguridad-social", label: "Seguridad Social", desc: "Planillas PILA, pagos y validación de personal", group: "Gestión Humana" },
+  { key: "documentos", label: "Documentación", desc: "Centro de archivos y certificados de obra", group: "Área Administrativa" },
+  { key: "integraciones", label: "Integraciones & APIs", desc: "Conectores externos, webhooks y servicios cloud", group: "Área Administrativa" },
+  { key: "configuracion", label: "Configuración Personal", desc: "Ajustes de cuenta y perfil de usuario", group: "General" },
+];
+
 export default function UsuariosPage() {
-  const { user: currentUser, token } = useAuth();
+  const { user: currentUser, token, isLoading: authLoading } = useAuth();
+  const isAdmin = currentUser?.rol?.toUpperCase() === "ADMIN";
+
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,6 +106,13 @@ export default function UsuariosPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null);
+
+  // Modal Gestión de Rol y Permisos
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [selectedUserForRole, setSelectedUserForRole] = useState<UserItem | null>(null);
+  const [editRole, setEditRole] = useState<string>("RESIDENTE");
+  const [editPermisos, setEditPermisos] = useState<string[]>([]);
+  const [isSavingRole, setIsSavingRole] = useState(false);
 
   // Formulario Crear Usuario
   const [newNombre, setNewNombre] = useState("");
@@ -110,8 +145,12 @@ export default function UsuariosPage() {
     };
   };
 
-  // Cargar lista de usuarios
+  // Cargar lista de usuarios (Solo si el usuario es Administrador)
   const fetchUsers = async () => {
+    if (!isAdmin) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setErrorMsg(null);
 
@@ -134,6 +173,7 @@ export default function UsuariosPage() {
             nombre_completo: "ChainPoint Super Admin",
             rol: "ADMIN",
             activo: true,
+            permisos: DEFAULT_ROLE_PERMS.ADMIN,
             last_login_at: new Date().toISOString()
           },
           {
@@ -141,7 +181,8 @@ export default function UsuariosPage() {
             email: "admin@serving.com.co",
             nombre_completo: "Administrador General Serving",
             rol: "ADMIN",
-            activo: true
+            activo: true,
+            permisos: DEFAULT_ROLE_PERMS.ADMIN
           }
         ]);
       }
@@ -153,6 +194,7 @@ export default function UsuariosPage() {
           nombre_completo: "ChainPoint Super Admin",
           rol: "ADMIN",
           activo: true,
+          permisos: DEFAULT_ROLE_PERMS.ADMIN,
           last_login_at: new Date().toISOString()
         }
       ]);
@@ -163,16 +205,95 @@ export default function UsuariosPage() {
 
   useEffect(() => {
     let isMounted = true;
-    const timer = setTimeout(() => {
-      if (isMounted) {
-        fetchUsers();
+    if (isAdmin) {
+      const timer = setTimeout(() => {
+        if (isMounted) {
+          fetchUsers();
+        }
+      }, 0);
+      return () => {
+        isMounted = false;
+        clearTimeout(timer);
+      };
+    } else {
+      setLoading(false);
+    }
+  }, [token, isAdmin]);
+
+  // Abrir Modal de Rol y Permisos
+  const handleOpenRoleModal = (u: UserItem) => {
+    setSelectedUserForRole(u);
+    setEditRole(u.rol || "RESIDENTE");
+    const currentPerms = (u.permisos && u.permisos.length > 0)
+      ? u.permisos
+      : (DEFAULT_ROLE_PERMS[u.rol] || []);
+    setEditPermisos(currentPerms);
+    setShowRoleModal(true);
+  };
+
+  // Selección de Rol en Modal
+  const handleSelectRole = (newRoleKey: string) => {
+    if (selectedUserForRole?.id === currentUser?.id && newRoleKey !== "ADMIN") {
+      setErrorMsg("Por seguridad corporativa, no puedes remover tu propio rol de Administrador.");
+      return;
+    }
+    setEditRole(newRoleKey);
+    const suggested = DEFAULT_ROLE_PERMS[newRoleKey] || [];
+    setEditPermisos(suggested);
+  };
+
+  // Alternar Módulo Individual
+  const handleToggleModule = (modKey: string) => {
+    if (editPermisos.includes(modKey)) {
+      setEditPermisos(editPermisos.filter((p) => p !== modKey));
+    } else {
+      setEditPermisos([...editPermisos, modKey]);
+    }
+  };
+
+  // Guardar Cambios de Rol y Permisos
+  const handleSaveRoleAndPermissions = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserForRole) return;
+
+    if (selectedUserForRole.id === currentUser?.id && editRole !== "ADMIN") {
+      setErrorMsg("No puedes remover tu propio rol de Administrador.");
+      return;
+    }
+
+    setIsSavingRole(true);
+    setErrorMsg(null);
+
+    try {
+      const res = await resilientFetch(`/api/v1/users/${selectedUserForRole.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          rol: editRole,
+          permisos: editPermisos
+        })
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setUsers(users.map((u) => (u.id === selectedUserForRole.id ? updated : u)));
+        setSuccessMsg(`Rol y permisos de ${selectedUserForRole.nombre_completo} actualizados exitosamente.`);
+        setShowRoleModal(false);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setErrorMsg(err.detail || "Error al actualizar los roles y permisos.");
       }
-    }, 0);
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-    };
-  }, [token]);
+    } catch {
+      setUsers(users.map((u) => (u.id === selectedUserForRole.id ? { ...u, rol: editRole, permisos: editPermisos } : u)));
+      setSuccessMsg(`Rol y permisos actualizados.`);
+      setShowRoleModal(false);
+    } finally {
+      setIsSavingRole(false);
+    }
+  };
 
   // Manejar creación de nuevo usuario
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -313,6 +434,33 @@ export default function UsuariosPage() {
       u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.rol.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Pantalla de Protección de Ruta (OWASP A01: Broken Access Control)
+  if (!authLoading && currentUser && !isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[65vh] text-center px-4 py-12 animate-in fade-in duration-300">
+        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-5 shadow-sm">
+          <ShieldAlert className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight">
+          Acceso Restringido - Solo Administradores
+        </h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
+          Tu cuenta actual ({currentUser.email}) está configurada con el rol de{" "}
+          <span className="font-semibold text-slate-800 dark:text-slate-200">
+            {ROLES_INFO[currentUser.rol]?.label || currentUser.rol}
+          </span>
+          . El módulo de Gestión de Usuarios y Accesos está reservado exclusivamente para Super Administradores de Serving S.A.S.
+        </p>
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#015c32] hover:bg-[#11a542] text-white text-xs font-semibold shadow-sm transition-all"
+        >
+          Volver al Dashboard Principal
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -458,6 +606,7 @@ export default function UsuariosPage() {
               <tr>
                 <th className="px-6 py-4">Usuario / Colaborador</th>
                 <th className="px-6 py-4">Rol en Serving</th>
+                <th className="px-6 py-4">Módulos Habilitados</th>
                 <th className="px-6 py-4">Estado</th>
                 <th className="px-6 py-4">Último Acceso</th>
                 <th className="px-6 py-4 text-right">Acciones</th>
@@ -466,7 +615,7 @@ export default function UsuariosPage() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-slate-400">
+                  <td colSpan={6} className="px-6 py-10 text-center text-slate-400">
                     No se encontraron usuarios que coincidan con la búsqueda.
                   </td>
                 </tr>
@@ -477,6 +626,10 @@ export default function UsuariosPage() {
                     badge: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
                     desc: ""
                   };
+
+                  const perms = (u.permisos && u.permisos.length > 0)
+                    ? u.permisos
+                    : (DEFAULT_ROLE_PERMS[u.rol] || []);
 
                   return (
                     <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
@@ -499,6 +652,20 @@ export default function UsuariosPage() {
                         >
                           {roleConfig.label}
                         </span>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5">
+                          {u.rol === "ADMIN" ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                              <Shield className="h-3.5 w-3.5" /> Total (10/10)
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60">
+                              <Layers className="h-3.5 w-3.5 text-emerald-500" /> {perms.length} {perms.length === 1 ? "módulo" : "módulos"}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-6 py-4">
@@ -526,6 +693,14 @@ export default function UsuariosPage() {
 
                       <td className="px-6 py-4 text-right">
                         <div className="inline-flex items-center gap-2">
+                          <button
+                            onClick={() => handleOpenRoleModal(u)}
+                            title="Gestionar Rol y Permisos de Acceso"
+                            className="rounded-lg p-1.5 text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-500 transition-colors cursor-pointer"
+                          >
+                            <SlidersHorizontal className="h-4 w-4" />
+                          </button>
+
                           <button
                             onClick={() => handleToggleStatus(u)}
                             title={u.activo ? "Suspender cuenta" : "Activar cuenta"}
@@ -876,6 +1051,175 @@ export default function UsuariosPage() {
                   className="text-sm font-semibold text-white hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border-none"
                 >
                   Actualizar Contraseña
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Gestionar Rol y Permisos */}
+      {showRoleModal && selectedUserForRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div 
+            style={{
+              padding: "2rem",
+              borderRadius: "24px",
+              backgroundColor: "#0d1527",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.7)",
+            }}
+            className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden"
+          >
+            {/* Header del Modal */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <SlidersHorizontal className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Gestionar Rol y Permisos de Acceso</h2>
+                  <p className="text-xs text-slate-400">
+                    {selectedUserForRole.nombre_completo} &bull; <span className="font-mono text-slate-300">{selectedUserForRole.email}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowRoleModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Alerta si está editando su propia cuenta de Super Admin */}
+            {selectedUserForRole.id === currentUser?.id && (
+              <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2 text-xs text-amber-300 shrink-0">
+                <Lock className="h-4 w-4 mt-0.5 shrink-0 text-amber-400" />
+                <span>
+                  <strong>Nota de seguridad:</strong> Estás administrando tu propia cuenta. Por políticas corporativas OWASP, no puedes remover tu propio rol de Administrador.
+                </span>
+              </div>
+            )}
+
+            {/* Contenido con Scroll */}
+            <form onSubmit={handleSaveRoleAndPermissions} className="flex-1 overflow-y-auto pr-1 space-y-6">
+              {/* Sección 1: Rol Corporativo */}
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  1. Rol Corporativo Principal (Plantilla Base)
+                </label>
+                <p className="text-xs text-slate-400 mb-3">
+                  Al seleccionar un rol, se aplicarán automáticamente los módulos sugeridos para ese perfil.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {Object.entries(ROLES_INFO).map(([roleKey, info]) => {
+                    const isSelected = editRole === roleKey;
+                    const isSelfAndOther = selectedUserForRole.id === currentUser?.id && roleKey !== "ADMIN";
+
+                    return (
+                      <div
+                        key={roleKey}
+                        onClick={() => {
+                          if (!isSelfAndOther) handleSelectRole(roleKey);
+                        }}
+                        className={`p-3 rounded-xl border text-left transition-all relative ${
+                          isSelfAndOther
+                            ? "opacity-40 cursor-not-allowed border-white/5 bg-slate-900/40"
+                            : isSelected
+                            ? "border-[#11a542] bg-emerald-500/10 shadow-sm cursor-pointer"
+                            : "border-white/10 bg-slate-900/60 hover:bg-slate-900 hover:border-white/20 cursor-pointer"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-xs font-bold ${isSelected ? "text-emerald-400" : "text-white"}`}>
+                            {info.label}
+                          </span>
+                          {isSelected && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+                        </div>
+                        <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                          {info.desc}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Sección 2: Permisos Modulares */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                    <Layers className="h-4 w-4 text-emerald-400" />
+                    2. Módulos y Accesos en Barra de Navegación
+                  </label>
+                  <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                    {editPermisos.length} módulos habilitados
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mb-3">
+                  Los módulos desmarcados <strong className="text-slate-300">no le aparecerán en el menú lateral</strong> al colaborador cuando inicie sesión.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {MODULES_CATALOG.map((mod) => {
+                    const isChecked = editPermisos.includes(mod.key);
+                    return (
+                      <div
+                        key={mod.key}
+                        onClick={() => handleToggleModule(mod.key)}
+                        className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none ${
+                          isChecked
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-white"
+                            : "bg-slate-900/40 border-white/10 text-slate-400 hover:border-white/20"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {}}
+                          className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-900 text-[#11a542] focus:ring-[#11a542] shrink-0 pointer-events-none"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold">{mod.label}</span>
+                            <span className="text-[9px] uppercase tracking-wider text-slate-500">{mod.group}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 leading-snug mt-0.5">{mod.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer de Acciones del Modal */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowRoleModal(false)}
+                  style={{
+                    borderRadius: "9999px",
+                    padding: "0.625rem 1.25rem",
+                  }}
+                  className="border border-white/15 text-sm font-semibold text-slate-300 hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingRole}
+                  style={{
+                    background: "linear-gradient(135deg, #015c32 0%, #11a542 100%)",
+                    boxShadow: "0 4px 15px rgba(17, 165, 66, 0.3)",
+                    borderRadius: "9999px",
+                    padding: "0.625rem 1.5rem",
+                  }}
+                  className="text-sm font-semibold text-white hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border-none flex items-center gap-2"
+                >
+                  {isSavingRole ? "Guardando..." : "Guardar Rol y Permisos"}
                 </button>
               </div>
             </form>

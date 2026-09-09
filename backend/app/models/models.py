@@ -69,6 +69,7 @@ class Usuario(Base):
     last_login_at = Column(DateTime(timezone=True), nullable=True)
     totp_secret = Column(String(255), nullable=True)
     totp_enabled = Column(Boolean, default=False)
+    permisos = Column(JSON, default=list, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 

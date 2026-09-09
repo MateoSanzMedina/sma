@@ -4,10 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
 from datetime import datetime, timezone, timedelta
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from app.db.session import get_db
 from app.models.models import Usuario, Empresa, SecurityAuditLog
+from app.api.users import DEFAULT_ROLE_PERMISSIONS
 from app.core.security import (
     hash_password,
     verify_password,
@@ -38,6 +39,7 @@ class UserResponse(BaseModel):
     nombre_completo: str
     rol: str
     empresa_id: str
+    permisos: Optional[List[str]] = []
     totp_enabled: bool = False
 
 class LoginResponse(BaseModel):
@@ -189,6 +191,7 @@ async def login(request_data: LoginRequest, request: Request, db: AsyncSession =
         nombre_completo=user.nombre_completo,
         rol=str(user.rol),
         empresa_id=str(user.empresa_id),
+        permisos=getattr(user, "permisos", None) if (getattr(user, "permisos", None) and len(user.permisos) > 0) else DEFAULT_ROLE_PERMISSIONS.get(str(user.rol), []),
         totp_enabled=bool(user.totp_enabled)
     )
 
@@ -272,6 +275,7 @@ async def verify_2fa(request_data: Verify2FARequest, request: Request, db: Async
         nombre_completo=user.nombre_completo,
         rol=str(user.rol),
         empresa_id=str(user.empresa_id),
+        permisos=getattr(user, "permisos", None) if (getattr(user, "permisos", None) and len(user.permisos) > 0) else DEFAULT_ROLE_PERMISSIONS.get(str(user.rol), []),
         totp_enabled=True
     )
 
@@ -413,5 +417,6 @@ async def get_profile(current_user: dict = Depends(get_current_user), db: AsyncS
         nombre_completo=user.nombre_completo,
         rol=str(user.rol),
         empresa_id=str(user.empresa_id),
+        permisos=getattr(user, "permisos", None) if (getattr(user, "permisos", None) and len(user.permisos) > 0) else DEFAULT_ROLE_PERMISSIONS.get(str(user.rol), []),
         totp_enabled=bool(user.totp_enabled)
     )

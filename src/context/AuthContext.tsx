@@ -12,6 +12,7 @@ export interface User {
   rol: string;
   empresa_id?: string;
   totp_enabled?: boolean;
+  permisos?: string[];
 }
 
 export interface LoginResult {
@@ -27,6 +28,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   requires2FA: boolean;
+  hasAccess: (moduleKey: string) => boolean;
   login: (usernameOrEmail: string, pass: string) => Promise<LoginResult>;
   verify2FA: (code: string) => Promise<{ success: boolean; error?: string }>;
   cancel2FA: () => void;
@@ -319,6 +321,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const hasAccess = useCallback((moduleKey: string): boolean => {
+    if (!user) return false;
+    // Super Administrador siempre tiene acceso irrestricto a todo
+    if (user.rol?.toUpperCase() === "ADMIN") return true;
+
+    // El módulo de usuarios y accesos es de uso exclusivo de administradores
+    if (moduleKey === "usuarios") return false;
+
+    // Permisos personalizados explícitos asignados al usuario
+    if (Array.isArray(user.permisos) && user.permisos.length > 0) {
+      return user.permisos.includes(moduleKey);
+    }
+
+    // Permisos por defecto según el rol corporativo
+    const DEFAULT_ROLE_PERMS: Record<string, string[]> = {
+      DIRECTOR_OBRA: ["dashboard", "proyectos", "analisis", "cierre-costos", "documentos", "configuracion"],
+      RESIDENTE: ["dashboard", "proyectos", "cierre-costos", "configuracion"],
+      GESTION_HUMANA: ["dashboard", "seguridad-social", "documentos", "configuracion"],
+      CONTABILIDAD: ["dashboard", "cierre-costos", "seguridad-social", "documentos", "configuracion"],
+      CLIENTE: ["dashboard", "proyectos", "documentos", "configuracion"]
+    };
+
+    return DEFAULT_ROLE_PERMS[user.rol?.toUpperCase()]?.includes(moduleKey) ?? false;
+  }, [user]);
+
   const extendSession = () => {
     resetActivityTimer();
   };
@@ -331,6 +358,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         requires2FA,
+        hasAccess,
         login,
         verify2FA,
         cancel2FA,

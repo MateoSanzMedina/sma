@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
   HardHat,
@@ -23,7 +24,9 @@ interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  module: string;
   exact?: boolean;
+  adminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -35,45 +38,46 @@ const navGroups: NavGroup[] = [
   {
     group: "General",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true }
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true, module: "dashboard" }
     ]
   },
   {
     group: "Área Técnica",
     items: [
-      { label: "Proyectos", href: "/tecnica/proyectos", icon: HardHat },
-      { label: "Flujo Gerencia", href: "/tecnica/analisis", icon: TrendingUp },
-      { label: "Cierre de Costos", href: "/tecnica/cierre-costos", icon: Receipt }
+      { label: "Proyectos", href: "/tecnica/proyectos", icon: HardHat, module: "proyectos" },
+      { label: "Flujo Gerencia", href: "/tecnica/analisis", icon: TrendingUp, module: "analisis" },
+      { label: "Cierre de Costos", href: "/tecnica/cierre-costos", icon: Receipt, module: "cierre-costos" }
     ]
   },
   {
     group: "Área Comercial",
     items: [
-      { label: "CRM", href: "/comercial/crm", icon: Users }
+      { label: "CRM", href: "/comercial/crm", icon: Users, module: "crm" }
     ]
   },
   {
     group: "Gestión Humana",
     items: [
-      { label: "Seguridad Social", href: "/gestion-humana/seguridad-social", icon: ShieldCheck }
+      { label: "Seguridad Social", href: "/gestion-humana/seguridad-social", icon: ShieldCheck, module: "seguridad-social" }
     ]
   },
   {
     group: "Área Administrativa",
     items: [
-      { label: "Usuarios & Accesos", href: "/administrativa/usuarios", icon: UserCog },
-      { label: "Documentos", href: "/administrativa/documentos", icon: FileText },
-      { label: "Integraciones", href: "/administrativa/integraciones", icon: Blocks }
+      { label: "Usuarios & Accesos", href: "/administrativa/usuarios", icon: UserCog, module: "usuarios", adminOnly: true },
+      { label: "Documentos", href: "/administrativa/documentos", icon: FileText, module: "documentos" },
+      { label: "Integraciones", href: "/administrativa/integraciones", icon: Blocks, module: "integraciones" }
     ]
   }
 ];
 
 const bottomItems: NavItem[] = [
-  { label: "Configuración", href: "/configuracion", icon: Settings },
+  { label: "Configuración", href: "/configuracion", icon: Settings, module: "configuracion" },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { user, hasAccess } = useAuth();
   const [isLocked, setIsLocked] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -97,6 +101,20 @@ export default function Sidebar() {
   useEffect(() => {
     document.documentElement.style.setProperty('--sidebar-width', isExpanded ? '16rem' : '5rem');
   }, [isExpanded]);
+
+  const isAdmin = user?.rol?.toUpperCase() === "ADMIN";
+
+  const visibleGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (item.adminOnly && !isAdmin) return false;
+        return hasAccess(item.module);
+      })
+    }))
+    .filter((group) => group.items.length > 0);
+
+  const visibleBottomItems = bottomItems.filter((item) => hasAccess(item.module));
 
   return (
     <aside
@@ -127,7 +145,7 @@ export default function Sidebar() {
 
       {/* 2. Navegación Principal con espaciado generoso (px-3 py-4) */}
       <nav className="flex flex-col gap-4 py-4 px-3 flex-1 overflow-y-auto">
-        {navGroups.map((group, groupIdx) => (
+        {visibleGroups.map((group, groupIdx) => (
           <div key={group.group} className="flex flex-col gap-1">
             {groupIdx > 0 && !isExpanded && (
               <hr className="border-t border-slate-200 dark:border-slate-800 my-1 opacity-60" />
@@ -173,7 +191,7 @@ export default function Sidebar() {
 
       {/* 3. Footer / Configuración y Bloqueo */}
       <div className="mt-auto p-3.5 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2 shrink-0">
-        {bottomItems.map((item) => {
+        {visibleBottomItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
           return (
