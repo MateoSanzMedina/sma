@@ -32,6 +32,7 @@ interface AuthContextType {
   cancel2FA: () => void;
   logout: () => void;
   extendSession: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -298,6 +299,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setTempToken(null);
   };
 
+  const refreshUser = async () => {
+    const savedToken = token || localStorage.getItem("sma_token");
+    if (!savedToken) return;
+    try {
+      const res = await resilientFetch("/api/v1/auth/me", {
+        headers: {
+          "Authorization": `Bearer ${savedToken}`,
+          "Content-Type": "application/json"
+        }
+      }, 5000);
+      if (res.ok) {
+        const freshUser: User = await res.json();
+        setUser(freshUser);
+        localStorage.setItem("sma_user", JSON.stringify(freshUser));
+      }
+    } catch (err) {
+      console.warn("[AuthContext] Error refrescando usuario:", err);
+    }
+  };
+
   const extendSession = () => {
     resetActivityTimer();
   };
@@ -314,7 +335,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         verify2FA,
         cancel2FA,
         logout,
-        extendSession
+        extendSession,
+        refreshUser
       }}
     >
       {children}

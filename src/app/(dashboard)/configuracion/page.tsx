@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   Settings,
@@ -16,6 +16,7 @@ import {
   Laptop
 } from "lucide-react";
 import { CLOUD_BACKEND_URL, LOCAL_BACKEND_URL } from "@/lib/apiConfig";
+import { TwoFactorSetupCard } from "@/components/auth/TwoFactorSetupCard";
 
 export default function ConfiguracionPage() {
   const { user } = useAuth();
@@ -68,6 +69,22 @@ export default function ConfiguracionPage() {
       clearTimeout(timer);
     };
   }, [checkBackendHealth]);
+
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+    setTheme(newTheme);
+    if (newTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else if (newTheme === "light") {
+      document.documentElement.classList.remove("dark");
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (prefersDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  };
 
   const handleSavePreferences = () => {
     setSaveSuccess(true);
@@ -233,6 +250,9 @@ export default function ConfiguracionPage() {
               </p>
             </div>
           </div>
+
+          {/* Card: Autenticación en Dos Pasos (2FA / TOTP) */}
+          <TwoFactorSetupCard />
 
           {/* Card: Notificaciones y Auditoría */}
           <div 
