@@ -24,33 +24,7 @@ export default function ConfiguracionPage() {
   const [activeServerUrl, setActiveServerUrl] = useState<string>("");
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Cargar tema inicial
-  useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
-    setTheme(isDark ? "dark" : "light");
-    checkBackendHealth();
-  }, []);
-
-  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
-    setTheme(newTheme);
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("sma_theme", "dark");
-    } else if (newTheme === "light") {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("sma_theme", "light");
-    } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-      localStorage.removeItem("sma_theme");
-    }
-  };
-
-  const checkBackendHealth = async () => {
+  const checkBackendHealth = useCallback(async () => {
     setServerStatus("checking");
     // 1. Probar primero si localhost responde
     try {
@@ -78,7 +52,22 @@ export default function ConfiguracionPage() {
 
     setServerStatus("offline");
     setActiveServerUrl("Servidor en arranque en frío (Render)");
-  };
+  }, []);
+
+  // Cargar tema inicial y estado de backend
+  useEffect(() => {
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      if (!isMounted) return;
+      const isDark = document.documentElement.classList.contains("dark");
+      setTheme(isDark ? "dark" : "light");
+      checkBackendHealth();
+    }, 0);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [checkBackendHealth]);
 
   const handleSavePreferences = () => {
     setSaveSuccess(true);

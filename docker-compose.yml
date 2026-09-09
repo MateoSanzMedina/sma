@@ -9,9 +9,9 @@ services:
     environment:
       POSTGRES_DB: sma_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secure_postgres_password_2026!
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sma_secure_local_dev_pass_2026!}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/app/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
@@ -29,11 +29,11 @@ services:
     container_name: sma_fastapi_backend
     restart: always
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       - ENVIRONMENT=production
-      - DATABASE_URL=postgresql+asyncpg://postgres:secure_postgres_password_2026!@postgres:5432/sma_db
-      - JWT_SECRET=CHANGE_THIS_TO_A_32_CHARACTER_SECRET_KEY_FOR_PRODUCTION
+      - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-sma_secure_local_dev_pass_2026!}@postgres:5432/sma_db
+      - JWT_SECRET=${JWT_SECRET}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       postgres:

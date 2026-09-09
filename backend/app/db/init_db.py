@@ -6,6 +6,10 @@ from app.db.session import AsyncSessionLocal, engine, Base
 from app.models.models import Empresa, Usuario
 from app.core.security import hash_password
 
+import os
+import secrets
+import string
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("sma.init_db")
 
@@ -32,40 +36,20 @@ async def init_db():
             await session.commit()
             await session.refresh(empresa)
             logger.info(f"Empresa creada con ID: {empresa.id}")
-            
-        # 2. Crear Super Administrador: ChainPoint
-        stmt_cp = select(Usuario).where(Usuario.email == "chainpoint@serving.com.co")
-        res_cp = await session.execute(stmt_cp)
-        cp_user = res_cp.scalar_one_or_none()
 
-        if not cp_user:
-            logger.info("Creando Super Administrador (ChainPoint)...")
-            cp_user = Usuario(
-                email="chainpoint@serving.com.co",
-                password_hash=hash_password("ChainPoint2026."),
-                nombre_completo="ChainPoint Super Admin",
-                rol="ADMIN",
-                empresa_id=empresa.id,
-                activo=True
-            )
-            session.add(cp_user)
-            await session.commit()
-            logger.info("Super Admin ChainPoint creado -> Usuario: ChainPoint | Pass: ChainPoint2026.")
-        else:
-            cp_user.password_hash = hash_password("ChainPoint2026.")
-            await session.commit()
-            logger.info("Super Admin ChainPoint actualizado.")
-
-        # 3. Crear Administrador Secundario Serving
-        stmt_admin = select(Usuario).where(Usuario.email == "admin@serving.com.co")
+        # 2. Inicializar Administrador Principal Serving
+        admin_email = os.getenv("SUPERADMIN_EMAIL", "admin@serving.com.co").strip().lower()
+        admin_pass = os.getenv("SUPERADMIN_PASSWORD", "Serving2026*SecureAdmin!")
+        
+        stmt_admin = select(Usuario).where(Usuario.email == admin_email)
         res_admin = await session.execute(stmt_admin)
         admin = res_admin.scalar_one_or_none()
         
         if not admin:
-            logger.info("Creando usuario Administrador inicial (admin@serving.com.co)...")
-            hashed_pwd = hash_password("Serving2026*SecureAdmin!")
+            logger.info(f"Creando usuario Administrador inicial ({admin_email})...")
+            hashed_pwd = hash_password(admin_pass)
             admin = Usuario(
-                email="admin@serving.com.co",
+                email=admin_email,
                 password_hash=hashed_pwd,
                 nombre_completo="Administrador General Serving",
                 rol="ADMIN",
@@ -74,7 +58,9 @@ async def init_db():
             )
             session.add(admin)
             await session.commit()
-            logger.info("Usuario Administrador Serving creado con éxito.")
+            logger.info(f"Usuario Administrador ({admin_email}) inicializado con éxito.")
+        else:
+            logger.info(f"Usuario Administrador ({admin_email}) ya existe.")
 
 if __name__ == "__main__":
     asyncio.run(init_db())

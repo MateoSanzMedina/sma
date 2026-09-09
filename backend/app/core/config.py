@@ -21,7 +21,8 @@ class Settings(BaseSettings):
         env="JWT_SECRET"
     )
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 8  # 8 Horas turno de trabajo
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60  # 60 minutos de sesión activa (OWASP A07)
+    TEMP_TOKEN_EXPIRE_MINUTES: int = 5  # 5 minutos para resolver 2FA
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # Rate Limiting (Peticiones por minuto por IP)
@@ -33,8 +34,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
         "https://sma.chainpoint.ai",
         "https://app.serving.com.co",
-        "https://sma-serving.vercel.app",
-        "*"
+        "https://sma-serving.vercel.app"
     ]
     
     # Cloud Storage & Gemini API

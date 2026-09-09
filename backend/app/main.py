@@ -7,6 +7,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.security import SECURITY_HEADERS
+from app.core.limiter import limiter
 from app.api.analysis import router as analysis_router
 from app.api.payroll import router as payroll_router
 from app.api.costs import router as costs_router
@@ -18,9 +19,6 @@ import uvicorn
 import logging
 
 logger = logging.getLogger("sma.main")
-
-# Inicialización de Rate Limiter (Protección contra DDoS / Brute Force OWASP A04)
-limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"])
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -56,14 +54,8 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://sma.chainpoint.ai",
-        "https://app.serving.com.co",
-        "https://sma-serving.vercel.app"
-    ],
-    allow_origin_regex=r"^https:\/\/.*\.vercel\.app$",
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origin_regex=r"^https:\/\/.*\.vercel\.app$" if settings.ENVIRONMENT != "production" else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -50,5 +50,22 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# gcp secrets
+# credentials & secrets (OWASP A04)
+.secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*service-account*.json
+*credential*.json
 backend/*.json
+backend/secrets/
+.env*
+!.env.example
+
+# Local SQLite / Database files
+*.db
+*.sqlite
+*.sqlite3
+

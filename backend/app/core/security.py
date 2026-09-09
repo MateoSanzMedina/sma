@@ -1,23 +1,34 @@
 import jwt
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any
-from passlib.context import CryptContext
+import bcrypt
 from fastapi import HTTPException, Security, status, Depends, UploadFile
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.config import settings
 import re
+import pyotp
 
-# Contexto de Cifrado con Bcrypt y Argon2
-pwd_context = CryptContext(schemes=["bcrypt", "argon2"], deprecated="auto")
+
 security_bearer = HTTPBearer(auto_error=False)
 
 def hash_password(password: str) -> str:
-    """Hashea la contraseña usando Bcrypt / Argon2 (OWASP A02)."""
-    return pwd_context.hash(password)
+    """Hashea la contraseña usando Bcrypt con salt seguro y truncado a 72 bytes (OWASP A02)."""
+    if not password:
+        raise ValueError("La contraseña no puede estar vacía.")
+    pwd_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt(rounds=12)
+    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica si la contraseña coincide con el hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verifica si la contraseña coincide con el hash almacenado de forma segura."""
+    if not plain_password or not hashed_password:
+        return False
+    try:
+        pwd_bytes = plain_password.encode("utf-8")[:72]
+        hash_bytes = hashed_password.encode("utf-8")
+        return bcrypt.checkpw(pwd_bytes, hash_bytes)
+    except Exception:
+        return False
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Genera un Token JWT firmado de acceso seguro."""
@@ -36,6 +47,50 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     
     encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
     return encoded_jwt
+
+def create_temp_2fa_token(user_id: str, email: str) -> str:
+    """Genera un token temporal de 5 minutos únicamente válido para verificación 2FA."""
+    now = datetime.now(timezone.utc)
+    expire = now + timedelta(minutes=settings.TEMP_TOKEN_EXPIRE_MINUTES)
+    payload = {
+        "sub": user_id,
+        "email": email,
+        "purpose": "2fa_pending",
+        "iat": now,
+        "exp": expire,
+        "iss": settings.PROJECT_NAME
+    }
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+def decode_temp_2fa_token(token: str) -> Dict[str, Any]:
+    """Valida que el token temporal de 2FA sea legítimo y no haya expirado."""
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        if payload.get("purpose") != "2fa_pending":
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token 2FA inválido.")
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="El código de verificación temporal ha expirado. Inicie sesión nuevamente.")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token 2FA inválido o alterado.")
+
+def generate_totp_secret() -> str:
+    """Genera una clave secreta base32 única para el usuario."""
+    return pyotp.random_base32()
+
+def get_totp_uri(secret: str, email: str) -> str:
+    """Genera el URI estándar otpauth:// compatible con Google Authenticator."""
+    totp = pyotp.TOTP(secret)
+    return totp.provisioning_uri(name=email, issuer_name=settings.PROJECT_NAME)
+
+def verify_totp_code(secret: str, code: str) -> bool:
+    """Verifica el código de 6 dígitos con ventana de tolerancia de ±30 segundos."""
+    if not secret or not code:
+        return False
+    clean_code = str(code).strip().replace(" ", "")
+    totp = pyotp.TOTP(secret)
+    return totp.verify(clean_code, valid_window=1)
+
 
 def decode_access_token(token: str) -> Dict[str, Any]:
     """Decodifica y valida un Token JWT."""

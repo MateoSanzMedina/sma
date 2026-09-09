@@ -10,19 +10,26 @@ Base = declarative_base()
 
 # Formatear la URL para SQLite o Asyncpg en PostgreSQL
 db_url = settings.DATABASE_URL
-if db_url.startswith("postgresql://"):
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 elif db_url.startswith("sqlite://") and not db_url.startswith("sqlite+aiosqlite://"):
     db_url = db_url.replace("sqlite://", "sqlite+aiosqlite://", 1)
 
-# Configurar el AsyncEngine con Connection Pooling
+# Configurar el AsyncEngine con Connection Pooling y soporte para PgBouncer de Supabase
+connect_args = {}
+if "asyncpg" in db_url:
+    connect_args["statement_cache_size"] = 0
+
 engine = create_async_engine(
     db_url,
     echo=(settings.ENVIRONMENT == "development"),
     future=True,
     pool_size=10,
     max_overflow=20,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    connect_args=connect_args
 )
 
 # Async Session Maker

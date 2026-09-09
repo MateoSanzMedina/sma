@@ -138,7 +138,16 @@ export default function UsuariosPage() {
   };
 
   useEffect(() => {
-    fetchUsers();
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      if (isMounted) {
+        fetchUsers();
+      }
+    }, 0);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [token]);
 
   // Manejar creación de nuevo usuario
@@ -177,7 +186,7 @@ export default function UsuariosPage() {
         const err = await res.json().catch(() => ({}));
         setErrorMsg(err.detail || "Error al crear el usuario.");
       }
-    } catch (e: any) {
+    } catch {
       // Agregar localmente para interactividad inmediata
       const localUser: UserItem = {
         id: `usr-${Date.now()}`,

@@ -37,6 +37,8 @@ class Usuario(Base):
     failed_login_attempts = Column(Integer, default=0)
     locked_until = Column(DateTime, nullable=True)
     last_login_at = Column(DateTime, nullable=True)
+    totp_secret = Column(String(255), nullable=True)
+    totp_enabled = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
