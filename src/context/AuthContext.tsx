@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [showIdleWarning, setShowIdleWarning] = useState<boolean>(false);
   const [remainingSeconds, setRemainingSeconds] = useState<number>(300);
 
-  const lastActivityRef = useRef<number>(0);
+  const lastActivityRef = useRef<number>(Date.now());
   const router = useRouter();
 
   const logout = useCallback(() => {
@@ -98,6 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setToken(savedToken);
           setUser(freshUser);
           localStorage.setItem("sma_user", JSON.stringify(freshUser));
+          lastActivityRef.current = Date.now();
         } else {
           // Token rechazado o usuario inactivo -> purgar almacenamiento local
           localStorage.removeItem("sma_token");
@@ -113,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (savedToken && savedUser) {
           setToken(savedToken);
           setUser(JSON.parse(savedUser));
+          lastActivityRef.current = Date.now();
         }
       } finally {
         setIsLoading(false);
@@ -149,6 +151,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener("touchstart", handleUserActivity, { passive: true });
 
     const interval = setInterval(() => {
+      if (!lastActivityRef.current || lastActivityRef.current === 0) {
+        lastActivityRef.current = Date.now();
+        return;
+      }
+
       const inactiveDuration = Date.now() - lastActivityRef.current;
 
       if (inactiveDuration >= INACTIVITY_TIMEOUT_MS) {
