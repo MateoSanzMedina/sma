@@ -137,7 +137,32 @@ def parse_spanish_date(date_str):
     except:
         return date_str
 
-async def process_analysis(schedule_content: bytes, schedule_name: str, budget_content: bytes, budget_name: str, prorate_orphans: bool = True):
+def subtract_months_from_date(date_str: str, months: int) -> str:
+    try:
+        parts = date_str.split("-")
+        if len(parts) != 3:
+            return date_str
+        year = int(parts[0])
+        month = int(parts[1]) - months
+        day = int(parts[2])
+        while month <= 0:
+            month += 12
+            year -= 1
+        day = min(day, 28)
+        return f"{year:04d}-{month:02d}-{day:02d}"
+    except Exception:
+        return date_str
+
+async def process_analysis(
+    schedule_content: bytes, 
+    schedule_name: str, 
+    budget_content: bytes, 
+    budget_name: str, 
+    prorate_orphans: bool = True,
+    enable_anticipo: bool = True,
+    anticipo_percentage: float = 30.0,
+    anticipo_months: int = 1
+):
     """
     Servicio lógico de análisis de costos con mapeo de procesos (Tasks -> Budget Items) y Costo Split.
     """
@@ -465,14 +490,41 @@ RESPUESTA JSON:
                 "date": s_date
             })
 
-            for day_str in calendar_days:
+            if enable_anticipo and not is_orphan and total_val > 0 and s_date:
+                anticipo_ratio = min(100.0, max(0.0, float(anticipo_percentage))) / 100.0
+                exec_ratio = 1.0 - anticipo_ratio
+
+                anticipo_val = total_val * anticipo_ratio
+                exec_total_val = total_val * exec_ratio
+                daily_exec_val = exec_total_val / duration if duration > 0 else 0.0
+
+                anticipo_date = subtract_months_from_date(s_date, anticipo_months)
+
                 distributed_points.append({
-                    "date": day_str,
-                    "budget_required": daily_val,
-                    "task_name": dp.get("task_name", ""),
+                    "date": anticipo_date,
+                    "budget_required": anticipo_val,
+                    "task_name": f"[ANTICIPO {anticipo_percentage:.0f}%] {dp.get('task_name', '')}",
                     "chapter": dp.get("chapter") or "Otros",
                     "budget_item_code": dp.get("budget_item_code", "")
                 })
+
+                for day_str in calendar_days:
+                    distributed_points.append({
+                        "date": day_str,
+                        "budget_required": daily_exec_val,
+                        "task_name": dp.get("task_name", ""),
+                        "chapter": dp.get("chapter") or "Otros",
+                        "budget_item_code": dp.get("budget_item_code", "")
+                    })
+            else:
+                for day_str in calendar_days:
+                    distributed_points.append({
+                        "date": day_str,
+                        "budget_required": daily_val,
+                        "task_name": dp.get("task_name", ""),
+                        "chapter": dp.get("chapter") or "Otros",
+                        "budget_item_code": dp.get("budget_item_code", "")
+                    })
 
         direct_budget_sum = sum(dp["budget_required"] for dp in processed_points)
         total_budget_sum = direct_budget_sum * 1.1007

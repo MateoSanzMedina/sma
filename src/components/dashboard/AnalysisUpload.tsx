@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { UploadCloud, FileSpreadsheet, Loader2, CheckCircle } from "lucide-react";
 import { DataPoint } from "@/lib/anticipoUtils";
+import { resilientFetch } from "@/lib/apiConfig";
 
 export interface AnalysisResult {
   analysis: string;
@@ -73,17 +74,26 @@ export default function AnalysisUpload({ onAnalysisComplete }: AnalysisUploadPro
     formData.append("anticipoMonths", String(anticipoMonths));
 
     try {
-      const response = await fetch("/api/analysis/process", {
+      // Enviar directamente al backend de FastAPI (Render en producción, localhost en dev)
+      // evitando el límite estricto de 4.5 MB de Vercel
+      const response = await resilientFetch("/api/v1/analysis/process", {
         method: "POST",
         body: formData,
-      });
-
-      const result = await response.json();
+      }, 180000);
 
       if (!response.ok) {
-        throw new Error(result.error || "Ocurrió un error al procesar los archivos.");
+        let errorDetail = "Ocurrió un error al procesar los archivos en el servidor.";
+        try {
+          const errData = await response.json();
+          errorDetail = errData.detail || errData.error || errorDetail;
+        } catch {
+          const text = await response.text();
+          if (text) errorDetail = text.slice(0, 150);
+        }
+        throw new Error(errorDetail);
       }
 
+      const result = await response.json();
       onAnalysisComplete(result.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ocurrió un error al procesar los archivos.");
